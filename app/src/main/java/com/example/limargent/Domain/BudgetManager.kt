@@ -1,6 +1,6 @@
-package com.example.limargent.Application
+package com.example.limargent.Domain
 
-import com.example.limargent.Application.MoneyMovement
+import com.example.limargent.Domain.MoneyMovement
 
 class BudgetManager(  liste : ArrayList<MoneyMovement>) {
     var liste: ArrayList<MoneyMovement> = liste

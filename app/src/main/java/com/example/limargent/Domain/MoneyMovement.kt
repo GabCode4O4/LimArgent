@@ -1,4 +1,4 @@
-package com.example.limargent.Application
+package com.example.limargent.Domain
 
 import java.math.BigDecimal
 
