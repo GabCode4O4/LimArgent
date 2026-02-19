@@ -1,11 +1,12 @@
 package com.example.limargent.Domain
 
 import java.math.BigDecimal
+import java.time.LocalDate
 
-class MoneyMovement(titre : String, montant : BigDecimal, categorie : String, date : String) {
-    var titre: String = titre
-    var montant: BigDecimal = montant
-    var categorie: String = categorie
-    var date: String = date
-
-}
+data class MoneyMovement(
+    // On définit l'objet comme immuable en utilisant des val pour éviter les effets de bord, on peut donc laisser les attributs en public
+    val titre: String,
+    val montant: BigDecimal, // On utilise BigDecimal car la précision est importante dès qu'on touche au financier
+    val categorie: String,
+    val date: LocalDate // LocalDate permet de faire du tri et du parsing plus facilement et garantit le format
+)
