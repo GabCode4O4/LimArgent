@@ -13,9 +13,7 @@ class DashboardActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            MaterialTheme {
                 DashBoardScreen(viewModel = viewModel)
             }
         }
     }
-}
