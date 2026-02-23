@@ -22,6 +22,7 @@ class DashBoardViewModel: ViewModel() {
     fun loadData(){
 
         val total = manager.getBudget()
+        budget = total.toDouble()
         val categories = manager.getBudgetCategorie()
         mouvements = manager.getMov()
     }
