@@ -22,7 +22,8 @@
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
-        <activity android:name="Presentation.Dashboard.DashBoardActivity" tools:ignore="Instantiatable"/>
+        <activity android:name=".Presentation.Dashboard.DashboardActivity" />
+        <activity android:name=".Presentation.Configuration.ConfigurationActivity" />
     </application>
 
 </manifest>
