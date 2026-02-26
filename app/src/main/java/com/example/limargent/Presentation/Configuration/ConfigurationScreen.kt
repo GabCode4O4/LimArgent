@@ -1,2 +1,87 @@
 package com.example.limargent.Presentation.Configuration
 
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun ConfigurationScreen(viewModel: ConfigurationViewModel) {
+    val categories = viewModel.categories
+    var newCategoryName by remember { mutableStateOf("") }
+
+    Scaffold(
+        topBar = {
+            TopAppBar(title = { Text("Configuration des Catégories") })
+        }
+    ) { paddingValues ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+                .padding(16.dp)
+        ) {
+            // Section pour ajouter une catégorie
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                OutlinedTextField(
+                    value = newCategoryName,
+                    onValueChange = { newCategoryName = it },
+                    label = { Text("Nouvelle catégorie") },
+                    modifier = Modifier.weight(1f)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Button(onClick = {
+                    viewModel.addCategorie(newCategoryName)
+                    newCategoryName = "" // Reset text field
+                }) {
+                    Text("Ajouter")
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Liste des catégories existantes
+            LazyColumn {
+                items(categories) { category ->
+                    CategoryItem(
+                        categoryName = category,
+                        onDelete = { viewModel.delCategorie(category) }
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun CategoryItem(categoryName: String, onDelete: () -> Unit) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    ) {
+        Row(
+            modifier = Modifier
+                .padding(16.dp)
+                .fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Text(text = categoryName, style = MaterialTheme.typography.bodyLarge)
+            IconButton(onClick = onDelete) {
+                Icon(Icons.Default.Delete, contentDescription = "Supprimer la catégorie")
+            }
+        }
+    }
+}

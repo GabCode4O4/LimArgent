@@ -4,20 +4,41 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
-import com.example.limargent.Domain.BudgetManager
-import com.example.limargent.Domain.MoneyMovement
+import androidx.lifecycle.viewModelScope
+import com.example.limargent.Data.Categorie.CategoryProvider
+import com.example.limargent.Data.Categorie.CategoryRepositoryImpl
+import com.example.limargent.Application.CategoryService
+import com.example.limargent.Domain.Categorie.CategoryRepository
+import kotlinx.coroutines.launch
 
-class ConfigurationViewModel: ViewModel() {
-    val manager = BudgetManager()
+class ConfigurationViewModel : ViewModel() {
 
-    var budget by mutableStateOf(0.0)
-        private set
-    var mouvements by mutableStateOf<ArrayList<MoneyMovement>>(arrayListOf())
+    private val categoryRepository: CategoryRepository = CategoryRepositoryImpl(CategoryService(CategoryProvider()))
+
+    var categories by mutableStateOf<List<String>>(emptyList())
         private set
 
     init {
-
+        loadCategories()
     }
 
-    fun addCategorie(name : String){}
-    fun delCategorie(name : String){}
+    private fun loadCategories() {
+        categories = categoryRepository.getCategories()
+    }
+
+    fun addCategorie(name: String) {
+        viewModelScope.launch {
+            if (name.isNotBlank()) {
+                categoryRepository.addCat(name)
+                loadCategories()
+            }
+        }
+    }
+
+    fun delCategorie(name: String) {
+        viewModelScope.launch {
+            categoryRepository.delCat(name)
+            loadCategories()
+        }
+    }
+}
