@@ -10,6 +10,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import com.example.limargent.Presentation.Dashboard.DashboardActivity
+import com.example.limargent.Presentation.Configuration.ConfigurationActivity
 import kotlin.jvm.java
 
 @Composable
@@ -26,6 +27,13 @@ fun MainScreen(){
             context.startActivity(intent)
         }) {
             Text("Dashboard")
+        }
+
+        Button(onClick = {
+            val intent = Intent(context, ConfigurationActivity::class.java)
+            context.startActivity(intent)
+        }) {
+            Text("Config")
         }
 
 
