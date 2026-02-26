@@ -23,6 +23,7 @@
             </intent-filter>
         </activity>
         <activity android:name=".Presentation.Dashboard.DashboardActivity" />
+        <activity android:name=".Presentation.Configuration.ConfigurationActivity" />
     </application>
 
 </manifest>

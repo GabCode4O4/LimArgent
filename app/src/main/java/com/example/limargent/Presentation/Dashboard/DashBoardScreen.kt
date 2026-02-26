@@ -43,7 +43,7 @@ fun DashBoardScreen(viewModel: DashBoardViewModel) {
                 .padding(horizontal = 20.dp)
         ) {
             Spacer(modifier = Modifier.height(10.dp))
-            BudgetViewer(budget = budget)
+            BalanceCard(budget = budget)
             Spacer(modifier = Modifier.height(24.dp))
 
             Text(
@@ -65,7 +65,7 @@ fun DashBoardScreen(viewModel: DashBoardViewModel) {
                     contentPadding = PaddingValues(bottom = 20.dp)
                 ) {
                     items(mouvements) { mouvement ->
-                        MouvementList(mouvement = mouvement)
+                        MouvementItem(mouvement = mouvement)
                     }
                 }
             }
@@ -74,7 +74,7 @@ fun DashBoardScreen(viewModel: DashBoardViewModel) {
 }
 
 @Composable
-fun BudgetViewer(budget: Double) {
+fun BalanceCard(budget: Double) {
     val isPositive = budget >= 0
     Card(
         modifier = Modifier
@@ -109,7 +109,7 @@ fun BudgetViewer(budget: Double) {
 }
 
 @Composable
-fun MouvementList(mouvement: MoneyMovement) {
+fun MouvementItem(mouvement: MoneyMovement) {
     val isIncome = mouvement.montant >= BigDecimal.ZERO
     val amountColor = if (isIncome) Color(0xFF4CAF50) else Color(0xFFE53935)
     val iconText = if (isIncome) "+" else "-"
