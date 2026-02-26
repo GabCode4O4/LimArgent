@@ -2,6 +2,7 @@ package com.example.limargent.Data.Categorie
 
 
 class CategoryProvider {
+    // dd
     private val categories = mutableListOf(
         "Alimentation", "Logement", "Transports", "Santé", "Loisirs", "Épargne", "Salaire", "Autre"
     )

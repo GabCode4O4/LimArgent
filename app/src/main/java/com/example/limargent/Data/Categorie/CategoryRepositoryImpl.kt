@@ -4,6 +4,7 @@ import com.example.limargent.Application.CategoryService
 import com.example.limargent.Domain.Categorie.CategoryRepository
 
 class CategoryRepositoryImpl(
+    //
     private val categoryService: CategoryService
 ) : CategoryRepository {
     
