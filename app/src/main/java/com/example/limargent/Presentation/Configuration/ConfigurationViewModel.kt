@@ -5,15 +5,15 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.limargent.Data.Categorie.CategoryProvider
-import com.example.limargent.Data.Categorie.CategoryRepositoryImpl
 import com.example.limargent.Application.CategoryService
-import com.example.limargent.Domain.Categorie.CategoryRepository
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
-class ConfigurationViewModel : ViewModel() {
-
-    private val categoryRepository: CategoryRepository = CategoryRepositoryImpl(CategoryService(CategoryProvider()))
+@HiltViewModel
+class ConfigurationViewModel @Inject constructor(
+    private val categoryService: CategoryService
+) : ViewModel() {
 
     var categories by mutableStateOf<List<String>>(emptyList())
         private set
@@ -23,13 +23,13 @@ class ConfigurationViewModel : ViewModel() {
     }
 
     private fun loadCategories() {
-        categories = categoryRepository.getCategories()
+        categories = categoryService.getCategories()
     }
 
     fun addCategorie(name: String) {
         viewModelScope.launch {
             if (name.isNotBlank()) {
-                categoryRepository.addCat(name)
+                categoryService.addCategory(name)
                 loadCategories()
             }
         }
@@ -37,7 +37,7 @@ class ConfigurationViewModel : ViewModel() {
 
     fun delCategorie(name: String) {
         viewModelScope.launch {
-            categoryRepository.delCat(name)
+            categoryService.removeCategory(name)
             loadCategories()
         }
     }

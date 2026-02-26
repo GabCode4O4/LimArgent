@@ -5,7 +5,9 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import com.example.limargent.ui.theme.LimArgentTheme
+import dagger.hilt.android.AndroidEntryPoint
 
+@AndroidEntryPoint
 class ConfigurationActivity : ComponentActivity() {
     private val viewModel: ConfigurationViewModel by viewModels()
 

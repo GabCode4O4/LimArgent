@@ -1,25 +1,19 @@
 package com.example.limargent.Data.Categorie
 
-import com.example.limargent.Application.CategoryService
 import com.example.limargent.Domain.Categorie.CategoryRepository
 
 class CategoryRepositoryImpl(
-    //
-    private val categoryService: CategoryService
+    private val categoryProvider: CategoryProvider
 ) : CategoryRepository {
-    
     override fun getCategories(): List<String> {
-        return categoryService.getCategories()
+        return categoryProvider.getCategories()
     }
-
     override suspend fun addCat(nom: String) {
-        categoryService.addCategory(nom)
+        categoryProvider.addCategory(nom)
     }
-
     override suspend fun delCat(nom: String) {
-        categoryService.removeCategory(nom)
+        categoryProvider.removeCategory(nom)
     }
-
     override suspend fun update() {
         // TODO: Implement update logic
     }
