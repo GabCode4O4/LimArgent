@@ -16,6 +16,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.limargent.Domain.MoneyMovement
+import com.example.limargent.Domain.MovType
 import java.math.BigDecimal
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
@@ -169,8 +170,9 @@ fun MouvementItem(mouvement: MoneyMovement) {
 @Composable
 fun DashBoardPreview() {
     val testViewModel = DashBoardViewModel()
-    testViewModel.manager.addMov(MoneyMovement("Courses E.Leclerc", BigDecimal("-54.20"), "Alimentation", LocalDate.now()))
-    testViewModel.manager.addMov(MoneyMovement("Salaire Octobre", BigDecimal("2450.00"), "Revenus", LocalDate.now().minusDays(5)))
+    testViewModel.manager.addMov(MoneyMovement("Courses E.Leclerc", BigDecimal("-54.20"), "Alimentation", LocalDate.now(), MovType.sortie))
+    testViewModel.manager.addMov(MoneyMovement("Salaire Octobre", BigDecimal("2450.00"), "Revenus", LocalDate.now().minusDays(5),
+        MovType.entree))
     testViewModel.loadData()
 
     MaterialTheme {

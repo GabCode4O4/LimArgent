@@ -2,6 +2,7 @@ package com.example.limargent.Data.User
 
 import android.content.Context
 import com.example.limargent.Domain.MoneyMovement
+import com.example.limargent.Domain.MovType
 import com.example.limargent.Domain.User
 import dagger.hilt.android.qualifiers.ApplicationContext
 import org.json.JSONArray
@@ -75,7 +76,8 @@ class UserProvider @Inject constructor(
                             val categorie = mouvObj.getString("categorie")
                             val dateString = mouvObj.getString("date")
                             val date = LocalDate.parse(dateString)
-                            mouvements.add(MoneyMovement(titre, montant, categorie, date))
+                            val type = MovType.valueOf(mouvObj.getString("type"))
+                            mouvements.add(MoneyMovement(titre, montant, categorie, date, type))
                         }
                     }
 
@@ -107,6 +109,7 @@ class UserProvider @Inject constructor(
                     mouvObj.put("montant", mouv.montant.toString())
                     mouvObj.put("categorie", mouv.categorie)
                     mouvObj.put("date", mouv.date.toString())
+                    mouvObj.put("type", mouv.type.name)
                     mouvementsArray.put(mouvObj)
                 }
                 jsonObject.put("mouvements", mouvementsArray)

@@ -25,6 +25,7 @@
         </activity>
         <activity android:name=".Presentation.Dashboard.DashboardActivity" />
         <activity android:name=".Presentation.Configuration.ConfigurationActivity" />
+        <activity android:name=".Presentation.Analytics.AnalyticsActivity" />
     </application>
 
 </manifest>
