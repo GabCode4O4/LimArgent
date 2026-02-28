@@ -1,28 +1,41 @@
 package com.example.limargent.Data.Categorie
 
 import com.example.limargent.Domain.Categorie.CategoryRepository
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import javax.inject.Inject
 
-class CategoryRepositoryImpl(
+class CategoryRepositoryImpl @Inject constructor(
     private val categoryProvider: CategoryProvider
 ) : CategoryRepository {
+    
     override fun getCategories(): List<String> {
         return categoryProvider.getCategories()
     }
-    override suspend fun addCat(nom: String) {
-        categoryProvider.addCategory(nom)
+
+    override suspend fun addCategorie(nom: String) {
+        withContext(Dispatchers.IO) {
+            categoryProvider.addCategorie(nom)
+        }
     }
-    override suspend fun delCat(nom: String) {
-        categoryProvider.removeCategory(nom)
+
+    override suspend fun supprimerCat(nom: String) {
+        withContext(Dispatchers.IO) {
+            categoryProvider.supprimer(nom)
+        }
     }
+
     override suspend fun update() {
         // TODO: Implement update logic
     }
 
-    override suspend fun delete() {
-        // TODO: Implement delete logic
+    override suspend fun supprimer() {
+        // TODO: Implement delete logic (maybe clear all categories?)
     }
 
-    override suspend fun save() {
-        // TODO: Implement save logic
+    override suspend fun sauvegarder() {
+        withContext(Dispatchers.IO) {
+            categoryProvider.sauvegarder()
+        }
     }
 }
