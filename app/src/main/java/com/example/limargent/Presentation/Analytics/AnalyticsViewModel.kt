@@ -42,5 +42,16 @@ class AnalyticsViewModel @Inject constructor(
         return chartData
     }
 
+    fun getCategoryData(category: String) : Map<String, Float>{
+        val chartData = mutableMapOf<String, Float>()
+
+        for (m in mouvements) {
+            if (m.categorie != category) continue
+            chartData[m.titre] = (chartData[m.titre] ?: 0f) + m.montant.toFloat()
+        }
+
+        return chartData
+    }
+
     // 67
 }
