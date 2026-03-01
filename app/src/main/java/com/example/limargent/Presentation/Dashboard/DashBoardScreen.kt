@@ -112,7 +112,7 @@ fun BalanceCard(budget: Double) {
 
 @Composable
 fun MouvementItem(mouvement: MoneyMovement) {
-    val isIncome = mouvement.montant >= BigDecimal.ZERO
+    val isIncome = mouvement.type == MovType.entree
     val amountColor = if (isIncome) Color(0xFF4CAF50) else Color(0xFFE53935)
     val iconText = if (isIncome) "+" else "-"
     val iconBackgroundColor = amountColor.copy(alpha = 0.1f)
@@ -166,16 +166,3 @@ fun MouvementItem(mouvement: MoneyMovement) {
 }
 
 
-@Preview(showBackground = true, showSystemUi = true)
-@Composable
-fun DashBoardPreview() {
-    val testViewModel = DashBoardViewModel()
-    testViewModel.manager.addMov(MoneyMovement("Courses E.Leclerc", BigDecimal("-54.20"), "Alimentation", LocalDate.now(), MovType.sortie))
-    testViewModel.manager.addMov(MoneyMovement("Salaire Octobre", BigDecimal("2450.00"), "Revenus", LocalDate.now().minusDays(5),
-        MovType.entree))
-    testViewModel.loadData()
-
-    MaterialTheme {
-        DashBoardScreen(viewModel = testViewModel)
-    }
-}

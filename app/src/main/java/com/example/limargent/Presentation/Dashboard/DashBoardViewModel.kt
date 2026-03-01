@@ -3,26 +3,33 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.example.limargent.Domain.BudgetManager
 import com.example.limargent.Domain.MoneyMovement
+import com.example.limargent.Domain.Mouvements.MovementsRepository
+import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.launch
+import javax.inject.Inject
 
-
-class DashBoardViewModel: ViewModel() {
+@HiltViewModel
+class DashBoardViewModel @Inject constructor(private val movementsRepository: MovementsRepository): ViewModel() {
     val manager = BudgetManager()
 
     var budget by mutableStateOf(0.0)
         private set
-    var mouvements by mutableStateOf<ArrayList<MoneyMovement>>(arrayListOf())
+    var mouvements by mutableStateOf<List<MoneyMovement>>(emptyList())
         private set
 
     init {
         loadData()
     }
-
     fun loadData(){
-        val total = manager.getBudget()
-        budget = total.toDouble()
-        val categories = manager.getBudgetCategorie()
-        mouvements = manager.getMov()
+        viewModelScope.launch {
+            val fetchedMouvements = movementsRepository.getMouvements()
+            mouvements = fetchedMouvements
+
+            val total = manager.getBudget(fetchedMouvements)
+            budget = total.toDouble()
+        }
     }
 }

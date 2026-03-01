@@ -11,7 +11,9 @@ import java.io.File
 import java.math.BigDecimal
 import java.time.LocalDate
 import javax.inject.Inject
+import javax.inject.Singleton
 
+@Singleton // Ajout de @Singleton pour garantir qu'on a la même instance partout
 class UserProvider @Inject constructor(
     @ApplicationContext private val context: Context
 ) {
@@ -55,8 +57,7 @@ class UserProvider @Inject constructor(
                     val jsonObject = jsonArray.getJSONObject(i)
                     val identifiant = jsonObject.getString("identifiant")
                     val motDePasse = jsonObject.getString("motDePasse")
-                    
-                    // Chargement des catégories
+
                     val categories = mutableListOf<String>()
                     if (jsonObject.has("categories")) {
                         val categoriesArray = jsonObject.getJSONArray("categories")
@@ -65,7 +66,6 @@ class UserProvider @Inject constructor(
                         }
                     }
 
-                    // Chargement des mouvements
                     val mouvements = mutableListOf<MoneyMovement>()
                     if (jsonObject.has("mouvements")) {
                         val mouvementsArray = jsonObject.getJSONArray("mouvements")
@@ -87,6 +87,24 @@ class UserProvider @Inject constructor(
                 e.printStackTrace()
             }
         }
+
+        if (users.isEmpty()) {
+            createDefaultUser()
+        }
+    }
+
+    private fun createDefaultUser() {
+        val defaultCategories = mutableListOf(
+            "Alimentation", "Logement", "Transports", "Santé", "Loisirs", "Épargne", "Salaire", "Autre"
+        )
+        val defaultMovements = mutableListOf(
+            MoneyMovement("Salaire Février", BigDecimal("2500.00"), "Salaire", LocalDate.of(2026, 2, 1), MovType.entree),
+            MoneyMovement("Courses Supermarché", BigDecimal("120.50"), "Alimentation", LocalDate.of(2026, 2, 3), MovType.sortie),
+            MoneyMovement("Loyer Appartement", BigDecimal("800.00"), "Logement", LocalDate.of(2026, 2, 5), MovType.sortie)
+        )
+        val defaultUser = User("default", "password123", defaultMovements, defaultCategories)
+        users.add(defaultUser)
+        saveToFile()
     }
 
     private fun saveToFile() {
@@ -96,12 +114,10 @@ class UserProvider @Inject constructor(
                 val jsonObject = JSONObject()
                 jsonObject.put("identifiant", user.identifiant)
                 jsonObject.put("motDePasse", user.motDePasse)
-                
-                // Sauvegarde des catégories
+
                 val categoriesArray = JSONArray(user.categories)
                 jsonObject.put("categories", categoriesArray)
 
-                // Sauvegarde des mouvements
                 val mouvementsArray = JSONArray()
                 for (mouv in user.mouvements) {
                     val mouvObj = JSONObject()

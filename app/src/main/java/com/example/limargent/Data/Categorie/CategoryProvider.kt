@@ -1,72 +1,40 @@
 package com.example.limargent.Data.Categorie
 
-import android.content.Context
-import dagger.hilt.android.qualifiers.ApplicationContext
-import org.json.JSONArray
-import java.io.File
+import com.example.limargent.Data.SessionManager
+import com.example.limargent.Data.User.UserProvider
 import javax.inject.Inject
 
 class CategoryProvider @Inject constructor(
-    @ApplicationContext private val context: Context
+    private val userProvider: UserProvider,
+    private val sessionManager: SessionManager
 ) {
-    private val fileName = "categories.json"
-    private val categories = mutableListOf<String>()
 
-    init {
-        loadCategories()
-    }
+    private val currentUserId: String get() = sessionManager.currentUserIdentifiant ?: "default"
 
     fun getCategories(): List<String> {
-        return categories.toList()
+        val user = userProvider.getUser(currentUserId)
+        return user?.categories?.toList() ?: emptyList()
     }
 
     fun addCategorie(nom: String) {
-        if (!categories.contains(nom)) {
-            categories.add(nom)
-            sauvegarder()
+        val user = userProvider.getUser(currentUserId)
+        if (user != null && !user.categories.contains(nom)) {
+            user.categories.add(nom)
+            userProvider.saveUser(user)
         }
     }
 
     fun supprimer(nom: String) {
-        if (categories.remove(nom)) {
-            sauvegarder()
+        val user = userProvider.getUser(currentUserId)
+        if (user != null && user.categories.remove(nom)) {
+            userProvider.saveUser(user)
         }
-    }
-
-    private fun loadCategories() {
-        val file = File(context.filesDir, fileName)
-        if (file.exists()) {
-            try {
-                val jsonString = file.readText()
-                val jsonArray = JSONArray(jsonString)
-                categories.clear()
-                for (i in 0 until jsonArray.length()) {
-                    categories.add(jsonArray.getString(i))
-                }
-            } catch (e: Exception) {
-                e.printStackTrace()
-                defautCategories()
-            }
-        } else {
-            defautCategories()
-        }
-    }
-
-    private fun defautCategories() {
-        categories.clear()
-        categories.addAll(listOf(
-            "Alimentation", "Logement", "Transports", "Santé", "Loisirs", "Épargne", "Salaire", "Autre"
-        ))
-        sauvegarder()
     }
 
     fun sauvegarder() {
-        try {
-            val jsonArray = JSONArray(categories)
-            val file = File(context.filesDir, fileName)
-            file.writeText(jsonArray.toString())
-        } catch (e: Exception) {
-            e.printStackTrace()
+        val user = userProvider.getUser(currentUserId)
+        if (user != null) {
+            userProvider.saveUser(user)
         }
     }
 }

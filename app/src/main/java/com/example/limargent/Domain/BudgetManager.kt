@@ -4,18 +4,20 @@ import java.util.ArrayList
 
 
 class BudgetManager{
-    private val mouvements = ArrayList<MoneyMovement>()
-
-    fun getBudget() : BigDecimal{
+    fun getBudget(mouvements: List<MoneyMovement>) : BigDecimal{
         var total = BigDecimal.ZERO
         for (mouv in mouvements){
-            total = total+(mouv.montant)
+            if(mouv.type == MovType.entree){
+                total = total+(mouv.montant)}
+            else{
+                total = total-(mouv.montant)
+            }
 
         }
         return total
     }
 
-    fun getBudgetCategorie():Map<String, BigDecimal>{
+    fun getBudgetCategorie(mouvements: List<MoneyMovement>):Map<String, BigDecimal>{
         val categories = HashMap<String, BigDecimal>()
 
         for (mouv in mouvements) {
@@ -27,11 +29,4 @@ class BudgetManager{
         return categories
     }
 
-    fun addMov(mouv: MoneyMovement){
-        mouvements.add(mouv)
-    }
-
-    fun getMov() : ArrayList<MoneyMovement>{
-        return mouvements
-    }
 }

@@ -22,7 +22,6 @@ fun MainScreen(){
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        // Bouton vers DashBoardActivity
         Button(onClick = {
             val intent = Intent(context, DashboardActivity::class.java)
             context.startActivity(intent)

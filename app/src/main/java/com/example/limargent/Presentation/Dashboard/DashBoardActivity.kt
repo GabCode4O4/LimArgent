@@ -5,7 +5,9 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels // Important pour la survie du ViewModel
 import androidx.compose.material3.MaterialTheme
+import dagger.hilt.android.AndroidEntryPoint
 
+@AndroidEntryPoint
 class DashboardActivity : ComponentActivity() {
 
     private val viewModel: DashBoardViewModel by viewModels()
