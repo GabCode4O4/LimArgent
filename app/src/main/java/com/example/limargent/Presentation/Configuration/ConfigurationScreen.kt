@@ -193,20 +193,18 @@ fun MouvementsSection(viewModel: ConfigurationViewModel) {
 
         Button(
             onClick = {
-                // Vérification basique et ajout
                 val montantDecimal = montant.toBigDecimalOrNull()
                 if (titre.isNotBlank() && montantDecimal != null && selectedCategory.isNotBlank()) {
-                    // On force le montant à être négatif si c'est une sortie, ou on laisse tel quel (selon votre logique métier)
-                    val finalMontant = if (type == MovType.sortie && montantDecimal > BigDecimal.ZERO) montantDecimal.negate() else montantDecimal
+
+                    val finalMontant = montantDecimal
 
                     viewModel.addMouvement(
                         titre = titre,
                         montant = finalMontant,
                         categorie = selectedCategory,
-                        date = LocalDate.now(), // Date du jour
+                        date = LocalDate.now(),
                         type = type
                     )
-                    // Reset du formulaire
                     titre = ""
                     montant = ""
                 }
@@ -220,7 +218,7 @@ fun MouvementsSection(viewModel: ConfigurationViewModel) {
         Divider()
         Spacer(modifier = Modifier.height(8.dp))
 
-        // --- Liste des mouvements ---
+
         LazyColumn {
             items(mouvements) { mouvement ->
                 MouvementConfigItem(
@@ -232,7 +230,6 @@ fun MouvementsSection(viewModel: ConfigurationViewModel) {
     }
 }
 
-// --- Composants UI pour les listes ---
 
 @Composable
 fun CategoryItem(categoryName: String, onDelete: () -> Unit) {

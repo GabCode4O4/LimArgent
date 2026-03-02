@@ -13,7 +13,7 @@ import java.time.LocalDate
 import javax.inject.Inject
 import javax.inject.Singleton
 
-@Singleton // Ajout de @Singleton pour garantir qu'on a la même instance partout
+@Singleton
 class UserProvider @Inject constructor(
     @ApplicationContext private val context: Context
 ) {

@@ -157,12 +157,10 @@ fun MouvementItem(mouvement: MoneyMovement) {
             )
         }
         Text(
-            text = "${if (isIncome) "+" else ""}${mouvement.montant} €",
+            text = "${if (isIncome) "+" else "-"}${mouvement.montant} €",
             fontWeight = FontWeight.Bold,
             fontSize = 16.sp,
             color = amountColor
         )
     }
 }
-
-
