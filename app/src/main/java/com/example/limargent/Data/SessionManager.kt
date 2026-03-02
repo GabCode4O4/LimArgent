@@ -1,22 +1,25 @@
 package com.example.limargent.Data
 
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import javax.inject.Inject
 import javax.inject.Singleton
 
-@Singleton // Doit être un Singleton pour partager la même session partout
+@Singleton
 class SessionManager @Inject constructor() {
-    var currentUserIdentifiant: String? = null
-        private set
+    private val UserId = MutableStateFlow<String?>(null)
+    val UserIdentifiant: StateFlow<String?> =UserId.asStateFlow()
 
     fun login(identifiant: String) {
-        currentUserIdentifiant = identifiant
+        UserId.value = identifiant
     }
 
     fun logout() {
-        currentUserIdentifiant = null
+        UserId.value = null
     }
 
     fun isLoggedIn(): Boolean {
-        return currentUserIdentifiant != null
+        return UserId.value != null
     }
 }

@@ -1,13 +1,11 @@
 package com.example.limargent.Presentation.Configuration
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -16,7 +14,6 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.example.limargent.Domain.MoneyMovement
 import com.example.limargent.Domain.MovType
-import java.math.BigDecimal
 import java.time.LocalDate
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -35,7 +32,6 @@ fun ConfigurationScreen(viewModel: ConfigurationViewModel) {
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
-            // --- Système d'onglets ---
             TabRow(selectedTabIndex = selectedTabIndex) {
                 tabs.forEachIndexed { index, title ->
                     Tab(
@@ -46,7 +42,6 @@ fun ConfigurationScreen(viewModel: ConfigurationViewModel) {
                 }
             }
 
-            // --- Contenu selon l'onglet sélectionné ---
             Box(modifier = Modifier.padding(16.dp)) {
                 when (selectedTabIndex) {
                     0 -> CategoriesSection(viewModel)
@@ -63,7 +58,6 @@ fun CategoriesSection(viewModel: ConfigurationViewModel) {
     var newCategoryName by remember { mutableStateOf("") }
 
     Column(modifier = Modifier.fillMaxSize()) {
-        // Formulaire d'ajout
         Row(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
@@ -85,7 +79,6 @@ fun CategoriesSection(viewModel: ConfigurationViewModel) {
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Liste des catégories
         LazyColumn {
             items(categories) { category ->
                 CategoryItem(
@@ -103,16 +96,13 @@ fun MouvementsSection(viewModel: ConfigurationViewModel) {
     val mouvements = viewModel.mouvement
     val categories = viewModel.categories
 
-    // Variables d'état pour le formulaire
     var titre by remember { mutableStateOf("") }
     var montant by remember { mutableStateOf("") }
     var type by remember { mutableStateOf(MovType.sortie) }
 
-    // Variables pour le menu déroulant des catégories
     var expandedCategoryMenu by remember { mutableStateOf(false) }
     var selectedCategory by remember { mutableStateOf("") }
 
-    // On sélectionne la première catégorie par défaut si disponible
     LaunchedEffect(categories) {
         if (selectedCategory.isEmpty() && categories.isNotEmpty()) {
             selectedCategory = categories[0]
@@ -120,7 +110,6 @@ fun MouvementsSection(viewModel: ConfigurationViewModel) {
     }
 
     Column(modifier = Modifier.fillMaxSize()) {
-        // --- Formulaire d'ajout de mouvement ---
         OutlinedTextField(
             value = titre,
             onValueChange = { titre = it },
@@ -138,8 +127,6 @@ fun MouvementsSection(viewModel: ConfigurationViewModel) {
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                 modifier = Modifier.weight(1f)
             )
-
-            // Bouton de type (Entrée / Sortie)
             Column(modifier = Modifier.weight(1f)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     RadioButton(
@@ -160,7 +147,7 @@ fun MouvementsSection(viewModel: ConfigurationViewModel) {
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        // Menu déroulant pour la catégorie
+
         ExposedDropdownMenuBox(
             expanded = expandedCategoryMenu,
             onExpandedChange = { expandedCategoryMenu = !expandedCategoryMenu }
@@ -171,7 +158,9 @@ fun MouvementsSection(viewModel: ConfigurationViewModel) {
                 readOnly = true,
                 label = { Text("Catégorie") },
                 trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedCategoryMenu) },
-                modifier = Modifier.menuAnchor().fillMaxWidth()
+                modifier = Modifier
+                    .menuAnchor()
+                    .fillMaxWidth()
             )
             ExposedDropdownMenu(
                 expanded = expandedCategoryMenu,
@@ -196,11 +185,9 @@ fun MouvementsSection(viewModel: ConfigurationViewModel) {
                 val montantDecimal = montant.toBigDecimalOrNull()
                 if (titre.isNotBlank() && montantDecimal != null && selectedCategory.isNotBlank()) {
 
-                    val finalMontant = montantDecimal
-
                     viewModel.addMouvement(
                         titre = titre,
-                        montant = finalMontant,
+                        montant = montantDecimal,
                         categorie = selectedCategory,
                         date = LocalDate.now(),
                         type = type
@@ -215,7 +202,7 @@ fun MouvementsSection(viewModel: ConfigurationViewModel) {
         }
 
         Spacer(modifier = Modifier.height(24.dp))
-        Divider()
+        HorizontalDivider()
         Spacer(modifier = Modifier.height(8.dp))
 
 

@@ -20,9 +20,9 @@ class LoginViewModel @Inject constructor(
     var isError by mutableStateOf(false)
         private set
 
-    fun attemptLogin(onLoginSuccess: () -> Unit) {
+    fun onLog(onLoginSuccess: () -> Unit) {
         viewModelScope.launch {
-            val success = loginService.authenticate(identifiant, motDePasse)
+            val success = loginService.authentification(identifiant, motDePasse)
             if (success) {
                 isError = false
                 onLoginSuccess()

@@ -3,7 +3,7 @@ package com.example.limargent.Presentation.Dashboard
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.activity.viewModels // Important pour la survie du ViewModel
+import androidx.activity.viewModels
 import androidx.compose.material3.MaterialTheme
 import dagger.hilt.android.AndroidEntryPoint
 

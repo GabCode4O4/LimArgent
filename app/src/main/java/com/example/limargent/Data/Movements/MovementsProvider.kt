@@ -8,11 +8,10 @@ import javax.inject.Inject
 
 class MovementsProvider @Inject constructor(
     private val userProvider: UserProvider,
-    private val sessionManager: SessionManager // Injection du SessionManager
+    private val sessionManager: SessionManager
 ) {
-    // On récupère dynamiquement l'identifiant, ou "default" par sécurité s'il y a un souci
     private val currentUserId: String
-        get() = sessionManager.currentUserIdentifiant ?: "default"
+        get() = sessionManager.UserIdentifiant.value ?: "default"
 
     fun getMouvements(): List<MoneyMovement> {
         val user = userProvider.getUser(currentUserId)

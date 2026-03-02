@@ -10,10 +10,9 @@ class LoginService @Inject constructor(
     private val userRepository: UserRepository,
     private val sessionManager: SessionManager
 ) {
-    suspend fun authenticate(identifiant: String, motDePasse: String): Boolean {
+    suspend fun authentification(identifiant: String, motDePasse: String): Boolean {
         return withContext(Dispatchers.IO) {
             val user = userRepository.getUser(identifiant)
-
             if (user != null && user.motDePasse == motDePasse) {
                 sessionManager.login(identifiant)
                 true

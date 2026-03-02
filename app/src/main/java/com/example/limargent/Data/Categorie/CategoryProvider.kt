@@ -9,7 +9,7 @@ class CategoryProvider @Inject constructor(
     private val sessionManager: SessionManager
 ) {
 
-    private val currentUserId: String get() = sessionManager.currentUserIdentifiant ?: "default"
+    private val currentUserId: String get() = sessionManager.UserIdentifiant.value ?: "default"
 
     fun getCategories(): List<String> {
         val user = userProvider.getUser(currentUserId)

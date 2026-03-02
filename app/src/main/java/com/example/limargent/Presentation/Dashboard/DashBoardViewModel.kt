@@ -25,10 +25,10 @@ class DashBoardViewModel @Inject constructor(private val movementsRepository: Mo
     }
     fun loadData(){
         viewModelScope.launch {
-            val fetchedMouvements = movementsRepository.getMouvements()
-            mouvements = fetchedMouvements
+            val lesMouvements = movementsRepository.getMouvements()
+            mouvements = lesMouvements
 
-            val total = manager.getBudget(fetchedMouvements)
+            val total = manager.getBudget(lesMouvements)
             budget = total.toDouble()
         }
     }

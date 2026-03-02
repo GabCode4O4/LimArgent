@@ -48,7 +48,7 @@ fun LoginScreen(
         Spacer(modifier = Modifier.height(32.dp))
 
         Button(
-            onClick = { viewModel.attemptLogin(onLoginSuccess = onNavigateToMain) },
+            onClick = { viewModel.onLog(onLoginSuccess = onNavigateToMain) },
             modifier = Modifier.fillMaxWidth()
         ) {
             Text("Se connecter")
