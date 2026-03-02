@@ -2,6 +2,8 @@ package com.example.limargent.Presentation.Analytics
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -18,33 +20,63 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.nativeCanvas
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.limargent.Domain.MovType
-import com.example.limargent.Presentation.Dashboard.DashBoardViewModel
 import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.material3.Card
+import androidx.compose.material3.SegmentedButton
+import androidx.compose.material3.SegmentedButtonDefaults
+import androidx.compose.material3.SingleChoiceSegmentedButtonRow
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+
+enum class AnalyticsMode {
+    DEPENSES,
+    RECETTES
+}
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AnalyticsScreen(viewModel: AnalyticsViewModel) {
-    val entrees = viewModel.getCategoriesData(MovType.entree)
-    val sorties = viewModel.getCategoriesData(MovType.sortie)
 
-    var currentData = sorties
+    //var currentGraph by remember { mutableStateOf("categories") } TODO
+
+    var mode by remember { mutableStateOf(AnalyticsMode.DEPENSES) }
+    var selectedCategory by remember { mutableStateOf<String?>(null) }
+
+    // Récupération des données selon le mode et catégorie
+    val data = when {
+        selectedCategory != null -> viewModel.getCategoryData(selectedCategory!!)
+        mode == AnalyticsMode.DEPENSES -> viewModel.getCategoriesData(MovType.sortie)
+        else -> viewModel.getCategoriesData(MovType.entree)
+    }
 
     Scaffold(
         topBar = {
-            TopAppBar(title = { Text("Analytics") })
-        }
+            if (selectedCategory == null) {
+                Column (modifier = Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally){
+                    TopAppBar(title = { Text("Analytics") })
+                    AnalyticsSegmentedButtons(
+                        mode = mode,
+                        onModeChange = { mode = it }
+                    )
+                }
+            }
+        },
+        /*bottomBar = {
+            BottomNavigationBar(
+                currentGraph = currentGraph,
+                onGraphChange = { currentGraph = it }
+            )
+        }*/
     ) { paddingValues ->
 
         Column(
@@ -55,38 +87,89 @@ fun AnalyticsScreen(viewModel: AnalyticsViewModel) {
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
 
+            BoutonRetour(
+                selectedCategory = selectedCategory,
+                onClick = { selectedCategory = null },
+                modifier = Modifier.align(Alignment.Start)
+            )
+
+            selectedCategory?.let { Text(text = it) }
+
+            Spacer(modifier = Modifier.height(32.dp))
+
             // PieChart en haut
-            PieChart(data = sorties)
+            PieChart(data = data)
+
 
             Spacer(modifier = Modifier.height(32.dp))
 
             // Liste des catégories avec LazyColumn
 
-            val colors=getChartColors(currentData.size)
+            val colors=getChartColors(data.size)
 
             LazyColumn(
                 modifier = Modifier.fillMaxWidth()
             ) {
-                items(currentData.size) { index ->
+                items(data.size) { index ->
+                    val entry = data.entries.elementAt(index)
 
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.padding(vertical = 4.dp)
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .size(12.dp)
-                                .background(
-                                    color = colors[index],
-                                    shape = CircleShape
-                                )
-                        )
-                        Spacer(modifier=Modifier.width(8.dp))
-                        Text(text = currentData.entries.elementAt(index).key)
-                    }
+                    CategoryItemCard(
+                        name = entry.key,
+                        color = colors[index % colors.size],
+                        onClick = {
+                            // action au clic
+                            selectedCategory = entry.key
+                        }
+                    )
                 }
             }
+
+
+
         }
+    }
+}
+
+@Composable
+fun AnalyticsSegmentedButtons(
+    mode: AnalyticsMode,
+    onModeChange: (AnalyticsMode) -> Unit
+) {
+
+    SingleChoiceSegmentedButtonRow {
+        SegmentedButton(
+            selected = mode == AnalyticsMode.DEPENSES,
+            onClick = { onModeChange(AnalyticsMode.DEPENSES) },
+            shape = SegmentedButtonDefaults.itemShape(index = 0, count = 2)
+        ) {
+            Text("Dépenses")
+        }
+
+        SegmentedButton(
+            selected = mode == AnalyticsMode.RECETTES,
+            onClick = { onModeChange(AnalyticsMode.RECETTES) },
+            shape = SegmentedButtonDefaults.itemShape(index = 1, count = 2)
+        ) {
+            Text("Recettes")
+        }
+    }
+}
+
+
+@Composable
+fun BoutonRetour(
+    selectedCategory: String?,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    if (selectedCategory != null) {
+        Spacer(modifier = Modifier.height(16.dp))
+        Text(
+            "Retour",
+            modifier = modifier.clickable { onClick() },
+            color = MaterialTheme.colorScheme.primary
+        )
+        Spacer(modifier = Modifier.height(16.dp))
     }
 }
 
@@ -114,6 +197,33 @@ fun PieChart(data: Map<String, Float>) {
             )
 
             startAngle += sweepAngle
+        }
+    }
+}
+
+@Composable
+fun CategoryItemCard(
+    name: String,
+    color: Color,
+    onClick: () -> Unit
+) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp)
+            .clickable { onClick() }
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.padding(12.dp)
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(12.dp)
+                    .background(color, CircleShape)
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(name)
         }
     }
 }
