@@ -31,4 +31,10 @@ class LoginViewModel @Inject constructor(
             }
         }
     }
+
+    fun clearFields() {
+        identifiant = ""
+        motDePasse = ""
+        isError = false
+    }
 }

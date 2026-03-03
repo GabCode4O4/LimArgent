@@ -1,58 +1,48 @@
 package com.example.limargent.Presentation.Configuration
 
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.limargent.Domain.Categorie.CategoryRepository
-import com.example.limargent.Domain.MoneyMovement
-import com.example.limargent.Domain.Mouvements.MovementsRepository
-import com.example.limargent.Domain.MovType
+import com.example.limargent.Domain.Preference.PreferenceRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import java.math.BigDecimal
-import java.time.LocalDate
 import javax.inject.Inject
 
 @HiltViewModel
 class ConfigurationViewModel @Inject constructor(
     private val categoryRepository: CategoryRepository,
-    private val movementsRepository: MovementsRepository
+    private val preferenceRepository: PreferenceRepository
 ) : ViewModel() {
 
-    var categories by mutableStateOf<List<String>>(emptyList())
-        private set
-    var mouvement by mutableStateOf<List<MoneyMovement>>(emptyList())
+    private val _categories = MutableStateFlow<List<String>>(emptyList())
+    val categories: StateFlow<List<String>> = _categories.asStateFlow()
 
-    init {
+    private val _theme = MutableStateFlow("system")
+    val theme: StateFlow<String> = _theme.asStateFlow()
+
+    fun loadUserPreferences() {
         loadCategories()
-        loadMouvements()
-
-    }
-    private fun loadMouvements(){
-        mouvement = movementsRepository.getMouvements()
-
+        loadPreference()
     }
 
-    fun addMouvement(titre: String, montant: BigDecimal, categorie: String, date: LocalDate, type: MovType) {
+    fun resetToDefault() {
+        _categories.value = emptyList()
+        _theme.value = "system"
+    }
+
+    private fun loadPreference() {
         viewModelScope.launch {
-            val mouvement = MoneyMovement(titre, montant, categorie, date, type)
-            movementsRepository.addMouvement(mouvement)
-            loadMouvements()
-        }
-
-    }
-
-    fun delMouvement(mouvement: MoneyMovement){
-        viewModelScope.launch {
-            movementsRepository.deleteMouvement(mouvement)
-            loadMouvements()
+            _theme.value = preferenceRepository.getTheme()
         }
     }
 
     private fun loadCategories() {
-        categories = categoryRepository.getCategories()
+        viewModelScope.launch {
+            _categories.value = categoryRepository.getCategories()
+        }
     }
 
     fun addCategorie(name: String) {
@@ -68,6 +58,13 @@ class ConfigurationViewModel @Inject constructor(
         viewModelScope.launch {
             categoryRepository.supprimerCat(name)
             loadCategories()
+        }
+    }
+
+    fun setThemePreference(theme: String) {
+        viewModelScope.launch {
+            preferenceRepository.setTheme(theme)
+            loadPreference()
         }
     }
 }

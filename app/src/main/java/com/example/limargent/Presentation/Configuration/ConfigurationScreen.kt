@@ -3,24 +3,19 @@ package com.example.limargent.Presentation.Configuration
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import com.example.limargent.Domain.MoneyMovement
-import com.example.limargent.Domain.MovType
-import java.time.LocalDate
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ConfigurationScreen(viewModel: ConfigurationViewModel) {
     var selectedTabIndex by remember { mutableStateOf(0) }
-    val tabs = listOf("Catégories", "Mouvements")
+    val tabs = listOf("Catégories", "Préférences")
 
     Scaffold(
         topBar = {
@@ -45,7 +40,7 @@ fun ConfigurationScreen(viewModel: ConfigurationViewModel) {
             Box(modifier = Modifier.padding(16.dp)) {
                 when (selectedTabIndex) {
                     0 -> CategoriesSection(viewModel)
-                    1 -> MouvementsSection(viewModel)
+                    1 -> PreferencesSection(viewModel)
                 }
             }
         }
@@ -53,8 +48,28 @@ fun ConfigurationScreen(viewModel: ConfigurationViewModel) {
 }
 
 @Composable
+fun PreferencesSection(viewModel: ConfigurationViewModel) {
+    val theme by viewModel.theme.collectAsState()
+    val isDarkTheme = theme == "dark"
+
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Text("Thème sombre")
+        Switch(
+            checked = isDarkTheme,
+            onCheckedChange = {
+                viewModel.setThemePreference(if (it) "dark" else "light")
+            }
+        )
+    }
+}
+
+@Composable
 fun CategoriesSection(viewModel: ConfigurationViewModel) {
-    val categories = viewModel.categories
+    val categories by viewModel.categories.collectAsState()
     var newCategoryName by remember { mutableStateOf("") }
 
     Column(modifier = Modifier.fillMaxSize()) {
@@ -90,134 +105,6 @@ fun CategoriesSection(viewModel: ConfigurationViewModel) {
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun MouvementsSection(viewModel: ConfigurationViewModel) {
-    val mouvements = viewModel.mouvement
-    val categories = viewModel.categories
-
-    var titre by remember { mutableStateOf("") }
-    var montant by remember { mutableStateOf("") }
-    var type by remember { mutableStateOf(MovType.sortie) }
-
-    var expandedCategoryMenu by remember { mutableStateOf(false) }
-    var selectedCategory by remember { mutableStateOf("") }
-
-    LaunchedEffect(categories) {
-        if (selectedCategory.isEmpty() && categories.isNotEmpty()) {
-            selectedCategory = categories[0]
-        }
-    }
-
-    Column(modifier = Modifier.fillMaxSize()) {
-        OutlinedTextField(
-            value = titre,
-            onValueChange = { titre = it },
-            label = { Text("Titre du mouvement") },
-            modifier = Modifier.fillMaxWidth()
-        )
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            OutlinedTextField(
-                value = montant,
-                onValueChange = { montant = it },
-                label = { Text("Montant") },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                modifier = Modifier.weight(1f)
-            )
-            Column(modifier = Modifier.weight(1f)) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    RadioButton(
-                        selected = type == MovType.entree,
-                        onClick = { type = MovType.entree }
-                    )
-                    Text("Entrée")
-                }
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    RadioButton(
-                        selected = type == MovType.sortie,
-                        onClick = { type = MovType.sortie }
-                    )
-                    Text("Sortie")
-                }
-            }
-        }
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-
-        ExposedDropdownMenuBox(
-            expanded = expandedCategoryMenu,
-            onExpandedChange = { expandedCategoryMenu = !expandedCategoryMenu }
-        ) {
-            OutlinedTextField(
-                value = selectedCategory,
-                onValueChange = {},
-                readOnly = true,
-                label = { Text("Catégorie") },
-                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedCategoryMenu) },
-                modifier = Modifier
-                    .menuAnchor()
-                    .fillMaxWidth()
-            )
-            ExposedDropdownMenu(
-                expanded = expandedCategoryMenu,
-                onDismissRequest = { expandedCategoryMenu = false }
-            ) {
-                categories.forEach { selectionOption ->
-                    DropdownMenuItem(
-                        text = { Text(selectionOption) },
-                        onClick = {
-                            selectedCategory = selectionOption
-                            expandedCategoryMenu = false
-                        }
-                    )
-                }
-            }
-        }
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        Button(
-            onClick = {
-                val montantDecimal = montant.toBigDecimalOrNull()
-                if (titre.isNotBlank() && montantDecimal != null && selectedCategory.isNotBlank()) {
-
-                    viewModel.addMouvement(
-                        titre = titre,
-                        montant = montantDecimal,
-                        categorie = selectedCategory,
-                        date = LocalDate.now(),
-                        type = type
-                    )
-                    titre = ""
-                    montant = ""
-                }
-            },
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Text("Ajouter le mouvement")
-        }
-
-        Spacer(modifier = Modifier.height(24.dp))
-        HorizontalDivider()
-        Spacer(modifier = Modifier.height(8.dp))
-
-
-        LazyColumn {
-            items(mouvements) { mouvement ->
-                MouvementConfigItem(
-                    mouvement = mouvement,
-                    onDelete = { viewModel.delMouvement(mouvement) }
-                )
-            }
-        }
-    }
-}
-
-
 @Composable
 fun CategoryItem(categoryName: String, onDelete: () -> Unit) {
     Card(
@@ -236,36 +123,6 @@ fun CategoryItem(categoryName: String, onDelete: () -> Unit) {
             Text(text = categoryName, style = MaterialTheme.typography.bodyLarge)
             IconButton(onClick = onDelete) {
                 Icon(Icons.Default.Delete, contentDescription = "Supprimer la catégorie")
-            }
-        }
-    }
-}
-
-@Composable
-fun MouvementConfigItem(mouvement: MoneyMovement, onDelete: () -> Unit) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 4.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-    ) {
-        Row(
-            modifier = Modifier
-                .padding(16.dp)
-                .fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Column(modifier = Modifier.weight(1f)) {
-                Text(text = mouvement.titre, style = MaterialTheme.typography.bodyLarge)
-                Text(
-                    text = "${mouvement.montant} € - ${mouvement.categorie}",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-            IconButton(onClick = onDelete) {
-                Icon(Icons.Default.Delete, contentDescription = "Supprimer le mouvement", tint = MaterialTheme.colorScheme.error)
             }
         }
     }

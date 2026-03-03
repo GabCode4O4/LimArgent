@@ -2,9 +2,12 @@ package com.example.limargent.di
 
 import com.example.limargent.Application.CategoryService
 import com.example.limargent.Application.MovementsService
+import com.example.limargent.Application.PreferenceService
 import com.example.limargent.Application.UserService
+import com.example.limargent.Data.Preference.PreferenceProvider
 import com.example.limargent.Domain.Categorie.CategoryRepository
 import com.example.limargent.Domain.Mouvements.MovementsRepository
+import com.example.limargent.Domain.Preference.PreferenceRepository
 import com.example.limargent.Domain.Users.UserRepository
 import dagger.Binds
 import dagger.Module
@@ -33,4 +36,10 @@ abstract class RepositoryModule {
     abstract fun bindUserRepository(
         impl: UserService
     ): UserRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindPreferenceRepository(
+        impl: PreferenceProvider
+    ): PreferenceRepository
 }

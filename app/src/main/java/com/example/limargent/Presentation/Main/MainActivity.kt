@@ -12,6 +12,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import com.example.limargent.Data.SessionManager
+import com.example.limargent.Presentation.Configuration.ConfigurationViewModel
 import com.example.limargent.Presentation.Login.LoginScreen
 import com.example.limargent.Presentation.Login.LoginViewModel
 import com.example.limargent.Presentation.Register.RegisterScreen
@@ -34,23 +35,26 @@ class MainActivity : ComponentActivity() {
 
         val loginViewModel: LoginViewModel by viewModels()
         val registerViewModel: RegisterViewModel by viewModels()
+        val configurationViewModel: ConfigurationViewModel by viewModels()
 
         setContent {
-            LimArgentTheme {
-                val userAct by sessionManager.UserIdentifiant.collectAsState()
+            val theme by configurationViewModel.theme.collectAsState()
+            val userAct by sessionManager.UserIdentifiant.collectAsState()
+            var screenAct by remember { mutableStateOf(if (userAct != null) ScreenState.HOME else ScreenState.LOGIN) }
 
-                var screenAct by remember { mutableStateOf(if (userAct != null) ScreenState.HOME else ScreenState.LOGIN) }
-
-                LaunchedEffect(userAct) {
-                    if (userAct != null) {
-                        screenAct = ScreenState.HOME
-                    } else {
-                        if (screenAct == ScreenState.HOME) {
-                            screenAct = ScreenState.LOGIN
-                        }
+            LaunchedEffect(userAct) {
+                if (userAct != null) {
+                    configurationViewModel.loadUserPreferences()
+                    screenAct = ScreenState.HOME
+                } else {
+                    configurationViewModel.resetToDefault()
+                    if (screenAct == ScreenState.HOME) {
+                        screenAct = ScreenState.LOGIN
                     }
                 }
+            }
 
+            LimArgentTheme(theme = theme) {
                 when (screenAct) {
                     ScreenState.LOGIN -> {
                         LoginScreen(viewModel = loginViewModel, onNavigateToMain = {screenAct = ScreenState.HOME}, onNavigateToRegister = { screenAct = ScreenState.REGISTER })
@@ -59,7 +63,10 @@ class MainActivity : ComponentActivity() {
                         RegisterScreen(viewModel = registerViewModel, onNavigateToMain = {screenAct = ScreenState.HOME }, onNavigateToLogin = { screenAct = ScreenState.LOGIN })
                     }
                     ScreenState.HOME -> {
-                        MainAppScreen(onLogout = { sessionManager.logout() })
+                        MainAppScreen(onLogout = {
+                            sessionManager.logout()
+                            loginViewModel.clearFields()
+                        })
                     }
                 }
             }

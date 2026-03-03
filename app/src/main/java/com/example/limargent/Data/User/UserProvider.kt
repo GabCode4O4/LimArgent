@@ -28,6 +28,10 @@ class UserProvider @Inject constructor(
         return users.toList()
     }
 
+    fun getUser(): User? {
+        return users.firstOrNull()
+    }
+
     fun getUser(identifiant: String): User? {
         return users.find { it.identifiant == identifiant }
     }
@@ -39,6 +43,14 @@ class UserProvider @Inject constructor(
         }
         users.add(user)
         saveToFile()
+    }
+
+    fun updateUser(user: User) {
+        val index = users.indexOfFirst { it.identifiant == user.identifiant }
+        if (index != -1) {
+            users[index] = user
+            saveToFile()
+        }
     }
 
     fun deleteUser(identifiant: String) {
@@ -66,6 +78,14 @@ class UserProvider @Inject constructor(
                         }
                     }
 
+                    val preferences = mutableListOf<String>()
+                    if (jsonObject.has("preference")) {
+                        val preferencesArray = jsonObject.getJSONArray("preference")
+                        for (j in 0 until preferencesArray.length()) {
+                            preferences.add(preferencesArray.getString(j))
+                        }
+                    }
+
                     val mouvements = mutableListOf<MoneyMovement>()
                     if (jsonObject.has("mouvements")) {
                         val mouvementsArray = jsonObject.getJSONArray("mouvements")
@@ -81,7 +101,7 @@ class UserProvider @Inject constructor(
                         }
                     }
 
-                    users.add(User(identifiant, motDePasse, mouvements, categories))
+                    users.add(User(identifiant, motDePasse, mouvements, categories, preferences))
                 }
             } catch (e: Exception) {
                 e.printStackTrace()
@@ -102,7 +122,7 @@ class UserProvider @Inject constructor(
             MoneyMovement("Courses Supermarché", BigDecimal("120.50"), "Alimentation", LocalDate.of(2026, 2, 3), MovType.sortie),
             MoneyMovement("Loyer Appartement", BigDecimal("800.00"), "Logement", LocalDate.of(2026, 2, 5), MovType.sortie)
         )
-        val defaultUser = User("default", "password123", defaultMovements, defaultCategories)
+        val defaultUser = User("default", "password123", defaultMovements, defaultCategories, mutableListOf("theme:light"))
         users.add(defaultUser)
         saveToFile()
     }
@@ -117,6 +137,9 @@ class UserProvider @Inject constructor(
 
                 val categoriesArray = JSONArray(user.categories)
                 jsonObject.put("categories", categoriesArray)
+
+                val preferencesArray = JSONArray(user.preference)
+                jsonObject.put("preference", preferencesArray)
 
                 val mouvementsArray = JSONArray()
                 for (mouv in user.mouvements) {
