@@ -21,7 +21,6 @@ import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.limargent.Domain.MovType
-import com.example.limargent.Presentation.Dashboard.DashBoardViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

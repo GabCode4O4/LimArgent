@@ -2,8 +2,8 @@ package com.example.limargent.Presentation.Main
 
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Analytics
-import androidx.compose.material.icons.filled.Dashboard
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
@@ -15,14 +15,12 @@ import com.example.limargent.Presentation.Analytics.AnalyticsScreen
 import com.example.limargent.Presentation.Analytics.AnalyticsViewModel
 import com.example.limargent.Presentation.Configuration.ConfigurationScreen
 import com.example.limargent.Presentation.Configuration.ConfigurationViewModel
-import com.example.limargent.Presentation.Dashboard.DashBoardScreen
-import com.example.limargent.Presentation.Dashboard.DashBoardViewModel
+import com.example.limargent.Presentation.Home.AddMouvement
 import com.example.limargent.Presentation.Home.HomeScreen
 import com.example.limargent.Presentation.Home.HomeViewModel
 
 enum class AppScreen(val title: String, val icon: ImageVector) {
     HOME("Accueil", Icons.Default.Home),
-    DASHBOARD("Tableau de bord", Icons.Default.Dashboard),
     ANALYTICS("Analytique", Icons.Default.Analytics),
     CONFIGURATION("Config", Icons.Default.Settings)
 }
@@ -33,11 +31,14 @@ fun MainAppScreen(
     onLogout: () -> Unit
 ) {
     var screenAct by remember { mutableStateOf(AppScreen.HOME) }
+    var showAddMouv by remember { mutableStateOf(false) }
+
+    val homeViewModel: HomeViewModel = hiltViewModel()
 
     Scaffold(
         bottomBar = {
             NavigationBar {
-                AppScreen.values().forEach { screen ->
+                AppScreen.entries.forEach { screen ->
                     NavigationBarItem(
                         icon = { Icon(screen.icon, contentDescription = screen.title) },
                         label = { Text(screen.title) },
@@ -46,20 +47,24 @@ fun MainAppScreen(
                     )
                 }
             }
+        },
+        floatingActionButton = {
+            if (screenAct == AppScreen.HOME) {
+                FloatingActionButton(
+                    onClick = { showAddMouv = true }
+                ) {
+                    Icon(Icons.Filled.Add, contentDescription = "Ajouter un mouvement")
+                }
+            }
         }
     ) { innerPadding ->
         Surface(modifier = Modifier.padding(innerPadding)) {
             when (screenAct) {
                 AppScreen.HOME -> {
-                    val viewModel = hiltViewModel<HomeViewModel>()
                     HomeScreen(
-                        viewModel = viewModel,
+                        viewModel = homeViewModel,
                         onLogout = onLogout
                     )
-                }
-                AppScreen.DASHBOARD -> {
-                    val viewModel = hiltViewModel<DashBoardViewModel>()
-                    DashBoardScreen(viewModel = viewModel)
                 }
                 AppScreen.ANALYTICS -> {
                     val viewModel = hiltViewModel<AnalyticsViewModel>()
@@ -70,6 +75,16 @@ fun MainAppScreen(
                     ConfigurationScreen(viewModel = viewModel)
                 }
             }
+        }
+
+        if (showAddMouv) {
+            AddMouvement(
+                categories = homeViewModel.categories,
+                onDismiss = { showAddMouv = false },
+                onConfirm = { titre, montant, categorie, type -> homeViewModel.addMouvement(titre, montant, categorie, java.time.LocalDate.now(), type)
+                    showAddMouv = false
+                }
+            )
         }
     }
 }
