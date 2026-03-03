@@ -162,7 +162,7 @@ fun HomeScreen(viewModel: HomeViewModel, onLogout: () -> Unit) {
                             content = {
                                 MouvementItem(mouvement = mouvement)
                             },
-                            enableDismissFromStartToEnd = false // Désactiver le swipe vers la droite
+                            enableDismissFromStartToEnd = false
                         )
                     }
                 }
