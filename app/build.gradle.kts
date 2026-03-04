@@ -4,6 +4,7 @@ plugins {
     alias(libs.plugins.kotlin.compose)
     kotlin("kapt") // Obligatoire pour la génération de code Hilt
     id("com.google.dagger.hilt.android")
+    id("com.google.gms.google-services")
 }
 
 android {
@@ -61,6 +62,11 @@ dependencies {
     implementation("com.google.dagger:hilt-android:2.51.1")
     kapt("com.google.dagger:hilt-android-compiler:2.51.1")
     implementation("androidx.hilt:hilt-navigation-compose:1.2.0")
+    implementation(platform("com.google.firebase:firebase-bom:34.9.0"))
+    implementation("com.google.firebase:firebase-analytics")
+    implementation("com.google.firebase:firebase-auth")
+    implementation("com.google.firebase:firebase-firestore")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.8.0")
 }
 
 kapt {

@@ -10,8 +10,10 @@ class CategoryService @Inject constructor(
     private val categoryProvider: CategoryProvider
 ) : CategoryRepository {
 
-    override fun getCategories(): List<String> {
-        return categoryProvider.getCategories()
+    override suspend fun getCategories(): List<String> {
+        return withContext(Dispatchers.IO) {
+            categoryProvider.getCategories()
+        }
     }
 
     override suspend fun addCategorie(nom: String) {
@@ -20,23 +22,9 @@ class CategoryService @Inject constructor(
         }
     }
 
-    override suspend fun supprimerCat(nom: String) {
+    override suspend fun supprimer(nom: String) {
         withContext(Dispatchers.IO) {
             categoryProvider.supprimer(nom)
-        }
-    }
-
-    override suspend fun update() {
-        // TODO: Implement update logic
-    }
-
-    override suspend fun supprimer() {
-        // TODO: Implement delete logic
-    }
-
-    override suspend fun sauvegarder() {
-        withContext(Dispatchers.IO) {
-            categoryProvider.sauvegarder()
         }
     }
 }

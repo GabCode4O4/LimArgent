@@ -11,8 +11,10 @@ class MovementsService @Inject constructor(
     private val movementsProvider: MovementsProvider
 ) : MovementsRepository {
 
-    override fun getMouvements(): List<MoneyMovement> {
-        return movementsProvider.getMouvements()
+    override suspend fun getMouvements(): List<MoneyMovement> {
+        return withContext(Dispatchers.IO) {
+            movementsProvider.getMouvements()
+        }
     }
 
     override suspend fun addMouvement(mouvement: MoneyMovement) {

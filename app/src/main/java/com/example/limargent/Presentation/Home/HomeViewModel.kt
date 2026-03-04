@@ -45,9 +45,9 @@ class HomeViewModel @Inject constructor(
 
     private fun currentUser() {
         viewModelScope.launch {
-            sessionManager.UserIdentifiant.collect { currentUser ->
-                if (currentUser != null) {
-                    _userName.value = currentUser
+            sessionManager.currentUser.collect { firebaseUser ->
+                if (firebaseUser != null) {
+                    _userName.value = firebaseUser.email?.split("@")?.get(0) ?: firebaseUser.uid
                 } else {
                     _userName.value = "Invité"
                 }

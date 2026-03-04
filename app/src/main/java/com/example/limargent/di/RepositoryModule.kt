@@ -1,9 +1,9 @@
 package com.example.limargent.di
 
-import com.example.limargent.Application.CategoryService
-import com.example.limargent.Application.MovementsService
-import com.example.limargent.Application.UserService
+import com.example.limargent.Data.Categorie.CategoryProvider
+import com.example.limargent.Data.Movements.MovementsProvider
 import com.example.limargent.Data.Preference.PreferenceProvider
+import com.example.limargent.Data.User.UserProvider
 import com.example.limargent.Domain.Categorie.CategoryRepository
 import com.example.limargent.Domain.Mouvements.MovementsRepository
 import com.example.limargent.Domain.Preference.PreferenceRepository
@@ -21,19 +21,19 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindCategoryRepository(
-        impl: CategoryService
+        impl: CategoryProvider
     ): CategoryRepository
-    
+
     @Binds
     @Singleton
     abstract fun bindMovementRepository(
-        impl: MovementsService
+        impl: MovementsProvider
     ): MovementsRepository
 
     @Binds
     @Singleton
     abstract fun bindUserRepository(
-        impl: UserService
+        impl: UserProvider
     ): UserRepository
 
     @Binds

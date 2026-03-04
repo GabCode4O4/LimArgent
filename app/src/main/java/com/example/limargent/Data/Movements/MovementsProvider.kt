@@ -1,36 +1,22 @@
 package com.example.limargent.Data.Movements
 
-import android.content.Context
-import com.example.limargent.Data.SessionManager
 import com.example.limargent.Data.User.UserProvider
 import com.example.limargent.Domain.MoneyMovement
+import com.example.limargent.Domain.Mouvements.MovementsRepository
 import javax.inject.Inject
 
 class MovementsProvider @Inject constructor(
-    private val userProvider: UserProvider,
-    private val sessionManager: SessionManager
-) {
-    private val currentUserId: String
-        get() = sessionManager.UserIdentifiant.value ?: "default"
-
-    fun getMouvements(): List<MoneyMovement> {
-        val user = userProvider.getUser(currentUserId)
-        return user?.mouvements?.toList() ?: emptyList()
+    private val userProvider: UserProvider
+) : MovementsRepository {
+    override suspend fun getMouvements(): List<MoneyMovement> {
+        return userProvider.getMouvements()
     }
 
-    fun addMouvement(mouvement: MoneyMovement) {
-        val user = userProvider.getUser(currentUserId)
-        if (user != null) {
-            user.mouvements.add(mouvement)
-            userProvider.saveUser(user)
-        }
+    override suspend fun addMouvement(mouvement: MoneyMovement) {
+        userProvider.addMovement(mouvement)
     }
 
-    fun deleteMouvement(mouvement: MoneyMovement) {
-        val user = userProvider.getUser(currentUserId)
-        if (user != null) {
-            user.mouvements.remove(mouvement)
-            userProvider.saveUser(user)
-        }
+    override suspend fun deleteMouvement(mouvement: MoneyMovement) {
+        mouvement.id?.let { userProvider.deleteMovement(it) }
     }
 }

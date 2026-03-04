@@ -1,24 +1,19 @@
 package com.example.limargent.Application
 
-import com.example.limargent.Data.SessionManager
-import com.example.limargent.Domain.Users.UserRepository
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
+import com.google.firebase.auth.FirebaseAuth
+import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
 
 class LoginService @Inject constructor(
-    private val userRepository: UserRepository,
-    private val sessionManager: SessionManager
+    private val firebaseAuth: FirebaseAuth
 ) {
     suspend fun authentification(identifiant: String, motDePasse: String): Boolean {
-        return withContext(Dispatchers.IO) {
-            val user = userRepository.getUser(identifiant)
-            if (user != null && user.motDePasse == motDePasse) {
-                sessionManager.login(identifiant)
-                true
-            } else {
-                false
-            }
+        return try {
+            val email = "$identifiant@limargent.app"
+            firebaseAuth.signInWithEmailAndPassword(email, motDePasse).await()
+            true
+        } catch (e: Exception) {
+            false
         }
     }
 }

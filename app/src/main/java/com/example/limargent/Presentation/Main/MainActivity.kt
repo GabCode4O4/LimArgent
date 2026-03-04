@@ -42,11 +42,13 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             val theme by configurationViewModel.theme.collectAsState()
-            val userAct by sessionManager.UserIdentifiant.collectAsState()
-            var screenAct by remember { mutableStateOf(if (userAct != null) ScreenState.HOME else ScreenState.LOGIN) }
+            val currentUser by sessionManager.currentUser.collectAsState()
+            var screenAct by remember(currentUser) {
+                mutableStateOf(if (currentUser != null) ScreenState.HOME else ScreenState.LOGIN)
+            }
 
-            LaunchedEffect(userAct) {
-                if (userAct != null) {
+            LaunchedEffect(currentUser) {
+                if (currentUser != null) {
                     configurationViewModel.loadUserPreferences()
                     screenAct = ScreenState.HOME
                 } else {

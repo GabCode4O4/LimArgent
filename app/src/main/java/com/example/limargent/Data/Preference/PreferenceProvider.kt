@@ -10,17 +10,18 @@ class PreferenceProvider @Inject constructor(
     private val userProvider: UserProvider
 ) : PreferenceRepository {
 
-    override fun getTheme(): String {
-        val user = userProvider.getUser()
+    override suspend fun getTheme(): String {
+        val user = userProvider.getCurrentUser()
         return user?.preference?.firstOrNull { it.startsWith("theme:") }?.substringAfter("theme:") ?: "system"
     }
 
-    override fun setTheme(theme: String) {
-        val user = userProvider.getUser()
+    override suspend fun setTheme(theme: String) {
+        val user = userProvider.getCurrentUser()
         user?.let {
-            it.preference.removeAll { pref -> pref.startsWith("theme:") }
-            it.preference.add("theme:$theme")
-            userProvider.updateUser(it)
+            val newPreferences = it.preference.filter { pref -> !pref.startsWith("theme:") }.toMutableList()
+            newPreferences.add("theme:$theme")
+            val updatedUser = it.copy(preference = newPreferences)
+            userProvider.updateUser(updatedUser)
         }
     }
 }

@@ -56,7 +56,7 @@ class ConfigurationViewModel @Inject constructor(
 
     fun delCategorie(name: String) {
         viewModelScope.launch {
-            categoryRepository.supprimerCat(name)
+            categoryRepository.supprimer(name)
             loadCategories()
         }
     }

@@ -11,27 +11,15 @@ class UserService @Inject constructor(
     private val userProvider: UserProvider
 ) : UserRepository {
 
-    override suspend fun getUser(identifiant: String): User? {
+    override suspend fun getCurrentUser(): User? {
         return withContext(Dispatchers.IO) {
-            userProvider.getUser(identifiant)
+            userProvider.getCurrentUser()
         }
     }
 
-    override suspend fun saveUser(user: User) {
+    override suspend fun updateUser(user: User) {
         withContext(Dispatchers.IO) {
-            userProvider.saveUser(user)
-        }
-    }
-
-    override suspend fun deleteUser(identifiant: String) {
-        withContext(Dispatchers.IO) {
-            userProvider.deleteUser(identifiant)
-        }
-    }
-
-    override suspend fun getAllUsers(): List<User> {
-        return withContext(Dispatchers.IO) {
-            userProvider.getUsers()
+            userProvider.updateUser(user)
         }
     }
 }

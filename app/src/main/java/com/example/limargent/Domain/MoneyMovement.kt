@@ -13,5 +13,6 @@ data class MoneyMovement(
     val montant: BigDecimal, // On utilise BigDecimal car la précision est importante dès qu'on touche au financier
     val categorie: String,
     val date: LocalDate, // LocalDate permet de faire du tri et du parsing plus facilement et garantit le format
-    val type: MovType
+    val type: MovType,
+    val id: String? = null
 )

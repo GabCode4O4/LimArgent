@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "162568010222",
+    "project_id": "limargent-90141",
+    "storage_bucket": "limargent-90141.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:162568010222:android:72957dbff20aa26489f6ff",
+        "android_client_info": {
+          "package_name": "com.example.limargent"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyApOlzxmyzcTiF7wQOA1J8GjCvWC1eeLM0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
