@@ -2,6 +2,7 @@ package com.example.limargent.Data.Categorie
 
 import com.example.limargent.Data.User.UserProvider
 import com.example.limargent.Domain.Categorie.CategoryRepository
+import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
 
 class CategoryProvider @Inject constructor(
@@ -19,5 +20,8 @@ class CategoryProvider @Inject constructor(
 
     override suspend fun supprimer(nom: String) {
         userProvider.removeCategoryFromCurrentUser(nom)
+    }
+    override fun getCategoriesFlow(): Flow<List<String>> {
+        return userProvider.getCategoriesFlow()
     }
 }
