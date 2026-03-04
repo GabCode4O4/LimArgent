@@ -45,6 +45,7 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.BasicText
+import androidx.compose.material3.CardDefaults
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.*
 import androidx.compose.ui.text.font.FontWeight
@@ -71,6 +72,12 @@ enum class AnalyticsTab {
 @Composable
 fun AnalyticsScreen(viewModel: AnalyticsViewModel) {
 
+    val mouvements by viewModel.mouvementsFlow.collectAsState()
+
+    LaunchedEffect(Unit) {
+        viewModel.loadData()
+    }
+
     var currentGraph by remember { mutableStateOf(AnalyticsTab.PIECHARTS) }
 
     // --- N'est nécessaire que pour l'onglet des piecharts je peux pas le mettre dans la fonction car j'en ai besoin pour la topbar
@@ -96,7 +103,6 @@ fun AnalyticsScreen(viewModel: AnalyticsViewModel) {
                 onGraphChange = { currentGraph = it }
             )
         },
-        containerColor = Color(0xFF1A1D21)
     ) { paddingValues ->
 
         Column(
@@ -155,99 +161,23 @@ fun PieChartsTab(
         ) {
             items(data.size) { index ->
                 val entry = data.entries.elementAt(index)
-                CategoryItemCard(
-                    name = entry.key,
-                    color = colors[index % colors.size],
-                    onClick = { onCategoryClick(entry.key) }
-                )
+                if (selectedCategory==null) {
+                    CategoryItemCard(
+                        name = entry.key,
+                        color = colors[index % colors.size],
+                        onClick = { onCategoryClick(entry.key) }
+                    )
+                }
+                else {
+                    LabelItemCard(
+                        name = entry.key,
+                        color = colors[index % colors.size]
+                    )
+                }
             }
         }
     }
 }
-
-/*@Composable
-fun LineChartsTab(viewModel: AnalyticsViewModel) {
-    Text("Graphique en courbe (67)", color=Color.White)
-
-    val data = viewModel.getBudgetByDateList()
-
-    if (data.isEmpty()) return
-
-    Canvas(modifier = Modifier.fillMaxWidth().height(300.dp)) {
-        val w = size.width
-        val h = size.height
-        val centerY = h / 2f
-
-        // Calcul de l'échelle verticale
-        val maxAbsValue = data.maxOf { abs(it.second) }
-        val scaleY = if (maxAbsValue == 0f) 1f else (h / 2f) / maxAbsValue
-
-        // Dates
-        val startDate = data.first().first
-        val endDate = data.last().first
-        val totalDays = max(ChronoUnit.DAYS.between(startDate, endDate).toFloat(), 1f)
-
-        // Calcul des points
-        val points = data.map { (date, value) ->
-            val daysFromStart = ChronoUnit.DAYS.between(startDate, date).toFloat()
-            val x = (daysFromStart / totalDays) * w
-            val y = centerY - value * scaleY
-            Offset(x, y)
-        }
-
-        // Chemin de la courbe
-        val path = Path().apply {
-            points.forEachIndexed { index, offset ->
-                if (index == 0) moveTo(offset.x, offset.y)
-                else lineTo(offset.x, offset.y)
-            }
-        }
-
-        // Dessiner la barre du milieu (0)
-        drawLine(
-            color = Color.Gray,
-            start = Offset(0f, centerY),
-            end = Offset(w, centerY),
-            strokeWidth = 2f,
-            pathEffect = PathEffect.dashPathEffect(floatArrayOf(10f, 10f), 0f)
-        )
-
-        // Dessiner la courbe
-        val lastValue = data.last().second
-        drawPath(
-            path = path,
-            color = if (lastValue > 0f) Color.Green else Color.Red,
-            style = Stroke(width = 5f, cap = StrokeCap.Round)
-        )
-
-        // Axe des X (4 dates)
-        val axisDates = listOf(
-            startDate,
-            startDate.plusDays((totalDays / 3f).toLong()),
-            startDate.plusDays((2 * totalDays / 3f).toLong()),
-            endDate
-        )
-        axisDates.forEach { date ->
-            val daysFromStart = ChronoUnit.DAYS.between(startDate, date).toFloat()
-            val x = (daysFromStart / totalDays) * w
-            val day = date.dayOfMonth
-            val month = date.month.getDisplayName(TextStyle.SHORT, Locale.getDefault())
-            drawContext.canvas.nativeCanvas.apply {
-                drawText(
-                    "$day $month",
-                    x,
-                    h + 20f,
-                    android.graphics.Paint().apply {
-                        color = android.graphics.Color.GRAY
-                        textAlign = android.graphics.Paint.Align.CENTER
-                        textSize = 30f
-                        isFakeBoldText = true
-                    }
-                )
-            }
-        }
-    }
-}*/
 
 @Composable
 fun LineChartsTab(viewModel: AnalyticsViewModel) {
@@ -287,7 +217,7 @@ fun LineChartsTab(viewModel: AnalyticsViewModel) {
                     val p1 = points[i + 1]
                     val midX = (p0.x + p1.x) / 2
                     val midY = (p0.y + p1.y) / 2
-                    quadraticBezierTo(p0.x, p0.y, midX, midY)
+                    quadraticTo(p0.x, p0.y, midX, midY)
                 }
                 // relier le dernier point exactement
                 lineTo(points.last().x, points.last().y)
@@ -336,6 +266,29 @@ fun LineChartsTab(viewModel: AnalyticsViewModel) {
                     }
                 )
             }
+        }
+
+        val yValues = listOf(
+            maxAbsValue,
+            maxAbsValue / 2f,
+            -maxAbsValue / 2f,
+            -maxAbsValue
+        )
+
+        yValues.forEach { value ->
+            val y = centerY - value * scaleY
+
+            drawContext.canvas.nativeCanvas.drawText(
+                String.format("%.0f", value),
+                w + 20f, // 👉 à droite du graphique
+                y + 10f,
+                android.graphics.Paint().apply {
+                    color = android.graphics.Color.GRAY
+                    textSize = 28f
+                    textAlign = android.graphics.Paint.Align.LEFT
+                    isFakeBoldText = true
+                }
+            )
         }
     }
 }
@@ -498,6 +451,31 @@ fun CategoryItemCard(
             .fillMaxWidth()
             .padding(vertical = 4.dp)
             .clickable { onClick() }
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.padding(12.dp)
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(12.dp)
+                    .background(color, CircleShape)
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(name)
+        }
+    }
+}
+
+@Composable
+fun LabelItemCard(
+    name: String,
+    color: Color
+) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp)
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,

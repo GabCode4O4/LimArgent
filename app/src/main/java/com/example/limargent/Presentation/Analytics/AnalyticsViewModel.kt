@@ -11,25 +11,35 @@ import com.example.limargent.Domain.MoneyMovement
 import com.example.limargent.Domain.Mouvements.MovementsRepository
 import com.example.limargent.Domain.MovType
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import java.math.BigDecimal
 import java.time.LocalDate
 import javax.inject.Inject
+import kotlin.collections.emptyList
 
 @HiltViewModel
 class AnalyticsViewModel @Inject constructor(
     private val movementsRepository : MovementsRepository
 ) : ViewModel() {
 
-    var mouvements by mutableStateOf<List<MoneyMovement>>(emptyList())
-        private set
+    val mouvements: StateFlow<List<MoneyMovement>> = movementsRepository
+        .getMouvementsFlow()
+        .stateIn(
+            viewModelScope,
+            SharingStarted.WhileSubscribed(5000),
+            emptyList()
+        )
 
     init {
         loadData()
     }
 
     fun loadData() {
-        mouvements = movementsRepository.getMouvements()
+        viewModelScope.launch {
+            movementsRepository.getMouvements() // optionnel si tu relies tout au Flow
+        }
     }
 
     fun getCategoriesData(type: MovType) : Map<String, Float>{
