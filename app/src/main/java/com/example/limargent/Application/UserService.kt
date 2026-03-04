@@ -8,18 +8,18 @@ import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 class UserService @Inject constructor(
-    private val userProvider: UserProvider
+    private val userRepository: UserRepository
 ) : UserRepository {
 
     override suspend fun getCurrentUser(): User? {
         return withContext(Dispatchers.IO) {
-            userProvider.getCurrentUser()
+            userRepository.getCurrentUser()
         }
     }
 
     override suspend fun updateUser(user: User) {
         withContext(Dispatchers.IO) {
-            userProvider.updateUser(user)
+            userRepository.updateUser(user)
         }
     }
 }

@@ -2,6 +2,8 @@ package com.example.limargent.Presentation.Configuration
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.limargent.Application.CategoryService
+import com.example.limargent.Application.PreferenceService
 import com.example.limargent.Domain.Categorie.CategoryRepository
 import com.example.limargent.Domain.Preference.PreferenceRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -13,8 +15,8 @@ import javax.inject.Inject
 
 @HiltViewModel
 class ConfigurationViewModel @Inject constructor(
-    private val categoryRepository: CategoryRepository,
-    private val preferenceRepository: PreferenceRepository
+    private val categoryService: CategoryService,      // Modifié ici
+    private val preferenceService: PreferenceService
 ) : ViewModel() {
 
     private val p_categories = MutableStateFlow<List<String>>(emptyList())
@@ -35,20 +37,20 @@ class ConfigurationViewModel @Inject constructor(
 
     private fun loadPreference() {
         viewModelScope.launch {
-            p_theme.value = preferenceRepository.getTheme()
+            p_theme.value = preferenceService.getTheme()
         }
     }
 
     private fun loadCategories() {
         viewModelScope.launch {
-            p_categories.value = categoryRepository.getCategories()
+            p_categories.value = categoryService.getCategories()
         }
     }
 
     fun addCategorie(name: String) {
         viewModelScope.launch {
             if (name.isNotBlank()) {
-                categoryRepository.addCategorie(name)
+                categoryService.addCategorie(name)
                 loadCategories()
             }
         }
@@ -56,14 +58,14 @@ class ConfigurationViewModel @Inject constructor(
 
     fun delCategorie(name: String) {
         viewModelScope.launch {
-            categoryRepository.supprimer(name)
+            categoryService.supprimer(name)
             loadCategories()
         }
     }
 
     fun setThemePreference(theme: String) {
         viewModelScope.launch {
-            preferenceRepository.setTheme(theme)
+            preferenceService.setTheme(theme)
             loadPreference()
         }
     }

@@ -5,6 +5,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.limargent.Application.MovementsService
 import com.example.limargent.Domain.MoneyMovement
 import com.example.limargent.Domain.Mouvements.MovementsRepository
 import com.example.limargent.Domain.MovType
@@ -14,7 +15,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class AnalyticsViewModel @Inject constructor(
-    private val movementsRepository : MovementsRepository
+    private val movementsService: MovementsService
 ) : ViewModel() {
 
     var mouvements by mutableStateOf<List<MoneyMovement>>(emptyList())
@@ -26,7 +27,7 @@ class AnalyticsViewModel @Inject constructor(
 
     fun loadData() {
         viewModelScope.launch {
-            mouvements = movementsRepository.getMouvements()
+            mouvements = movementsService.getMouvements()
         }
     }
 

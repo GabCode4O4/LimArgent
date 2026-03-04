@@ -5,6 +5,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.limargent.Application.CategoryService
+import com.example.limargent.Application.MovementsService
 import com.example.limargent.Data.SessionManager
 import com.example.limargent.Domain.BudgetManager
 import com.example.limargent.Domain.Categorie.CategoryRepository
@@ -23,8 +25,8 @@ import javax.inject.Inject
 @HiltViewModel
 class HomeViewModel @Inject constructor(
     private val sessionManager: SessionManager,
-    private val movementsRepository: MovementsRepository,
-    private val categoryRepository: CategoryRepository
+    private val mouvementsService: MovementsService,
+    private val categorieService: CategoryService
 ) : ViewModel() {
 
     private val _userName = MutableStateFlow("Utilisateur")
@@ -57,7 +59,7 @@ class HomeViewModel @Inject constructor(
 
     fun loadData(){
         viewModelScope.launch {
-            val lesMouvements = movementsRepository.getMouvements()
+            val lesMouvements = mouvementsService.getMouvements()
             mouvements = lesMouvements
 
             val total = manager.getBudget(lesMouvements)
@@ -67,21 +69,21 @@ class HomeViewModel @Inject constructor(
 
     private fun loadCategories() {
         viewModelScope.launch {
-            categories = categoryRepository.getCategories()
+            categories = categorieService.getCategories()
         }
     }
 
     fun addMouvement(titre: String, montant: BigDecimal, categorie: String, date: LocalDate, type: MovType) {
         viewModelScope.launch {
             val mouvement = MoneyMovement(titre, montant, categorie, date, type)
-            movementsRepository.addMouvement(mouvement)
+            mouvementsService.addMouvement(mouvement)
             loadData()
         }
     }
 
     fun delMouvement(mouvement: MoneyMovement){
         viewModelScope.launch {
-            movementsRepository.deleteMouvement(mouvement)
+            mouvementsService.deleteMouvement(mouvement)
             loadData()
         }
     }

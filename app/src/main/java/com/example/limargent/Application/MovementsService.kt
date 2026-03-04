@@ -8,24 +8,24 @@ import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 class MovementsService @Inject constructor(
-    private val movementsProvider: MovementsProvider
+    private val movementsRepository: MovementsRepository
 ) : MovementsRepository {
 
     override suspend fun getMouvements(): List<MoneyMovement> {
         return withContext(Dispatchers.IO) {
-            movementsProvider.getMouvements()
+            movementsRepository.getMouvements()
         }
     }
 
     override suspend fun addMouvement(mouvement: MoneyMovement) {
         withContext(Dispatchers.IO) {
-            movementsProvider.addMouvement(mouvement)
+            movementsRepository.addMouvement(mouvement)
         }
     }
 
     override suspend fun deleteMouvement(mouvement: MoneyMovement) {
         withContext(Dispatchers.IO) {
-            movementsProvider.deleteMouvement(mouvement)
+            movementsRepository.deleteMouvement(mouvement)
         }
     }
 }
