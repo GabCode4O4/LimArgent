@@ -17,11 +17,11 @@ class ConfigurationViewModel @Inject constructor(
     private val preferenceRepository: PreferenceRepository
 ) : ViewModel() {
 
-    private val _categories = MutableStateFlow<List<String>>(emptyList())
-    val categories: StateFlow<List<String>> = _categories.asStateFlow()
+    private val p_categories = MutableStateFlow<List<String>>(emptyList())
+    val categories: StateFlow<List<String>> = p_categories.asStateFlow()
 
-    private val _theme = MutableStateFlow("system")
-    val theme: StateFlow<String> = _theme.asStateFlow()
+    private val p_theme = MutableStateFlow("system")
+    val theme: StateFlow<String> = p_theme.asStateFlow()
 
     fun loadUserPreferences() {
         loadCategories()
@@ -29,19 +29,19 @@ class ConfigurationViewModel @Inject constructor(
     }
 
     fun resetToDefault() {
-        _categories.value = emptyList()
-        _theme.value = "system"
+        p_categories.value = emptyList()
+        p_theme.value = "system"
     }
 
     private fun loadPreference() {
         viewModelScope.launch {
-            _theme.value = preferenceRepository.getTheme()
+            p_theme.value = preferenceRepository.getTheme()
         }
     }
 
     private fun loadCategories() {
         viewModelScope.launch {
-            _categories.value = categoryRepository.getCategories()
+            p_categories.value = categoryRepository.getCategories()
         }
     }
 

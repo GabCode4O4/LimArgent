@@ -39,8 +39,8 @@ fun ConfigurationScreen(viewModel: ConfigurationViewModel) {
 
             Box(modifier = Modifier.padding(16.dp)) {
                 when (selectedTabIndex) {
-                    0 -> CategoriesSection(viewModel)
-                    1 -> PreferencesSection(viewModel)
+                    0 -> CategorieSection(viewModel)
+                    1 -> PreferenceSection(viewModel)
                 }
             }
         }
@@ -48,7 +48,7 @@ fun ConfigurationScreen(viewModel: ConfigurationViewModel) {
 }
 
 @Composable
-fun PreferencesSection(viewModel: ConfigurationViewModel) {
+fun PreferenceSection(viewModel: ConfigurationViewModel) {
     val theme by viewModel.theme.collectAsState()
     val isDarkTheme = theme == "dark"
 
@@ -68,7 +68,7 @@ fun PreferencesSection(viewModel: ConfigurationViewModel) {
 }
 
 @Composable
-fun CategoriesSection(viewModel: ConfigurationViewModel) {
+fun CategorieSection(viewModel: ConfigurationViewModel) {
     val categories by viewModel.categories.collectAsState()
     var newCategoryName by remember { mutableStateOf("") }
 

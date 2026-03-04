@@ -5,12 +5,15 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.Surface
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
 import com.example.limargent.Data.SessionManager
 import com.example.limargent.Presentation.Configuration.ConfigurationViewModel
 import com.example.limargent.Presentation.Login.LoginScreen
@@ -55,18 +58,20 @@ class MainActivity : ComponentActivity() {
             }
 
             LimArgentTheme(theme = theme) {
-                when (screenAct) {
-                    ScreenState.LOGIN -> {
-                        LoginScreen(viewModel = loginViewModel, onNavigateToMain = {screenAct = ScreenState.HOME}, onNavigateToRegister = { screenAct = ScreenState.REGISTER })
-                    }
-                    ScreenState.REGISTER -> {
-                        RegisterScreen(viewModel = registerViewModel, onNavigateToMain = {screenAct = ScreenState.HOME }, onNavigateToLogin = { screenAct = ScreenState.LOGIN })
-                    }
-                    ScreenState.HOME -> {
-                        MainAppScreen(onLogout = {
-                            sessionManager.logout()
-                            loginViewModel.clearFields()
-                        })
+                Surface(modifier = Modifier.fillMaxSize()) {
+                    when (screenAct) {
+                        ScreenState.LOGIN -> {
+                            LoginScreen(viewModel = loginViewModel, onNavigateToMain = {screenAct = ScreenState.HOME}, onNavigateToRegister = { screenAct = ScreenState.REGISTER })
+                        }
+                        ScreenState.REGISTER -> {
+                            RegisterScreen(viewModel = registerViewModel, onNavigateToMain = {screenAct = ScreenState.HOME }, onNavigateToLogin = { screenAct = ScreenState.LOGIN })
+                        }
+                        ScreenState.HOME -> {
+                            MainAppScreen(onLogout = {
+                                sessionManager.logout()
+                                loginViewModel.clearFields()
+                            })
+                        }
                     }
                 }
             }

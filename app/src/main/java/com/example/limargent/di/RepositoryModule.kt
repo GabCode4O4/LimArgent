@@ -2,7 +2,6 @@ package com.example.limargent.di
 
 import com.example.limargent.Application.CategoryService
 import com.example.limargent.Application.MovementsService
-import com.example.limargent.Application.PreferenceService
 import com.example.limargent.Application.UserService
 import com.example.limargent.Data.Preference.PreferenceProvider
 import com.example.limargent.Domain.Categorie.CategoryRepository
