@@ -9,9 +9,7 @@ import com.example.limargent.Application.CategoryService
 import com.example.limargent.Application.MovementsService
 import com.example.limargent.Data.SessionManager
 import com.example.limargent.Domain.BudgetManager
-import com.example.limargent.Domain.Categorie.CategoryRepository
 import com.example.limargent.Domain.MoneyMovement
-import com.example.limargent.Domain.Mouvements.MovementsRepository
 import com.example.limargent.Domain.MovType
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -25,8 +23,8 @@ import javax.inject.Inject
 @HiltViewModel
 class HomeViewModel @Inject constructor(
     private val sessionManager: SessionManager,
-    private val mouvementsService: MovementsService,
-    private val categorieService: CategoryService
+    private val movementsService: MovementsService,
+    private val categoryService: CategoryService
 ) : ViewModel() {
 
     private val _userName = MutableStateFlow("Utilisateur")
@@ -41,8 +39,7 @@ class HomeViewModel @Inject constructor(
 
     init {
         currentUser()
-        loadData()
-        loadCategories()
+        observeData() // On lance l'écoute des données dès la création du ViewModel
     }
 
     private fun currentUser() {
@@ -57,34 +54,33 @@ class HomeViewModel @Inject constructor(
         }
     }
 
-    fun loadData(){
+    private fun observeData() {
+        // 1. On écoute les mouvements en continu
         viewModelScope.launch {
-            val lesMouvements = mouvementsService.getMouvements()
-            mouvements = lesMouvements
-
-            val total = manager.getBudget(lesMouvements)
-            budget = total.toDouble()
+            movementsService.getMouvementsFlow().collect { lesMouvements ->
+                mouvements = lesMouvements
+                budget = manager.getBudget(lesMouvements).toDouble()
+            }
         }
-    }
 
-    private fun loadCategories() {
+        // 2. On écoute les catégories en continu
         viewModelScope.launch {
-            categories = categorieService.getCategories()
+            categoryService.getCategoriesFlow().collect { lesCategories ->
+                categories = lesCategories
+            }
         }
     }
 
     fun addMouvement(titre: String, montant: BigDecimal, categorie: String, date: LocalDate, type: MovType) {
         viewModelScope.launch {
             val mouvement = MoneyMovement(titre, montant, categorie, date, type)
-            mouvementsService.addMouvement(mouvement)
-            loadData()
+            movementsService.addMouvement(mouvement)
         }
     }
 
     fun delMouvement(mouvement: MoneyMovement){
         viewModelScope.launch {
-            mouvementsService.deleteMouvement(mouvement)
-            loadData()
+            movementsService.deleteMouvement(mouvement)
         }
     }
 

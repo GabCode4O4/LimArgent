@@ -15,6 +15,9 @@ import java.time.ZoneOffset
 import java.util.Date
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.callbackFlow
 
 @Singleton
 class UserProvider @Inject constructor(
@@ -29,7 +32,7 @@ class UserProvider @Inject constructor(
         val uid = currentUserUid ?: return null
         return try {
             val doc = firestore.collection("users").document(uid).get().await()
-            val user = doc.toObject<User>()
+            val user = doc.toObject(User::class.java)
             user?.mouvements = getMouvements()
             user
         } catch (e: Exception) {
@@ -42,25 +45,25 @@ class UserProvider @Inject constructor(
         val uid = currentUserUid ?: return
         try {
             val userMap = user.toFirestoreMap()
-            firestore.collection("users").document(uid).set(userMap).await()
+            firestore.collection("users").document(uid).set(userMap)
         } catch (e: Exception) {
             e.printStackTrace()
         }
     }
 
-    suspend fun addCategoryToCurrentUser(categorie: String) {
+    fun addCategoryToCurrentUser(categorie: String) {
         val uid = currentUserUid ?: return
         try {
-            firestore.collection("users").document(uid).update("categories", FieldValue.arrayUnion(categorie)).await()
+            firestore.collection("users").document(uid).update("categories", FieldValue.arrayUnion(categorie))
         } catch (e: Exception) {
             e.printStackTrace()
         }
     }
 
-    suspend fun removeCategoryFromCurrentUser(categorie: String) {
+    fun removeCategoryFromCurrentUser(categorie: String) {
         val uid = currentUserUid ?: return
         try {
-            firestore.collection("users").document(uid).update("categories", FieldValue.arrayRemove(categorie)).await()
+            firestore.collection("users").document(uid).update("categories", FieldValue.arrayRemove(categorie))
         } catch (e: Exception) {
             e.printStackTrace()
         }
@@ -81,32 +84,32 @@ class UserProvider @Inject constructor(
         }
     }
 
-    suspend fun addMovement(mouvement: MoneyMovement) {
+    fun addMovement(mouvement: MoneyMovement) {
         val uid = currentUserUid ?: return
         try {
             firestore.collection("users").document(uid)
-                .collection("mouvements").add(mouvement.toFirestoreMap()).await()
+                .collection("mouvements").add(mouvement.toFirestoreMap())
         } catch (e: Exception) {
             e.printStackTrace()
         }
     }
 
-    suspend fun updateMovement(mouvement: MoneyMovement) {
+    fun updateMovement(mouvement: MoneyMovement) {
         val uid = currentUserUid ?: return
         val mouvementId = mouvement.id ?: return
         try {
             firestore.collection("users").document(uid)
-                .collection("mouvements").document(mouvementId).set(mouvement.toFirestoreMap()).await()
+                .collection("mouvements").document(mouvementId).set(mouvement.toFirestoreMap())
         } catch (e: Exception) {
             e.printStackTrace()
         }
     }
 
-    suspend fun deleteMovement(mouvementId: String) {
+    fun deleteMovement(mouvementId: String) {
         val uid = currentUserUid ?: return
         try {
             firestore.collection("users").document(uid)
-                .collection("mouvements").document(mouvementId).delete().await()
+                .collection("mouvements").document(mouvementId).delete()
         } catch (e: Exception) {
             e.printStackTrace()
         }
@@ -143,9 +146,45 @@ class UserProvider @Inject constructor(
             null
         }
     }
-}
 
-// You might need to add an 'id' field to your MoneyMovement data class
-// data class MoneyMovement(..., val id: String? = null)
-// And adjust the User data class to not have a password field
-// data class User(..., val motDePasse: String = "", ...) -> remove motDePasse
+    fun getMouvementsFlow(): Flow<List<MoneyMovement>> = callbackFlow {
+        val uid = currentUserUid
+        if (uid == null) {
+            trySend(emptyList())
+            close()
+            return@callbackFlow
+        }
+        val listener = firestore.collection("users").document(uid)
+            .collection("mouvements")
+            .addSnapshotListener { snapshot, error ->
+                if (error != null) {
+                    close(error)
+                    return@addSnapshotListener
+                }
+                val mouvementsList = snapshot?.documents?.mapNotNull { it.toMoneyMovement() } ?: emptyList()
+                trySend(mouvementsList)
+            }
+        awaitClose { listener.remove() }
+    }
+
+    fun getCategoriesFlow(): Flow<List<String>> = callbackFlow {
+        val uid = currentUserUid
+        if (uid == null) {
+            trySend(emptyList())
+            close()
+            return@callbackFlow
+        }
+
+        val listener = firestore.collection("users").document(uid)
+            .addSnapshotListener { snapshot, error ->
+                if (error != null) {
+                    close(error)
+                    return@addSnapshotListener
+                }
+                val user = snapshot?.toObject(User::class.java)
+                trySend(user?.categories ?: emptyList())
+            }
+
+        awaitClose { listener.remove() }
+    }
+}

@@ -2,6 +2,7 @@ package com.example.limargent.Application
 
 import com.example.limargent.Domain.Categorie.CategoryRepository
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
@@ -24,5 +25,8 @@ class CategoryService @Inject constructor(
         withContext(Dispatchers.IO) {
             categoryRepository.supprimer(nom)
         }
+    }
+    fun getCategoriesFlow(): Flow<List<String>> {
+        return categoryRepository.getCategoriesFlow()
     }
 }

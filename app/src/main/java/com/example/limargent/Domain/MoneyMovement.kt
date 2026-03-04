@@ -8,11 +8,10 @@ enum class MovType{
 }
 
 data class MoneyMovement(
-    // On définit l'objet comme immuable en utilisant des val pour éviter les effets de bord, on peut donc laisser les attributs en public
-    val titre: String,
-    val montant: BigDecimal, // On utilise BigDecimal car la précision est importante dès qu'on touche au financier
-    val categorie: String,
-    val date: LocalDate, // LocalDate permet de faire du tri et du parsing plus facilement et garantit le format
-    val type: MovType,
+    val titre: String = "",
+    val montant: BigDecimal = BigDecimal.ZERO, // On utilise BigDecimal car la précision est importante dès qu'on touche au financier
+    val categorie: String = "",
+    val date: LocalDate = LocalDate.now(), // LocalDate permet de faire du tri et du parsing plus facilement et garantit le format
+    val type: MovType = MovType.entree,
     val id: String? = null
 )

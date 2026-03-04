@@ -6,4 +6,6 @@ interface MovementsRepository {
     suspend fun getMouvements(): List<MoneyMovement>
     suspend fun addMouvement(mouvement: MoneyMovement)
     suspend fun deleteMouvement(mouvement: MoneyMovement)
+    fun getMouvementsFlow(): kotlinx.coroutines.flow.Flow<List<MoneyMovement>>
+
 }

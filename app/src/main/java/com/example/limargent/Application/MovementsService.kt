@@ -1,9 +1,9 @@
 package com.example.limargent.Application
 
-import com.example.limargent.Data.Movements.MovementsProvider
 import com.example.limargent.Domain.MoneyMovement
 import com.example.limargent.Domain.Mouvements.MovementsRepository
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
@@ -27,5 +27,9 @@ class MovementsService @Inject constructor(
         withContext(Dispatchers.IO) {
             movementsRepository.deleteMouvement(mouvement)
         }
+    }
+    
+    override fun getMouvementsFlow(): Flow<List<MoneyMovement>> {
+        return movementsRepository.getMouvementsFlow()
     }
 }
