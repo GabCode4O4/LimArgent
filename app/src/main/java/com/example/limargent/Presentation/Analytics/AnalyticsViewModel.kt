@@ -1,6 +1,7 @@
 package com.example.limargent.Presentation.Analytics
 
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
@@ -12,6 +13,7 @@ import com.example.limargent.Domain.MovType
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
 import java.math.BigDecimal
+import java.time.LocalDate
 import javax.inject.Inject
 
 @HiltViewModel
@@ -51,6 +53,24 @@ class AnalyticsViewModel @Inject constructor(
         }
 
         return chartData
+    }
+
+    fun getBudgetByDateList(): List<Pair<LocalDate, Float>> {
+        val sortedMovements = mouvements.sortedBy { it.date }
+        val budget = mutableListOf<Pair<LocalDate, Float>>()
+
+        var tempM = 0f
+
+        for (m in sortedMovements) {
+            if (m.type == MovType.entree) {
+                tempM+=m.montant.toFloat()
+            } else {
+                tempM-=m.montant.toFloat()
+            }
+            budget.add(m.date to tempM)
+        }
+
+        return budget
     }
 
     // 67

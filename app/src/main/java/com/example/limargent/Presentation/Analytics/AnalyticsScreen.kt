@@ -42,6 +42,20 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.text.BasicText
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.*
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import java.time.LocalDate
+import java.time.format.TextStyle
+import java.time.temporal.ChronoUnit
+import java.util.*
+import kotlin.math.abs
+import kotlin.math.absoluteValue
+import kotlin.math.max
 
 enum class AnalyticsMode {
     DEPENSES,
@@ -81,7 +95,8 @@ fun AnalyticsScreen(viewModel: AnalyticsViewModel) {
                 currentGraph = currentGraph,
                 onGraphChange = { currentGraph = it }
             )
-        }
+        },
+        containerColor = Color(0xFF1A1D21)
     ) { paddingValues ->
 
         Column(
@@ -150,10 +165,179 @@ fun PieChartsTab(
     }
 }
 
+/*@Composable
+fun LineChartsTab(viewModel: AnalyticsViewModel) {
+    Text("Graphique en courbe (67)", color=Color.White)
+
+    val data = viewModel.getBudgetByDateList()
+
+    if (data.isEmpty()) return
+
+    Canvas(modifier = Modifier.fillMaxWidth().height(300.dp)) {
+        val w = size.width
+        val h = size.height
+        val centerY = h / 2f
+
+        // Calcul de l'échelle verticale
+        val maxAbsValue = data.maxOf { abs(it.second) }
+        val scaleY = if (maxAbsValue == 0f) 1f else (h / 2f) / maxAbsValue
+
+        // Dates
+        val startDate = data.first().first
+        val endDate = data.last().first
+        val totalDays = max(ChronoUnit.DAYS.between(startDate, endDate).toFloat(), 1f)
+
+        // Calcul des points
+        val points = data.map { (date, value) ->
+            val daysFromStart = ChronoUnit.DAYS.between(startDate, date).toFloat()
+            val x = (daysFromStart / totalDays) * w
+            val y = centerY - value * scaleY
+            Offset(x, y)
+        }
+
+        // Chemin de la courbe
+        val path = Path().apply {
+            points.forEachIndexed { index, offset ->
+                if (index == 0) moveTo(offset.x, offset.y)
+                else lineTo(offset.x, offset.y)
+            }
+        }
+
+        // Dessiner la barre du milieu (0)
+        drawLine(
+            color = Color.Gray,
+            start = Offset(0f, centerY),
+            end = Offset(w, centerY),
+            strokeWidth = 2f,
+            pathEffect = PathEffect.dashPathEffect(floatArrayOf(10f, 10f), 0f)
+        )
+
+        // Dessiner la courbe
+        val lastValue = data.last().second
+        drawPath(
+            path = path,
+            color = if (lastValue > 0f) Color.Green else Color.Red,
+            style = Stroke(width = 5f, cap = StrokeCap.Round)
+        )
+
+        // Axe des X (4 dates)
+        val axisDates = listOf(
+            startDate,
+            startDate.plusDays((totalDays / 3f).toLong()),
+            startDate.plusDays((2 * totalDays / 3f).toLong()),
+            endDate
+        )
+        axisDates.forEach { date ->
+            val daysFromStart = ChronoUnit.DAYS.between(startDate, date).toFloat()
+            val x = (daysFromStart / totalDays) * w
+            val day = date.dayOfMonth
+            val month = date.month.getDisplayName(TextStyle.SHORT, Locale.getDefault())
+            drawContext.canvas.nativeCanvas.apply {
+                drawText(
+                    "$day $month",
+                    x,
+                    h + 20f,
+                    android.graphics.Paint().apply {
+                        color = android.graphics.Color.GRAY
+                        textAlign = android.graphics.Paint.Align.CENTER
+                        textSize = 30f
+                        isFakeBoldText = true
+                    }
+                )
+            }
+        }
+    }
+}*/
+
 @Composable
 fun LineChartsTab(viewModel: AnalyticsViewModel) {
-    Text("Graphique en courbe (67)")
-    // TODO https://medium.com/@yilmazvolkan/kotlinlinecharts-c2a730226ff1
+    Text("Graphique en courbe (67)", color = Color.White)
+
+    val data = viewModel.getBudgetByDateList()
+    if (data.isEmpty()) return
+
+    Canvas(modifier = Modifier.fillMaxWidth().height(300.dp).offset(x=(-16).dp)) {
+        val w = size.width
+        val h = size.height
+        val centerY = h / 2f
+
+        // Échelle verticale
+        val maxAbsValue = data.maxOf { abs(it.second) }
+        val scaleY = if (maxAbsValue == 0f) 1f else (h / 2f) / maxAbsValue
+
+        // Dates
+        val startDate = data.first().first
+        val endDate = data.last().first
+        val totalDays = max(ChronoUnit.DAYS.between(startDate, endDate).toFloat(), 1f)
+
+        // Calcul des points
+        val points = data.map { (date, value) ->
+            val daysFromStart = ChronoUnit.DAYS.between(startDate, date).toFloat()
+            val x = (daysFromStart / totalDays) * w
+            val y = centerY - value * scaleY
+            Offset(x, y)
+        }
+
+        // --- Path Bézier pour lisser la courbe ---
+        val path = Path().apply {
+            if (points.isNotEmpty()) {
+                moveTo(points.first().x, points.first().y)
+                for (i in 0 until points.size - 1) {
+                    val p0 = points[i]
+                    val p1 = points[i + 1]
+                    val midX = (p0.x + p1.x) / 2
+                    val midY = (p0.y + p1.y) / 2
+                    quadraticBezierTo(p0.x, p0.y, midX, midY)
+                }
+                // relier le dernier point exactement
+                lineTo(points.last().x, points.last().y)
+            }
+        }
+
+        // Barre du milieu (0)
+        drawLine(
+            color = Color.Gray,
+            start = Offset(0f, centerY),
+            end = Offset(w, centerY),
+            strokeWidth = 2f,
+            pathEffect = PathEffect.dashPathEffect(floatArrayOf(10f, 10f), 0f)
+        )
+
+        // Dessiner la courbe avec cap arrondi
+        val lastValue = data.last().second
+        drawPath(
+            path = path,
+            color = if (lastValue > 0f) Color.Green else Color.Red,
+            style = Stroke(width = 10f, cap = StrokeCap.Round)
+        )
+
+        // Axe X avec 4 dates
+        val axisDates = listOf(
+            startDate,
+            startDate.plusDays((totalDays / 3f).toLong()),
+            startDate.plusDays((2 * totalDays / 3f).toLong()),
+            endDate
+        )
+        axisDates.forEach { date ->
+            val daysFromStart = ChronoUnit.DAYS.between(startDate, date).toFloat()
+            val x = if (daysFromStart == 0f) (0.05*w).toFloat() else ((daysFromStart / totalDays) * w)
+            val day = date.dayOfMonth
+            val month = date.month.getDisplayName(TextStyle.SHORT, Locale.getDefault())
+            drawContext.canvas.nativeCanvas.apply {
+                drawText(
+                    "$day $month",
+                    x,
+                    h + 20f,
+                    android.graphics.Paint().apply {
+                        color = android.graphics.Color.GRAY
+                        textAlign = android.graphics.Paint.Align.CENTER
+                        textSize = 30f
+                        isFakeBoldText = true
+                    }
+                )
+            }
+        }
+    }
 }
 
 @Composable
