@@ -27,43 +27,55 @@ class HomeViewModel @Inject constructor(
     private val categoryService: CategoryService
 ) : ViewModel() {
 
-    private val _userName = MutableStateFlow("Utilisateur")
-    val userName: StateFlow<String> = _userName.asStateFlow()
+    private val userN = MutableStateFlow("Utilisateur")
+    val userName: StateFlow<String> = userN.asStateFlow()
     val manager = BudgetManager()
+
     var budget by mutableStateOf(0.0)
         private set
     var mouvements by mutableStateOf<List<MoneyMovement>>(emptyList())
         private set
     var categories by mutableStateOf<List<String>>(emptyList())
         private set
+    var recherche by mutableStateOf("")
+    var moisFiltre by mutableStateOf<Int?>(null)
+    var anneeFiltre by mutableStateOf<Int?>(null)
+    var catFiltre by mutableStateOf<String?>(null)
+    var typeFiltre by mutableStateOf<MovType?>(null)
+
+    val filtrage: List<MoneyMovement>
+        get() = mouvements.filter {
+            (recherche.isBlank() || it.titre.contains(recherche, ignoreCase = true) || it.categorie.contains(recherche, ignoreCase = true)) &&
+                    (moisFiltre == null || it.date.monthValue == moisFiltre) &&
+                        (anneeFiltre == null || it.date.year == anneeFiltre) &&
+                    (catFiltre == null || it.categorie == catFiltre) &&
+                    (typeFiltre == null || it.type == typeFiltre)
+        }.reversed()
 
     init {
         currentUser()
-        observeData() // On lance l'écoute des données dès la création du ViewModel
+        observeData()
     }
 
     private fun currentUser() {
         viewModelScope.launch {
             sessionManager.currentUser.collect { firebaseUser ->
                 if (firebaseUser != null) {
-                    _userName.value = firebaseUser.email?.split("@")?.get(0) ?: firebaseUser.uid
+                    userN.value = firebaseUser.email?.split("@")?.get(0) ?: firebaseUser.uid
                 } else {
-                    _userName.value = "Invité"
+                    userN.value = "Invité"
                 }
             }
         }
     }
 
     private fun observeData() {
-        // 1. On écoute les mouvements en continu
         viewModelScope.launch {
             movementsService.getMouvementsFlow().collect { lesMouvements ->
                 mouvements = lesMouvements
                 budget = manager.getBudget(lesMouvements).toDouble()
             }
         }
-
-        // 2. On écoute les catégories en continu
         viewModelScope.launch {
             categoryService.getCategoriesFlow().collect { lesCategories ->
                 categories = lesCategories
@@ -82,6 +94,15 @@ class HomeViewModel @Inject constructor(
         viewModelScope.launch {
             movementsService.deleteMouvement(mouvement)
         }
+    }
+
+
+    fun resetFilters() {
+        recherche = ""
+        moisFiltre = null
+        anneeFiltre = null
+        catFiltre = null
+        typeFiltre = null
     }
 
     fun logout() {

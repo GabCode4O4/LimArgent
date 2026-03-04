@@ -1,40 +1,22 @@
 package com.example.limargent.Presentation.Home
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ExitToApp
+import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SwipeToDismissBox
-import androidx.compose.material3.SwipeToDismissBoxValue
-import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.material3.rememberSwipeToDismissBoxState
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
+import androidx.compose.material.icons.filled.FilterList
+import androidx.compose.material.icons.filled.FilterListOff
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -45,13 +27,18 @@ import androidx.compose.ui.unit.sp
 import com.example.limargent.Domain.MoneyMovement
 import com.example.limargent.Domain.MovType
 import java.time.format.DateTimeFormatter
+import java.time.Month
+import java.time.format.TextStyle
+import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(viewModel: HomeViewModel, onLogout: () -> Unit) {
     val userName by viewModel.userName.collectAsState()
     val budget = viewModel.budget
-    val mouvements = viewModel.mouvements.reversed()
+    val mouvements = viewModel.filtrage
+
+    var lesFiltres by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
@@ -94,17 +81,125 @@ fun HomeScreen(viewModel: HomeViewModel, onLogout: () -> Unit) {
                 fontWeight = FontWeight.Bold
             )
 
-            Spacer(modifier = Modifier.height(32.dp))
-
+            Spacer(modifier = Modifier.height(24.dp))
             BalanceCard(budget = budget)
             Spacer(modifier = Modifier.height(24.dp))
+            
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "Mes mouvements",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                IconButton(onClick = { lesFiltres = !lesFiltres }) {
+                    Icon(
+                        imageVector = if (lesFiltres) Icons.Default.FilterListOff else Icons.Default.FilterList,
+                        contentDescription = "Filtres",
+                        tint = if (lesFiltres || viewModel.recherche.isNotBlank() || viewModel.moisFiltre != null)
+                            MaterialTheme.colorScheme.primary
+                        else MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
 
-            Text(
-                text = "Mouvements récents",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
+            //Filtrage
+            AnimatedVisibility(
+                visible = lesFiltres,
+                enter = expandVertically(),
+                exit = shrinkVertically()
+            ) {
+                Column(modifier = Modifier.padding(bottom = 12.dp)) {
+                    OutlinedTextField(
+                        value = viewModel.recherche,
+                        onValueChange = { viewModel.recherche = it },
+                        placeholder = { Text("Rechercher un mouvement...") },
+                        leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
+                        trailingIcon = {
+                            if (viewModel.recherche.isNotEmpty()) {
+                                IconButton(onClick = { viewModel.recherche = "" }) {
+                                    Icon(Icons.Default.Clear, contentDescription = "Effacer")
+                                }
+                            }
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true,
+                        shape = RoundedCornerShape(12.dp)
+                    )
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Filtrer(
+                            modifier = Modifier.weight(1f),
+                            label = "Type",
+                            options = listOf("Tous", "Entrée", "Sortie"),
+                            selectedOption = when(viewModel.typeFiltre) {
+                                MovType.entree -> "Entrée"
+                                MovType.sortie -> "Sortie"
+                                null -> "Tous"
+                            },
+                            onOptionSelected = {
+                                viewModel.typeFiltre = when(it) {
+                                    "Entrée" -> MovType.entree
+                                    "Sortie" -> MovType.sortie
+                                    else -> null
+                                }
+                            }
+                        )
+
+                        val categoryOptions = listOf("Toutes") + viewModel.categories
+                        Filtrer(
+                            modifier = Modifier.weight(1f),
+                            label = "Catégorie",
+                            options = categoryOptions,
+                            selectedOption = viewModel.catFiltre ?: "Toutes",
+                            onOptionSelected = {
+                                viewModel.catFiltre = if (it == "Toutes") null else it
+                            }
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        val months = listOf("Tous") + Month.values().map { it.getDisplayName(TextStyle.FULL, Locale.FRANCE).replaceFirstChar { char -> char.uppercase() } }
+                        Filtrer(
+                            modifier = Modifier.weight(1f),
+                            label = "Mois",
+                            options = months,
+                            selectedOption = viewModel.moisFiltre?.let { months[it] } ?: "Tous",
+                            onOptionSelected = {
+                                viewModel.moisFiltre = if (it == "Tous") null else months.indexOf(it)
+                            }
+                        )
+
+                        val availableYears = listOf("Toutes") + viewModel.mouvements.map { it.date.year }.distinct().sortedDescending().map { it.toString() }
+                        Filtrer(
+                            modifier = Modifier.weight(1f),
+                            label = "Année",
+                            options = availableYears,
+                            selectedOption = viewModel.anneeFiltre?.toString() ?: "Toutes",
+                            onOptionSelected = {
+                                viewModel.anneeFiltre = if (it == "Toutes") null else it.toIntOrNull()
+                            }
+                        )
+                    }
+
+                    if (viewModel.typeFiltre != null || viewModel.catFiltre != null || viewModel.moisFiltre != null || viewModel.anneeFiltre != null || viewModel.recherche.isNotBlank()) {
+                        TextButton(
+                            onClick = { viewModel.resetFilters() },
+                            modifier = Modifier.align(Alignment.End)
+                        ) {
+                            Text("Réinitialiser les filtres", color = MaterialTheme.colorScheme.error)
+                        }
+                    }
+                }
+            }
 
             Spacer(modifier = Modifier.height(12.dp))
 
@@ -113,16 +208,19 @@ fun HomeScreen(viewModel: HomeViewModel, onLogout: () -> Unit) {
                     modifier = Modifier.fillMaxSize(),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text("Aucun mouvement récent", color = Color.Gray)
+                    Text(
+                        text = if (viewModel.mouvements.isEmpty()) "Aucun mouvement" else "Aucun résultat pour ces filtres",
+                        color = Color.Gray
+                    )
                 }
             } else {
                 LazyColumn(
                     verticalArrangement = Arrangement.spacedBy(12.dp),
-                    contentPadding = PaddingValues(bottom = 20.dp)
+                    contentPadding = PaddingValues(bottom = 80.dp) //Pour ne pas cacher le dernier sous le bouton +
                 ) {
                     items(
                         items = mouvements,
-                        key = { it.hashCode() } // Important pour l'animation de suppression
+                        key = { it.id ?: it.hashCode() }
                     ) { mouvement ->
                         val dismissState = rememberSwipeToDismissBoxState(
                             confirmValueChange = {
@@ -143,7 +241,7 @@ fun HomeScreen(viewModel: HomeViewModel, onLogout: () -> Unit) {
                                 } else {
                                     Color.Transparent
                                 }
-                                
+
                                 Box(
                                     modifier = Modifier
                                         .fillMaxSize()
@@ -171,6 +269,48 @@ fun HomeScreen(viewModel: HomeViewModel, onLogout: () -> Unit) {
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun Filtrer(
+    modifier: Modifier = Modifier,
+    label: String,
+    options: List<String>,
+    selectedOption: String,
+    onOptionSelected: (String) -> Unit
+) {
+    var expanded by remember { mutableStateOf(false) }
+
+    ExposedDropdownMenuBox(
+        expanded = expanded,
+        onExpandedChange = { expanded = !expanded },
+        modifier = modifier
+    ) {
+        OutlinedTextField(
+            value = selectedOption,
+            onValueChange = {},
+            readOnly = true,
+            label = { Text(label, fontSize = 12.sp) },
+            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+            modifier = Modifier.menuAnchor().fillMaxWidth(),
+            shape = RoundedCornerShape(12.dp),
+            textStyle = LocalTextStyle.current.copy(fontSize = 14.sp)
+        )
+        ExposedDropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false }
+        ) {
+            options.forEach { option ->
+                DropdownMenuItem(
+                    text = { Text(option) },
+                    onClick = {
+                        onOptionSelected(option)
+                        expanded = false
+                    }
+                )
+            }
+        }
+    }
+}
 
 @Composable
 fun BalanceCard(budget: Double) {
