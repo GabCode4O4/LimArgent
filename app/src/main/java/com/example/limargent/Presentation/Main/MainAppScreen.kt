@@ -3,6 +3,7 @@ package com.example.limargent.Presentation.Main
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.AddBusiness
 import androidx.compose.material.icons.filled.Analytics
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Settings
@@ -18,11 +19,15 @@ import com.example.limargent.Presentation.Configuration.ConfigurationViewModel
 import com.example.limargent.Presentation.Home.AddMouvement
 import com.example.limargent.Presentation.Home.HomeScreen
 import com.example.limargent.Presentation.Home.HomeViewModel
+import com.example.limargent.Presentation.Objectif.ObjectifScreen
+import com.example.limargent.Presentation.Objectif.ObjectifViewModel
 
 enum class AppScreen(val title: String, val icon: ImageVector) {
     HOME("Accueil", Icons.Default.Home),
     ANALYTICS("Analytique", Icons.Default.Analytics),
-    CONFIGURATION("Config", Icons.Default.Settings)
+    CONFIGURATION("Config", Icons.Default.Settings),
+    OBJECTIF("Objecfit", Icons.Default.AddBusiness)
+
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -70,10 +75,15 @@ fun MainAppScreen(
                     val viewModel = hiltViewModel<AnalyticsViewModel>()
                     AnalyticsScreen(viewModel = viewModel)
                 }
+                AppScreen.OBJECTIF->{
+                    val viewModel = hiltViewModel<ObjectifViewModel>()
+                    ObjectifScreen(viewModel = viewModel)
+                }
                 AppScreen.CONFIGURATION -> {
                     val viewModel = hiltViewModel<ConfigurationViewModel>()
                     ConfigurationScreen(viewModel = viewModel)
                 }
+
             }
         }
 

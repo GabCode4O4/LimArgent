@@ -26,8 +26,7 @@ import java.time.format.DateTimeFormatter
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ObjectifScreen(
-    viewModel: ObjectifViewModel = hiltViewModel(),
-    onNavigateBack: () -> Unit
+    viewModel: ObjectifViewModel = hiltViewModel()
 ) {
     val objectifs by viewModel.objectifs.collectAsState()
     var showAddDialog by remember { mutableStateOf(false) }

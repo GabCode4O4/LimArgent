@@ -2,6 +2,8 @@ package com.example.limargent.Data.User
 
 import com.example.limargent.Domain.MoneyMovement
 import com.example.limargent.Domain.MovType
+import com.example.limargent.Domain.Objectif.ObjectifRepository
+import com.example.limargent.Domain.ObjectifEpargne
 import com.example.limargent.Domain.User
 import com.example.limargent.Domain.Users.UserRepository
 import com.google.firebase.auth.FirebaseAuth
@@ -23,7 +25,7 @@ import kotlinx.coroutines.flow.callbackFlow
 class UserProvider @Inject constructor(
     private val firestore: FirebaseFirestore,
     private val auth: FirebaseAuth
-) : UserRepository {
+) : UserRepository, ObjectifRepository {
 
     private val currentUserUid: String?
         get() = auth.currentUser?.uid
@@ -188,5 +190,68 @@ class UserProvider @Inject constructor(
             }
 
         awaitClose { listener.remove() }
+    }
+    override suspend fun addObjectif(objectif: ObjectifEpargne) {
+        val uid = currentUserUid ?: return
+        try {
+            firestore.collection("users").document(uid)
+                .collection("objectifs").document(objectif.id).set(objectif.toMap())
+        } catch (e: Exception) { e.printStackTrace() }
+    }
+
+    override suspend fun updateObjectif(objectif: ObjectifEpargne) {
+        val uid = currentUserUid ?: return
+        try {
+            firestore.collection("users").document(uid)
+                .collection("objectifs").document(objectif.id).set(objectif.toMap())
+        } catch (e: Exception) { e.printStackTrace() }
+    }
+
+    override suspend fun deleteObjectif(id: String) {
+        val uid = currentUserUid ?: return
+        try {
+            firestore.collection("users").document(uid)
+                .collection("objectifs").document(id).delete()
+        } catch (e: Exception) { e.printStackTrace() }
+    }
+
+    override fun getObjectifsFlow(): Flow<List<ObjectifEpargne>> = callbackFlow {
+        val uid = currentUserUid
+        if (uid == null) {
+            trySend(emptyList())
+            close()
+            return@callbackFlow
+        }
+        val listener = firestore.collection("users").document(uid)
+            .collection("objectifs")
+            .addSnapshotListener { snapshot, error ->
+                if (error != null) {
+                    trySend(emptyList())
+                    close()
+                    return@addSnapshotListener
+                }
+                val objectifs = snapshot?.documents?.mapNotNull { doc ->
+                    try {
+                        ObjectifEpargne(
+                            id = doc.id,
+                            nom = doc.getString("nom") ?: "",
+                            montantCible = doc.getDouble("montantCible") ?: 0.0,
+                            montantActuel = doc.getDouble("montantActuel") ?: 0.0,
+                            dateEcheance = doc.getTimestamp("dateEcheance")?.toDate()?.toInstant()?.atZone(ZoneOffset.UTC)?.toLocalDate()
+                        )
+                    } catch (e: Exception) { null }
+                } ?: emptyList()
+                trySend(objectifs)
+            }
+        awaitClose { listener.remove() }
+    }
+
+    private fun ObjectifEpargne.toMap(): Map<String, Any?> {
+        return mapOf(
+            "nom" to nom,
+            "montantCible" to montantCible,
+            "montantActuel" to montantActuel,
+            "dateEcheance" to dateEcheance?.let { Date.from(it.atStartOfDay(ZoneOffset.UTC).toInstant()) }
+        )
     }
 }
