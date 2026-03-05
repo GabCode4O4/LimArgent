@@ -207,11 +207,11 @@ fun ObjectifItem(
 @Composable
 fun AddObjectifDialog(
     onDismiss: () -> Unit,
-    onConfirm: (String, Double, LocalDate?, Double) -> Unit // Modifier la signature
+    onConfirm: (String, Double, LocalDate?, Double) -> Unit
 ) {
     var nom by remember { mutableStateOf("") }
     var montant by remember { mutableStateOf("") }
-    var taux by remember { mutableStateOf("") } // Nouveau state
+    var taux by remember { mutableStateOf("") }
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -232,7 +232,7 @@ fun AddObjectifDialog(
                     singleLine = true
                 )
                 Spacer(modifier = Modifier.height(8.dp))
-                OutlinedTextField( // Nouveau champ pour le taux
+                OutlinedTextField(
                     value = taux,
                     onValueChange = { if (it.all { char -> char.isDigit() || char == '.' }) taux = it },
                     label = { Text("Taux d'intérêt annuel (%)") },
@@ -244,7 +244,7 @@ fun AddObjectifDialog(
             TextButton(
                 onClick = {
                     val montantDouble = montant.toDoubleOrNull()
-                    val tauxDouble = taux.toDoubleOrNull() ?: 0.0 // 0.0 par défaut si vide
+                    val tauxDouble = taux.toDoubleOrNull() ?: 0.0
                     if (nom.isNotBlank() && montantDouble != null && montantDouble > 0) {
                         onConfirm(nom, montantDouble, null, tauxDouble)
                     }

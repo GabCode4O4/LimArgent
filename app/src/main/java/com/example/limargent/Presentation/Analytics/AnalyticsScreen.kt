@@ -1,128 +1,83 @@
 package com.example.limargent.Presentation.Analytics
 
 import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearOutSlowInEasing
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.unit.dp
-import com.example.limargent.Domain.MovType
-import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.Card
-import androidx.compose.material3.SegmentedButton
-import androidx.compose.material3.SegmentedButtonDefaults
-import androidx.compose.material3.SingleChoiceSegmentedButtonRow
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.text.BasicText
-import androidx.compose.material3.CardDefaults
-import androidx.compose.runtime.collectAsState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.*
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import com.example.limargent.Domain.MovType
 import java.time.LocalDate
 import java.time.format.TextStyle
 import java.time.temporal.ChronoUnit
 import java.util.*
 import kotlin.math.abs
-import kotlin.math.absoluteValue
 import kotlin.math.max
 
-enum class AnalyticsMode {
-    DEPENSES,
-    RECETTES
-}
+enum class AnalyticsMode { DEPENSES, RECETTES }
+enum class AnalyticsTab { BUDGET}
 
-enum class AnalyticsTab {
-    BUDGETCHARTS,
-    EPARGNECHARTS
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AnalyticsScreen(viewModel: AnalyticsViewModel) {
-
-    var currentGraph by remember { mutableStateOf(AnalyticsTab.BUDGETCHARTS) }
-
-    // --- N'est nécessaire que pour l'onglet des piecharts je peux pas le mettre dans la fonction car j'en ai besoin pour la topbar
+    var currentTab by remember { mutableStateOf(AnalyticsTab.BUDGET) }
     var mode by remember { mutableStateOf(AnalyticsMode.DEPENSES) }
     var selectedCategory by remember { mutableStateOf<String?>(null) }
-    // ----------------------------------------------------------------------------
 
     Scaffold(
-        topBar = {
-            if (selectedCategory == null && currentGraph== AnalyticsTab.BUDGETCHARTS) {
-                Column (modifier = Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally){
-                    TopAppBar(title = { Text("Analytics") })
-                    AnalyticsSegmentedButtons(
-                        mode = mode,
-                        onModeChange = { mode = it }
-                    )
-                }
-            }
-        },
-        bottomBar = {
-            BottomNavigationBar(
-                currentGraph = currentGraph,
-                onGraphChange = { currentGraph = it }
-            )
-        },
+        containerColor = MaterialTheme.colorScheme.background
     ) { paddingValues ->
-
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .padding(16.dp),
+                .padding(horizontal = 24.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-
-            // --- N'apparait que quand on est dans un graphique de catégorie
-            BoutonRetour(
-                selectedCategory = selectedCategory,
-                onClick = { selectedCategory = null },
-                modifier = Modifier.align(Alignment.Start)
-            )
-            selectedCategory?.let { Text(text = it); Spacer(modifier = Modifier.height(16.dp)) }
-            // --------------------------------------------------------------
-
-            // Affichage des graphique selon le type de graphe choisi en onglet
-            when (currentGraph) {
-                AnalyticsTab.BUDGETCHARTS -> BudgetChartsTab(viewModel=viewModel, mode=mode,selectedCategory=selectedCategory,onCategoryClick = { selectedCategory = it })
-                AnalyticsTab.EPARGNECHARTS -> EpargneChartTab(viewModel)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "Analyses",
+                    style = MaterialTheme.typography.headlineLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onBackground
+                )
             }
 
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            when (currentTab) {
+                AnalyticsTab.BUDGET -> BudgetChartsTab(
+                    viewModel = viewModel,
+                    mode = mode,
+                    onModeChange = { mode = it },
+                    selectedCategory = selectedCategory,
+                    onCategoryClick = { selectedCategory = it },
+                    onBackClick = { selectedCategory = null }
+                )
+            }
         }
     }
 }
@@ -131,409 +86,286 @@ fun AnalyticsScreen(viewModel: AnalyticsViewModel) {
 fun BudgetChartsTab(
     viewModel: AnalyticsViewModel,
     mode: AnalyticsMode,
+    onModeChange: (AnalyticsMode) -> Unit,
     selectedCategory: String?,
-    onCategoryClick: (String) -> Unit
+    onCategoryClick: (String) -> Unit,
+    onBackClick: () -> Unit
 ) {
-
     val mouvements by viewModel.mouvements.collectAsState()
 
     val data = remember(mouvements, mode, selectedCategory) {
         when {
-            selectedCategory != null ->
-                viewModel.getCategoryData(selectedCategory)
-
-            mode == AnalyticsMode.DEPENSES ->
-                viewModel.getCategoriesData(MovType.sortie)
-
-            else ->
-                viewModel.getCategoriesData(MovType.entree)
+            selectedCategory != null -> viewModel.getCategoryData(selectedCategory)
+            mode == AnalyticsMode.DEPENSES -> viewModel.getCategoriesData(MovType.sortie)
+            else -> viewModel.getCategoriesData(MovType.entree)
         }
     }
-
-
-    val colors = getChartColors(data.size)
 
     LazyColumn(
         horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier.fillMaxSize()
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(bottom = 40.dp)
     ) {
-
         item {
-
             if (selectedCategory == null) {
+                IOSSegmentedControl(
+                    items = listOf("Dépenses", "Recettes"),
+                    selectedIndex = if (mode == AnalyticsMode.DEPENSES) 0 else 1,
+                    onItemSelected = { onModeChange(if (it == 0) AnalyticsMode.DEPENSES else AnalyticsMode.RECETTES) }
+                )
                 Spacer(modifier = Modifier.height(32.dp))
 
-                LineChart(viewModel.getBudgetByDateList())
-
+                ChartCard {
+                    Text(
+                        text = "Évolution du solde",
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    LineChart(viewModel.getBudgetByDateList())
+                }
                 Spacer(modifier = Modifier.height(32.dp))
+            } else {
+                Row(
+                    modifier = Modifier.fillMaxWidth().clickable { onBackClick() },
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text("← Retour", color = Color(0xFF007AFF), fontWeight = FontWeight.Medium)
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(selectedCategory, fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                }
+                Spacer(modifier = Modifier.height(24.dp))
             }
         }
 
         item {
-            AnimatedPieChart(data = data)
-
-            Spacer(modifier = Modifier.height(16.dp))
+            // Carte Donut Chart
+            ChartCard {
+                Text(
+                    text = "Répartition",
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                AnimatedDonutChart(data = data)
+            }
+            Spacer(modifier = Modifier.height(24.dp))
         }
+
+        val colors = getPremiumColors(data.size)
 
         items(data.size) { index ->
             val entry = data.entries.elementAt(index)
-
-            if (selectedCategory == null) {
-                CategoryItemCard(
-                    name = entry.key,
-                    color = colors[index % colors.size],
-                    onClick = { onCategoryClick(entry.key) }
-                )
-            } else {
-                LabelItemCard(
-                    name = entry.key,
-                    color = colors[index % colors.size]
-                )
-            }
+            CleanCategoryRow(
+                name = entry.key,
+                amount = entry.value,
+                color = colors[index % colors.size],
+                onClick = { if (selectedCategory == null) onCategoryClick(entry.key) }
+            )
         }
+    }
+}
 
+
+
+
+@Composable
+fun ChartCard(content: @Composable ColumnScope.() -> Unit) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(24.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        elevation = CardDefaults.cardElevation(0.dp) // Flat design
+    ) {
+        Column(
+            modifier = Modifier.padding(24.dp),
+            content = content
+        )
     }
 }
 
 @Composable
-fun EpargneChartTab(viewModel: AnalyticsViewModel) {
-    Text("Graphique en radial (67)", color = Color.White)
+fun IOSSegmentedControl(
+    items: List<String>,
+    selectedIndex: Int,
+    onItemSelected: (Int) -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(40.dp)
+            .clip(RoundedCornerShape(8.dp))
+            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+            .padding(2.dp),
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        items.forEachIndexed { index, text ->
+            val isSelected = selectedIndex == index
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxHeight()
+                    .clip(RoundedCornerShape(6.dp))
+                    .background(if (isSelected) MaterialTheme.colorScheme.surface else Color.Transparent)
+                    .clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null,
+                        onClick = { onItemSelected(index) }
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = text,
+                    fontSize = 14.sp,
+                    fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Medium,
+                    color = if (isSelected) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+    }
 }
 
 @Composable
-fun LineChart(data : List<Pair<LocalDate, Float>>){
-    if (data.isEmpty()) return
-    Canvas(modifier = Modifier.fillMaxWidth().height(300.dp).offset(x=(-16).dp)) {
+fun CleanCategoryRow(name: String, amount: Float, color: Color, onClick: () -> Unit) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onClick() }
+            .padding(vertical = 12.dp, horizontal = 8.dp)
+    ) {
+        Box(
+            modifier = Modifier
+                .size(14.dp)
+                .background(color, CircleShape)
+        )
+        Spacer(modifier = Modifier.width(16.dp))
+        Text(
+            text = name,
+            modifier = Modifier.weight(1f),
+            fontWeight = FontWeight.Medium,
+            fontSize = 16.sp
+        )
+        Text(
+            text = "${String.format("%.2f", amount)} €",
+            fontWeight = FontWeight.SemiBold,
+            fontSize = 16.sp
+        )
+    }
+}
+
+@Composable
+fun AnimatedDonutChart(data: Map<String, Float>) {
+    val progress = remember { Animatable(0f) }
+    LaunchedEffect(data) {
+        progress.snapTo(0f)
+        progress.animateTo(1f, animationSpec = tween(800, easing = FastOutSlowInEasing))
+    }
+
+    val total = data.values.sum()
+    val colors = getPremiumColors(data.size)
+
+    Box(
+        contentAlignment = Alignment.Center,
+        modifier = Modifier.fillMaxWidth().padding(vertical = 16.dp)
+    ) {
+        Canvas(modifier = Modifier.size(220.dp)) {
+            val thickness = 40f
+            var startAngle = -90f
+            val gap = if (data.size > 1) 3f else 0f
+
+            data.entries.forEachIndexed { index, entry ->
+                val sweepAngle = (entry.value / total) * 360f * progress.value
+                drawArc(
+                    color = colors[index % colors.size],
+                    startAngle = startAngle + (gap / 2),
+                    sweepAngle = max(1f, sweepAngle - gap),
+                    useCenter = false,
+                    style = Stroke(width = thickness, cap = StrokeCap.Round)
+                )
+                startAngle += (entry.value / total) * 360f
+            }
+        }
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Text(
+                text = "Total",
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                fontSize = 14.sp
+            )
+            Text(
+                text = "${total.toInt()} €",
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+        }
+    }
+}
+
+@Composable
+fun LineChart(data: List<Pair<LocalDate, Float>>) {
+    if (data.isEmpty()) {
+        Text("Pas assez de données", color = MaterialTheme.colorScheme.onSurfaceVariant)
+        return
+    }
+
+    val primaryColor = Color(0xFF007AFF) // Bleu Apple
+
+    Canvas(modifier = Modifier.fillMaxWidth().height(180.dp)) {
         val w = size.width
         val h = size.height
+        val maxAbsValue = data.maxOfOrNull { abs(it.second) } ?: 1f
+        val scaleY = (h * 0.8f) / (maxAbsValue * 2)
         val centerY = h / 2f
-
-        // Échelle verticale
-        val maxAbsValue = data.maxOf { abs(it.second) }
-        val scaleY = if (maxAbsValue == 0f) 1f else (h / 2f) / maxAbsValue
-
-        // Dates
         val startDate = data.first().first
         val endDate = data.last().first
         val totalDays = max(ChronoUnit.DAYS.between(startDate, endDate).toFloat(), 1f)
 
-        // Calcul des points
         val points = data.map { (date, value) ->
             val daysFromStart = ChronoUnit.DAYS.between(startDate, date).toFloat()
             val x = (daysFromStart / totalDays) * w
-            val y = centerY - value * scaleY
+            val y = centerY - (value * scaleY)
             Offset(x, y)
         }
 
-        // --- Path Bézier pour lisser la courbe ---
-        val path = Path().apply {
-            if (points.isNotEmpty()) {
-                moveTo(points.first().x, points.first().y)
-                for (i in 0 until points.size - 1) {
-                    val p0 = points[i]
-                    val p1 = points[i + 1]
-                    val midX = (p0.x + p1.x) / 2
-                    val midY = (p0.y + p1.y) / 2
-                    quadraticTo(p0.x, p0.y, midX, midY)
-                }
-                // relier le dernier point exactement
-                lineTo(points.last().x, points.last().y)
-            }
-        }
-
-        // Barre du milieu (0)
+        // Ligne de zéro subtile
         drawLine(
-            color = Color.Gray,
+            color = Color.LightGray.copy(alpha = 0.5f),
             start = Offset(0f, centerY),
             end = Offset(w, centerY),
             strokeWidth = 2f,
             pathEffect = PathEffect.dashPathEffect(floatArrayOf(10f, 10f), 0f)
         )
 
-        // Dessiner la courbe avec cap arrondi
-        val lastValue = data.last().second
+        val path = Path().apply {
+            if (points.isNotEmpty()) {
+                moveTo(points.first().x, points.first().y)
+                for (i in 0 until points.size - 1) {
+                    val p0 = points[i]
+                    val p1 = points[i + 1]
+                    quadraticTo(p0.x, p0.y, (p0.x + p1.x) / 2, (p0.y + p1.y) / 2)
+                }
+                lineTo(points.last().x, points.last().y)
+            }
+        }
+
         drawPath(
             path = path,
-            color = if (lastValue > 0f) Color.Green else Color.Red,
-            style = Stroke(width = 10f, cap = StrokeCap.Round)
-        )
-
-        // Axe X avec 4 dates
-        val axisDates = listOf(
-            startDate,
-            startDate.plusDays((totalDays / 3f).toLong()),
-            startDate.plusDays((2 * totalDays / 3f).toLong()),
-            endDate
-        )
-        axisDates.forEach { date ->
-            val daysFromStart = ChronoUnit.DAYS.between(startDate, date).toFloat()
-            val x = if (daysFromStart == 0f) (0.05*w).toFloat() else ((daysFromStart / totalDays) * w)
-            val day = date.dayOfMonth
-            val month = date.month.getDisplayName(TextStyle.SHORT, Locale.getDefault())
-            drawContext.canvas.nativeCanvas.apply {
-                drawText(
-                    "$day $month",
-                    x,
-                    h + 40f,
-                    android.graphics.Paint().apply {
-                        color = android.graphics.Color.GRAY
-                        textAlign = android.graphics.Paint.Align.CENTER
-                        textSize = 30f
-                        isFakeBoldText = true
-                    }
-                )
-            }
-        }
-
-        val yValues = listOf(
-            maxAbsValue,
-            maxAbsValue / 2f,
-            -maxAbsValue / 2f,
-            -maxAbsValue
-        )
-
-        yValues.forEach { value ->
-            val y = centerY - value * scaleY
-
-            drawContext.canvas.nativeCanvas.drawText(
-                String.format("%.0f", value),
-                w + 10f, // 👉 à droite du graphique
-                y + 10f,
-                android.graphics.Paint().apply {
-                    color = android.graphics.Color.GRAY
-                    textSize = 28f
-                    textAlign = android.graphics.Paint.Align.LEFT
-                    isFakeBoldText = true
-                }
-            )
-        }
-    }
-}
-
-@Composable
-fun AnalyticsSegmentedButtons(
-    mode: AnalyticsMode,
-    onModeChange: (AnalyticsMode) -> Unit
-) {
-
-    SingleChoiceSegmentedButtonRow {
-        SegmentedButton(
-            selected = mode == AnalyticsMode.DEPENSES,
-            onClick = { onModeChange(AnalyticsMode.DEPENSES) },
-            shape = SegmentedButtonDefaults.itemShape(index = 0, count = 2)
-        ) {
-            Text("Dépenses")
-        }
-
-        SegmentedButton(
-            selected = mode == AnalyticsMode.RECETTES,
-            onClick = { onModeChange(AnalyticsMode.RECETTES) },
-            shape = SegmentedButtonDefaults.itemShape(index = 1, count = 2)
-        ) {
-            Text("Recettes")
-        }
-    }
-}
-
-@Composable
-fun BottomNavigationBar(
-    currentGraph: AnalyticsTab,
-    onGraphChange: (AnalyticsTab) -> Unit
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(Color.LightGray),
-        horizontalArrangement = Arrangement.SpaceEvenly
-    ) {
-        Text(
-            text = "BudgetCharts",
-            color = if (currentGraph == AnalyticsTab.BUDGETCHARTS) Color.Blue else Color.Black,
-            modifier = Modifier.clickable { onGraphChange(AnalyticsTab.BUDGETCHARTS) }
-        )
-        Text(
-            text = "EpargneCharts",
-            color = if (currentGraph == AnalyticsTab.EPARGNECHARTS) Color.Blue else Color.Black,
-            modifier = Modifier.clickable { onGraphChange(AnalyticsTab.EPARGNECHARTS) }
+            color = primaryColor,
+            style = Stroke(width = 8f, cap = StrokeCap.Round)
         )
     }
 }
 
-@Composable
-fun BoutonRetour(
-    selectedCategory: String?,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    if (selectedCategory != null) {
-        Spacer(modifier = Modifier.height(16.dp))
-        Text(
-            "Retour",
-            modifier = modifier.clickable { onClick() },
-            color = MaterialTheme.colorScheme.primary
-        )
-        Spacer(modifier = Modifier.height(16.dp))
-    }
-}
-
-@Composable
-fun AnimatedPieChart(data: Map<String, Float>) {
-
-    Spacer(modifier = Modifier.height(32.dp))
-
-    val progress = remember { Animatable(0f) }
-
-    LaunchedEffect(data) {
-        progress.snapTo(0f)
-        progress.animateTo(
-            targetValue = 1f,
-            animationSpec = tween(
-                durationMillis = 1000,
-                easing = LinearOutSlowInEasing
-            )
-        )
-    }
-
-    val total = data.values.sum()
-
-    Box(
-        contentAlignment = Alignment.Center
-    ) {
-
-        Canvas(modifier = Modifier.size(200.dp)) {
-
-            val colors = getChartColors(data.size)
-            val thickness = size.minDimension / 8
-
-            var startAngle = -90f
-
-            data.entries.forEachIndexed { index, entry ->
-
-                val sweepAngle = (entry.value / total) * 360f * progress.value
-
-                drawArc(
-                    color = colors[index % colors.size],
-                    startAngle = startAngle,
-                    sweepAngle = sweepAngle,
-                    useCenter = false,
-                    style = Stroke(width = thickness)
-                )
-
-                startAngle += (entry.value / total) * 360f
-            }
-        }
-
-        Text(
-            text = total.toInt().toString() + " €",
-            style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.Bold
-        )
-    }
-
-    Spacer(modifier = Modifier.height(48.dp))
-}
-
-@Composable
-fun AnimatedPieChartV2(data: Map<String, Float>) {
-
-    Spacer(modifier = Modifier.height(32.dp))
-
-    val progress = remember { Animatable(0f) }
-    LaunchedEffect(data) {
-        progress.snapTo(0f)
-        progress.animateTo(
-            1f,
-            animationSpec = tween(durationMillis = 1000, easing = LinearOutSlowInEasing)
-        )
-    }
-
-    Canvas(modifier = Modifier.size(200.dp)) {
-        val total = data.values.sum()
-        val colors = getChartColors(data.size)
-        val thickness = size.minDimension / 8
-
-        var startAngle = -90f
-        val gap = 2f
-        data.entries.forEachIndexed { index, entry ->
-            val sweepAngle = (entry.value / total) * 360f * progress.value
-
-            drawArc(
-                color = colors[index % colors.size],
-                startAngle = startAngle,
-                sweepAngle = sweepAngle - gap,
-                useCenter = false,
-                style = Stroke(
-                    width = thickness,
-                    cap = StrokeCap.Round
-                )
-            )
-
-            startAngle += (entry.value / total) * 360f
-        }
-    }
-
-    Spacer(modifier = Modifier.height(48.dp))
-}
-
-@Composable
-fun CategoryItemCard(
-    name: String,
-    color: Color,
-    onClick: () -> Unit
-) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 4.dp)
-            .clickable { onClick() }
-    ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.padding(12.dp)
-        ) {
-            Box(
-                modifier = Modifier
-                    .size(12.dp)
-                    .background(color, CircleShape)
-            )
-            Spacer(modifier = Modifier.width(8.dp))
-            Text(name)
-        }
-    }
-}
-
-@Composable
-fun LabelItemCard(
-    name: String,
-    color: Color
-) {
-    Card(
-        colors = CardDefaults.cardColors(
-            containerColor = Color.Transparent
-        ),
-        elevation = CardDefaults.cardElevation(0.dp),
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 4.dp)
-    ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.padding(12.dp)
-        ) {
-            Box(
-                modifier = Modifier
-                    .size(12.dp)
-                    .background(color, CircleShape)
-            )
-            Spacer(modifier = Modifier.width(8.dp))
-            Text(name)
-        }
-    }
-}
-
-fun getChartColors(length:Int) : List<Color>{
-    return List(length) { i ->
-        val hue = i * 360f / length       // couleurs bien séparées
-        Color.hsv(hue, 0.6f, 0.85f)         // pastel, pas néon
-    }
+// Génère une palette de couleurs douces et modernes (style iOS)
+fun getPremiumColors(length: Int): List<Color> {
+    val premiumPalette = listOf(
+        Color(0xFF007AFF), // Blue
+        Color(0xFF34C759), // Green
+        Color(0xFFFF9500), // Orange
+        Color(0xFFAF52DE), // Purple
+        Color(0xFFFF2D55), // Pink
+        Color(0xFF5856D6), // Indigo
+        Color(0xFF5AC8FA)  // Teal
+    )
+    return List(length) { i -> premiumPalette[i % premiumPalette.size] }
 }

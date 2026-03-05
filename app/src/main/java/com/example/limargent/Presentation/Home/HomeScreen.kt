@@ -28,6 +28,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.limargent.Domain.MoneyMovement
 import com.example.limargent.Domain.MovType
+import com.example.limargent.ui.theme.AppleGreen
+import com.example.limargent.ui.theme.AppleRed
 import java.time.format.DateTimeFormatter
 import java.time.Month
 import java.time.format.TextStyle
@@ -70,211 +72,214 @@ fun HomeScreen(viewModel: HomeViewModel, onLogout: () -> Unit) {
             )
         }
     ) { paddingValues ->
-        Column(
+        LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .padding(horizontal = 24.dp)
+                .padding(horizontal = 24.dp),
+            contentPadding = PaddingValues(bottom = 80.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            Text(
-                text = "Bonjour, $userName",
-                style = MaterialTheme.typography.headlineMedium,
-                color = MaterialTheme.colorScheme.onBackground
-            )
-            Text(
-                text = "Bienvenue sur LimArgent",
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.primary,
-                fontWeight = FontWeight.Bold
-            )
 
-            Spacer(modifier = Modifier.height(24.dp))
-            BalanceCard(budget = budget)
-            Spacer(modifier = Modifier.height(24.dp))
-            
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
+            item {
+                Spacer(modifier = Modifier.height(8.dp))
                 Text(
-                    text = "Mes mouvements",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    text = "Bonjour, $userName",
+                    style = MaterialTheme.typography.headlineMedium,
+                    color = MaterialTheme.colorScheme.onBackground
                 )
-                IconButton(onClick = { lesFiltres = !lesFiltres }) {
-                    Icon(
-                        imageVector = if (lesFiltres) Icons.Default.FilterListOff else Icons.Default.FilterList,
-                        contentDescription = "Filtres",
-                        tint = if (lesFiltres || viewModel.recherche.isNotBlank() || viewModel.moisFiltre != null)
-                            MaterialTheme.colorScheme.primary
-                        else MaterialTheme.colorScheme.onSurfaceVariant
+                Text(
+                    text = "Bienvenue sur LimArgent",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.primary,
+                    fontWeight = FontWeight.Bold
+                )
+
+                Spacer(modifier = Modifier.height(24.dp))
+                BalanceCard(budget = budget)
+                Spacer(modifier = Modifier.height(24.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "Mes mouvements",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
+                    IconButton(onClick = { lesFiltres = !lesFiltres }) {
+                        Icon(
+                            imageVector = if (lesFiltres) Icons.Default.FilterListOff else Icons.Default.FilterList,
+                            contentDescription = "Filtres",
+                            tint = if (lesFiltres || viewModel.recherche.isNotBlank() || viewModel.moisFiltre != null)
+                                MaterialTheme.colorScheme.primary
+                            else MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
                 }
             }
 
-            //Filtrage
-            AnimatedVisibility(
-                visible = lesFiltres,
-                enter = expandVertically(),
-                exit = shrinkVertically()
-            ) {
-                Column(modifier = Modifier.padding(bottom = 12.dp)) {
-                    OutlinedTextField(
-                        value = viewModel.recherche,
-                        onValueChange = { viewModel.recherche = it },
-                        placeholder = { Text("Rechercher un mouvement...") },
-                        leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
-                        trailingIcon = {
-                            if (viewModel.recherche.isNotEmpty()) {
-                                IconButton(onClick = { viewModel.recherche = "" }) {
-                                    Icon(Icons.Default.Clear, contentDescription = "Effacer")
+            item {
+                AnimatedVisibility(
+                    visible = lesFiltres,
+                    enter = expandVertically(),
+                    exit = shrinkVertically()
+                ) {
+                    Column(modifier = Modifier.padding(bottom = 12.dp)) {
+                        OutlinedTextField(
+                            value = viewModel.recherche,
+                            onValueChange = { viewModel.recherche = it },
+                            placeholder = { Text("Rechercher un mouvement...") },
+                            leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
+                            trailingIcon = {
+                                if (viewModel.recherche.isNotEmpty()) {
+                                    IconButton(onClick = { viewModel.recherche = "" }) {
+                                        Icon(Icons.Default.Clear, contentDescription = "Effacer")
+                                    }
                                 }
-                            }
-                        },
-                        modifier = Modifier.fillMaxWidth(),
-                        singleLine = true,
-                        shape = RoundedCornerShape(12.dp)
-                    )
-
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Filtrer(
-                            modifier = Modifier.weight(1f),
-                            label = "Type",
-                            options = listOf("Tous", "Entrée", "Sortie"),
-                            selectedOption = when(viewModel.typeFiltre) {
-                                MovType.entree -> "Entrée"
-                                MovType.sortie -> "Sortie"
-                                null -> "Tous"
                             },
-                            onOptionSelected = {
-                                viewModel.typeFiltre = when(it) {
-                                    "Entrée" -> MovType.entree
-                                    "Sortie" -> MovType.sortie
-                                    else -> null
+                            modifier = Modifier.fillMaxWidth(),
+                            singleLine = true,
+                            shape = RoundedCornerShape(12.dp)
+                        )
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Filtrer(
+                                modifier = Modifier.weight(1f),
+                                label = "Type",
+                                options = listOf("Tous", "Entrée", "Sortie"),
+                                selectedOption = when(viewModel.typeFiltre) {
+                                    MovType.entree -> "Entrée"
+                                    MovType.sortie -> "Sortie"
+                                    null -> "Tous"
+                                },
+                                onOptionSelected = {
+                                    viewModel.typeFiltre = when(it) {
+                                        "Entrée" -> MovType.entree
+                                        "Sortie" -> MovType.sortie
+                                        else -> null
+                                    }
                                 }
+                            )
+
+                            val categoryOptions = listOf("Toutes") + viewModel.categories
+                            Filtrer(
+                                modifier = Modifier.weight(1f),
+                                label = "Catégorie",
+                                options = categoryOptions,
+                                selectedOption = viewModel.catFiltre ?: "Toutes",
+                                onOptionSelected = {
+                                    viewModel.catFiltre = if (it == "Toutes") null else it
+                                }
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            val months = listOf("Tous") + Month.values().map { it.getDisplayName(TextStyle.FULL, Locale.FRANCE).replaceFirstChar { char -> char.uppercase() } }
+                            Filtrer(
+                                modifier = Modifier.weight(1f),
+                                label = "Mois",
+                                options = months,
+                                selectedOption = viewModel.moisFiltre?.let { months[it] } ?: "Tous",
+                                onOptionSelected = {
+                                    viewModel.moisFiltre = if (it == "Tous") null else months.indexOf(it)
+                                }
+                            )
+
+                            val availableYears = listOf("Toutes") + viewModel.mouvements.map { it.date.year }.distinct().sortedDescending().map { it.toString() }
+                            Filtrer(
+                                modifier = Modifier.weight(1f),
+                                label = "Année",
+                                options = availableYears,
+                                selectedOption = viewModel.anneeFiltre?.toString() ?: "Toutes",
+                                onOptionSelected = {
+                                    viewModel.anneeFiltre = if (it == "Toutes") null else it.toIntOrNull()
+                                }
+                            )
+                        }
+
+                        if (viewModel.typeFiltre != null || viewModel.catFiltre != null || viewModel.moisFiltre != null || viewModel.anneeFiltre != null || viewModel.recherche.isNotBlank()) {
+                            TextButton(
+                                onClick = { viewModel.resetFilters() },
+                                modifier = Modifier.align(Alignment.End)
+                            ) {
+                                Text("Réinitialiser les filtres", color = MaterialTheme.colorScheme.error)
                             }
-                        )
-
-                        val categoryOptions = listOf("Toutes") + viewModel.categories
-                        Filtrer(
-                            modifier = Modifier.weight(1f),
-                            label = "Catégorie",
-                            options = categoryOptions,
-                            selectedOption = viewModel.catFiltre ?: "Toutes",
-                            onOptionSelected = {
-                                viewModel.catFiltre = if (it == "Toutes") null else it
-                            }
-                        )
-                    }
-
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        val months = listOf("Tous") + Month.values().map { it.getDisplayName(TextStyle.FULL, Locale.FRANCE).replaceFirstChar { char -> char.uppercase() } }
-                        Filtrer(
-                            modifier = Modifier.weight(1f),
-                            label = "Mois",
-                            options = months,
-                            selectedOption = viewModel.moisFiltre?.let { months[it] } ?: "Tous",
-                            onOptionSelected = {
-                                viewModel.moisFiltre = if (it == "Tous") null else months.indexOf(it)
-                            }
-                        )
-
-                        val availableYears = listOf("Toutes") + viewModel.mouvements.map { it.date.year }.distinct().sortedDescending().map { it.toString() }
-                        Filtrer(
-                            modifier = Modifier.weight(1f),
-                            label = "Année",
-                            options = availableYears,
-                            selectedOption = viewModel.anneeFiltre?.toString() ?: "Toutes",
-                            onOptionSelected = {
-                                viewModel.anneeFiltre = if (it == "Toutes") null else it.toIntOrNull()
-                            }
-                        )
-                    }
-
-                    if (viewModel.typeFiltre != null || viewModel.catFiltre != null || viewModel.moisFiltre != null || viewModel.anneeFiltre != null || viewModel.recherche.isNotBlank()) {
-                        TextButton(
-                            onClick = { viewModel.resetFilters() },
-                            modifier = Modifier.align(Alignment.End)
-                        ) {
-                            Text("Réinitialiser les filtres", color = MaterialTheme.colorScheme.error)
                         }
                     }
                 }
             }
 
-            Spacer(modifier = Modifier.height(12.dp))
-
             if (mouvements.isEmpty()) {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = if (viewModel.mouvements.isEmpty()) "Aucun mouvement" else "Aucun résultat pour ces filtres",
-                        color = Color.Gray
-                    )
-                }
-            } else {
-                LazyColumn(
-                    verticalArrangement = Arrangement.spacedBy(12.dp),
-                    contentPadding = PaddingValues(bottom = 80.dp) //Pour ne pas cacher le dernier sous le bouton +
-                ) {
-                    items(
-                        items = mouvements,
-                        key = { it.id ?: it.hashCode() }
-                    ) { mouvement ->
-                        val dismissState = rememberSwipeToDismissBoxState(
-                            confirmValueChange = {
-                                if (it == SwipeToDismissBoxValue.EndToStart) {
-                                    viewModel.delMouvement(mouvement)
-                                    true
-                                } else {
-                                    false
-                                }
-                            }
-                        )
-
-                        SwipeToDismissBox(
-                            state = dismissState,
-                            backgroundContent = {
-                                val color = if (dismissState.dismissDirection == SwipeToDismissBoxValue.EndToStart) {
-                                    MaterialTheme.colorScheme.errorContainer
-                                } else {
-                                    Color.Transparent
-                                }
-
-                                Box(
-                                    modifier = Modifier
-                                        .fillMaxSize()
-                                        .clip(RoundedCornerShape(16.dp))
-                                        .background(color)
-                                        .padding(horizontal = 20.dp),
-                                    contentAlignment = Alignment.CenterEnd
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Default.Delete,
-                                        contentDescription = "Supprimer",
-                                        tint = MaterialTheme.colorScheme.onErrorContainer
-                                    )
-                                }
-                            },
-                            content = {
-                                MouvementItem(mouvement = mouvement)
-                            },
-                            enableDismissFromStartToEnd = false
+                item {
+                    Box(
+                        modifier = Modifier.fillMaxWidth().height(200.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = if (viewModel.mouvements.isEmpty()) "Aucun mouvement" else "Aucun résultat pour ces filtres",
+                            color = Color.Gray
                         )
                     }
+                }
+            } else {
+                items(
+                    items = mouvements,
+                    key = { it.id ?: it.hashCode() }
+                ) { mouvement ->
+                    val dismissState = rememberSwipeToDismissBoxState(
+                        confirmValueChange = {
+                            if (it == SwipeToDismissBoxValue.EndToStart) {
+                                viewModel.delMouvement(mouvement)
+                                true
+                            } else {
+                                false
+                            }
+                        }
+                    )
+
+                    SwipeToDismissBox(
+                        state = dismissState,
+                        backgroundContent = {
+                            val color = if (dismissState.dismissDirection == SwipeToDismissBoxValue.EndToStart) {
+                                MaterialTheme.colorScheme.errorContainer
+                            } else {
+                                Color.Transparent
+                            }
+
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .clip(RoundedCornerShape(16.dp))
+                                    .background(color)
+                                    .padding(horizontal = 20.dp),
+                                contentAlignment = Alignment.CenterEnd
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Delete,
+                                    contentDescription = "Supprimer",
+                                    tint = MaterialTheme.colorScheme.onErrorContainer
+                                )
+                            }
+                        },
+                        content = {
+                            MouvementItem(mouvement = mouvement)
+                        },
+                        enableDismissFromStartToEnd = false
+                    )
                 }
             }
         }
     }
 }
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -319,36 +324,38 @@ fun Filtrer(
     }
 }
 
+
+
 @Composable
 fun BalanceCard(budget: Double) {
-    val isPositive = budget >= 0
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .height(140.dp),
+            .padding(vertical = 16.dp),
         shape = RoundedCornerShape(24.dp),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.primaryContainer
+            containerColor = MaterialTheme.colorScheme.surface
         ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
         Column(
             modifier = Modifier
-                .fillMaxSize()
-                .padding(24.dp),
-            verticalArrangement = Arrangement.Center
+                .fillMaxWidth()
+                .padding(32.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
                 text = "Solde Total",
                 fontSize = 14.sp,
-                color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
+                fontWeight = FontWeight.Medium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             Spacer(modifier = Modifier.height(8.dp))
             Text(
                 text = "${"%.2f".format(budget)} €",
-                fontSize = 36.sp,
+                fontSize = 42.sp,
                 fontWeight = FontWeight.Bold,
-                color = if (isPositive) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.error
+                color = MaterialTheme.colorScheme.onSurface
             )
         }
     }
@@ -357,53 +364,34 @@ fun BalanceCard(budget: Double) {
 @Composable
 fun MouvementItem(mouvement: MoneyMovement) {
     val isIncome = mouvement.type == MovType.entree
-    val amountColor = if (isIncome) Color(0xFF4CAF50) else Color(0xFFE53935)
-    val iconText = if (isIncome) "+" else "-"
-    val iconBackgroundColor = amountColor.copy(alpha = 0.1f)
+    val amountColor = if (isIncome) AppleGreen else AppleRed
     val formatDate = DateTimeFormatter.ofPattern("dd MMM yyyy")
 
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(16.dp))
-            .background(MaterialTheme.colorScheme.surface)
-            .padding(12.dp),
+            .background(MaterialTheme.colorScheme.background)
+            .padding(vertical = 12.dp, horizontal = 8.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Box(
-            modifier = Modifier
-                .size(48.dp)
-                .clip(RoundedCornerShape(12.dp))
-                .background(iconBackgroundColor),
-            contentAlignment = Alignment.Center
-        ) {
-            Text(
-                text = iconText,
-                color = amountColor,
-                fontWeight = FontWeight.Black,
-                fontSize = 20.sp
-            )
-        }
-
-        Spacer(modifier = Modifier.width(16.dp))
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = mouvement.titre,
                 fontWeight = FontWeight.SemiBold,
-                fontSize = 16.sp,
-                color = MaterialTheme.colorScheme.onSurface
+                fontSize = 17.sp,
+                color = MaterialTheme.colorScheme.onBackground
             )
-            Spacer(modifier = Modifier.height(4.dp))
+            Spacer(modifier = Modifier.height(2.dp))
             Text(
                 text = "${mouvement.categorie} • ${mouvement.date.format(formatDate)}",
-                fontSize = 12.sp,
+                fontSize = 13.sp,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
         Text(
             text = "${if (isIncome) "+" else "-"}${mouvement.montant} €",
-            fontWeight = FontWeight.Bold,
-            fontSize = 16.sp,
+            fontWeight = FontWeight.Medium,
+            fontSize = 17.sp,
             color = amountColor
         )
     }

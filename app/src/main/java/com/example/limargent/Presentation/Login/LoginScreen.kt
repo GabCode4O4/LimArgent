@@ -1,34 +1,51 @@
 package com.example.limargent.Presentation.Login
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 
 @Composable
 fun LoginScreen(
     viewModel: LoginViewModel,
     onNavigateToMain: () -> Unit,
     onNavigateToRegister: () -> Unit
-
 ) {
+    val scrollState = rememberScrollState()
+
     Column(
-        modifier = Modifier.fillMaxSize().padding(24.dp),
+        modifier = Modifier
+            .fillMaxSize()
+
+            .windowInsetsPadding(WindowInsets.systemBars)
+            .verticalScroll(scrollState)
+            .padding(32.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        Text("Connexion LimArgent", style = MaterialTheme.typography.headlineMedium)
+        Spacer(modifier = Modifier.height(48.dp))
 
-        Spacer(modifier = Modifier.height(32.dp))
+        Text(
+            text = "LimArgent",
+            style = MaterialTheme.typography.displaySmall.copy(fontWeight = FontWeight.Bold),
+            color = MaterialTheme.colorScheme.onBackground
+        )
+
+        Spacer(modifier = Modifier.height(48.dp))
 
         OutlinedTextField(
             value = viewModel.identifiant,
             onValueChange = { viewModel.identifiant = it },
             label = { Text("Identifiant") },
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
+            shape = MaterialTheme.shapes.medium
         )
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -38,10 +55,12 @@ fun LoginScreen(
             onValueChange = { viewModel.motDePasse = it },
             label = { Text("Mot de passe") },
             visualTransformation = PasswordVisualTransformation(),
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
+            shape = MaterialTheme.shapes.medium
         )
 
         if (viewModel.isError) {
+            Spacer(modifier = Modifier.height(8.dp))
             Text("Identifiants incorrects", color = MaterialTheme.colorScheme.error)
         }
 
@@ -49,15 +68,22 @@ fun LoginScreen(
 
         Button(
             onClick = { viewModel.onLog(onLoginSuccess = onNavigateToMain) },
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth().height(56.dp),
+            shape = MaterialTheme.shapes.large,
+            colors = ButtonDefaults.buttonColors(
+                containerColor = MaterialTheme.colorScheme.primary,
+                contentColor = MaterialTheme.colorScheme.onPrimary
+            )
         ) {
-            Text("Se connecter")
+            Text("Se connecter", fontSize = 18.sp, fontWeight = FontWeight.SemiBold)
         }
 
         Spacer(modifier = Modifier.height(16.dp))
 
         TextButton(onClick = onNavigateToRegister) {
-            Text("Créer un compte")
+            Text("Créer un compte", color = MaterialTheme.colorScheme.onBackground)
         }
+
+        Spacer(modifier = Modifier.height(48.dp))
     }
 }
