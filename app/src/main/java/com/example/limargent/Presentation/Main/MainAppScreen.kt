@@ -81,7 +81,8 @@ fun MainAppScreen(
             AddMouvement(
                 categories = homeViewModel.categories,
                 onDismiss = { showAddMouv = false },
-                onConfirm = { titre, montant, categorie, type -> homeViewModel.addMouvement(titre, montant, categorie, java.time.LocalDate.now(), type)
+                onConfirm = { titre, montant, categorie, date, type ->
+                    homeViewModel.addMouvement(titre, montant, categorie, date, type)
                     showAddMouv = false
                 }
             )
