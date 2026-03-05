@@ -158,7 +158,8 @@ class UserProvider @Inject constructor(
             .collection("mouvements")
             .addSnapshotListener { snapshot, error ->
                 if (error != null) {
-                    close(error)
+                    trySend(emptyList())
+                    close()
                     return@addSnapshotListener
                 }
                 val mouvementsList = snapshot?.documents?.mapNotNull { it.toMoneyMovement() } ?: emptyList()
@@ -178,7 +179,8 @@ class UserProvider @Inject constructor(
         val listener = firestore.collection("users").document(uid)
             .addSnapshotListener { snapshot, error ->
                 if (error != null) {
-                    close(error)
+                    trySend(emptyList())
+                    close()
                     return@addSnapshotListener
                 }
                 val user = snapshot?.toObject(User::class.java)

@@ -17,6 +17,7 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import java.math.BigDecimal
@@ -78,17 +79,27 @@ class HomeViewModel @Inject constructor(
 
     private fun observeData() {
         viewModelScope.launch {
-            movementsService.getMouvementsFlow().collect { lesMouvements ->
-                mouvements = lesMouvements
-                val ancienBudget = budget
-                val nouveauBudget = manager.getBudget(lesMouvements).toDouble()
-                budget = nouveauBudget
-                verifierSeuilBudget(ancienBudget, nouveauBudget)
-            }
-        }
-        viewModelScope.launch {
-            categoryService.getCategoriesFlow().collect { lesCategories ->
-                categories = lesCategories
+            sessionManager.currentUser.collect { user ->
+                if (user != null) {
+                    launch {
+                        movementsService.getMouvementsFlow().collect { lesMouvements ->
+                            mouvements = lesMouvements
+                            val ancienBudget = budget
+                            val nouveauBudget = manager.getBudget(lesMouvements).toDouble()
+                            budget = nouveauBudget
+                            verifierSeuilBudget(ancienBudget, nouveauBudget)
+                        }
+                    }
+                    launch {
+                        categoryService.getCategoriesFlow().collect { lesCategories ->
+                            categories = lesCategories
+                        }
+                    }
+                } else {
+                    mouvements = emptyList()
+                    categories = emptyList()
+                    budget = 0.0
+                }
             }
         }
     }
