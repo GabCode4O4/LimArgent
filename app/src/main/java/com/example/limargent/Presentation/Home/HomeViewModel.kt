@@ -7,14 +7,17 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.limargent.Application.CategoryService
 import com.example.limargent.Application.MovementsService
+import com.example.limargent.Application.PreferenceService
 import com.example.limargent.Data.SessionManager
 import com.example.limargent.Domain.BudgetManager
 import com.example.limargent.Domain.MoneyMovement
 import com.example.limargent.Domain.MovType
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import java.math.BigDecimal
 import java.time.LocalDate
@@ -24,7 +27,8 @@ import javax.inject.Inject
 class HomeViewModel @Inject constructor(
     private val sessionManager: SessionManager,
     private val movementsService: MovementsService,
-    private val categoryService: CategoryService
+    private val categoryService: CategoryService,
+    private val preferenceService: PreferenceService,
 ) : ViewModel() {
 
     private val userN = MutableStateFlow("Utilisateur")
@@ -42,6 +46,9 @@ class HomeViewModel @Inject constructor(
     var anneeFiltre by mutableStateOf<Int?>(null)
     var catFiltre by mutableStateOf<String?>(null)
     var typeFiltre by mutableStateOf<MovType?>(null)
+
+    private val p_toastMessage = Channel<String>()
+    val toastMessage = p_toastMessage.receiveAsFlow()
 
     val filtrage: List<MoneyMovement>
         get() = mouvements.filter {
@@ -73,12 +80,24 @@ class HomeViewModel @Inject constructor(
         viewModelScope.launch {
             movementsService.getMouvementsFlow().collect { lesMouvements ->
                 mouvements = lesMouvements
-                budget = manager.getBudget(lesMouvements).toDouble()
+                val ancienBudget = budget
+                val nouveauBudget = manager.getBudget(lesMouvements).toDouble()
+                budget = nouveauBudget
+                verifierSeuilBudget(ancienBudget, nouveauBudget)
             }
         }
         viewModelScope.launch {
             categoryService.getCategoriesFlow().collect { lesCategories ->
                 categories = lesCategories
+            }
+        }
+    }
+
+    private suspend fun verifierSeuilBudget(ancienBudget: Double, nouveauBudget: Double) {
+        if (preferenceService.isNotificationActive()) {
+            val seuil = preferenceService.getSeuilBudget()
+            if (nouveauBudget < seuil && ancienBudget >= seuil) {
+               p_toastMessage.send("Vous etes en dessous de votre seuil de budget !")
             }
         }
     }

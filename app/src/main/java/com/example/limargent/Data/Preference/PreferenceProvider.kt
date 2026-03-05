@@ -24,4 +24,34 @@ class PreferenceProvider @Inject constructor(
             userProvider.updateUser(updatedUser)
         }
     }
+
+    override suspend fun getSeuilBudget(): Double {
+        val user = userProvider.getCurrentUser()
+        return user?.preference?.firstOrNull { it.startsWith("seuil:") }?.substringAfter("seuil:")?.toDoubleOrNull() ?: 0.0
+    }
+
+    override suspend fun setSeuilBudget(seuil: Double) {
+        val user = userProvider.getCurrentUser()
+        user?.let {
+            val newPreferences = it.preference.filter { pref -> !pref.startsWith("seuil:") }.toMutableList()
+            newPreferences.add("seuil:$seuil")
+            val updatedUser = it.copy(preference = newPreferences)
+            userProvider.updateUser(updatedUser)
+        }
+    }
+
+    override suspend fun isNotificationActive(): Boolean {
+        val user = userProvider.getCurrentUser()
+        return user?.preference?.firstOrNull { it.startsWith("notif:") }?.substringAfter("notif:")?.toBoolean() ?: false
+    }
+
+    override suspend fun setNotificationActive(active: Boolean) {
+        val user = userProvider.getCurrentUser()
+        user?.let {
+            val newPreferences = it.preference.filter { pref -> !pref.startsWith("notif:") }.toMutableList()
+            newPreferences.add("notif:$active")
+            val updatedUser = it.copy(preference = newPreferences)
+            userProvider.updateUser(updatedUser)
+        }
+    }
 }

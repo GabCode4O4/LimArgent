@@ -3,12 +3,14 @@ package com.example.limargent.Presentation.Configuration
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -51,19 +53,56 @@ fun ConfigurationScreen(viewModel: ConfigurationViewModel) {
 fun PreferenceSection(viewModel: ConfigurationViewModel) {
     val theme by viewModel.theme.collectAsState()
     val isDarkTheme = theme == "dark"
+    val seuilBudget by viewModel.seuilBudget.collectAsState()
+    val notificationActive by viewModel.notificationActive.collectAsState()
+    var seuilInput by remember(seuilBudget) { mutableStateOf(seuilBudget.toString()) }
 
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween
-    ) {
-        Text("Thème sombre")
-        Switch(
-            checked = isDarkTheme,
-            onCheckedChange = {
-                viewModel.setThemePreference(if (it) "dark" else "light")
-            }
-        )
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Text("Thème sombre")
+            Switch(
+                checked = isDarkTheme,
+                onCheckedChange = {
+                    viewModel.setThemePreference(if (it) "dark" else "light")
+                }
+            )
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Text("Notification seuil budget")
+            Switch(
+                checked = notificationActive,
+                onCheckedChange = {
+                    viewModel.setNotificationActive(it)
+                }
+            )
+        }
+
+        if (notificationActive) {
+            Spacer(modifier = Modifier.height(8.dp))
+            OutlinedTextField(
+                value = seuilInput,
+                onValueChange = {
+                    seuilInput = it
+                    it.toDoubleOrNull()?.let { value ->
+                        viewModel.setSeuilBudget(value)
+                    }
+                },
+                label = { Text("Seuil d'alerte (€)") },
+                modifier = Modifier.fillMaxWidth(),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
+            )
+        }
     }
 }
 

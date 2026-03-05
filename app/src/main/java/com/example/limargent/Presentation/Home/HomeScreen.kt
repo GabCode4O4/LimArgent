@@ -1,5 +1,6 @@
 package com.example.limargent.Presentation.Home
 
+import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.shrinkVertically
@@ -21,6 +22,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -37,6 +39,11 @@ fun HomeScreen(viewModel: HomeViewModel, onLogout: () -> Unit) {
     val userName by viewModel.userName.collectAsState()
     val budget = viewModel.budget
     val mouvements = viewModel.filtrage
+    val context = LocalContext.current
+
+    LaunchedEffect(Unit) {
+        viewModel.toastMessage.collect { message -> Toast.makeText(context, message, Toast.LENGTH_LONG).show() }
+    }
 
     var lesFiltres by remember { mutableStateOf(false) }
 

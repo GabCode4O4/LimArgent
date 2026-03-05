@@ -15,7 +15,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class ConfigurationViewModel @Inject constructor(
-    private val categoryService: CategoryService,      // Modifié ici
+    private val categoryService: CategoryService,
     private val preferenceService: PreferenceService
 ) : ViewModel() {
 
@@ -25,6 +25,12 @@ class ConfigurationViewModel @Inject constructor(
     private val p_theme = MutableStateFlow("system")
     val theme: StateFlow<String> = p_theme.asStateFlow()
 
+    private val p_seuilBudget = MutableStateFlow(0.0)
+    val seuilBudget: StateFlow<Double> = p_seuilBudget.asStateFlow()
+
+    private val p_notificationActive = MutableStateFlow(false)
+    val notificationActive: StateFlow<Boolean> = p_notificationActive.asStateFlow()
+
     fun loadUserPreferences() {
         loadCategories()
         loadPreference()
@@ -33,11 +39,15 @@ class ConfigurationViewModel @Inject constructor(
     fun resetToDefault() {
         p_categories.value = emptyList()
         p_theme.value = "system"
+        p_seuilBudget.value = 0.0
+        p_notificationActive.value = false
     }
 
     private fun loadPreference() {
         viewModelScope.launch {
             p_theme.value = preferenceService.getTheme()
+            p_seuilBudget.value = preferenceService.getSeuilBudget()
+            p_notificationActive.value = preferenceService.isNotificationActive()
         }
     }
 
@@ -66,6 +76,20 @@ class ConfigurationViewModel @Inject constructor(
     fun setThemePreference(theme: String) {
         viewModelScope.launch {
             preferenceService.setTheme(theme)
+            loadPreference()
+        }
+    }
+
+    fun setSeuilBudget(seuil: Double) {
+        viewModelScope.launch {
+            preferenceService.setSeuilBudget(seuil)
+            loadPreference()
+        }
+    }
+
+    fun setNotificationActive(active: Boolean) {
+        viewModelScope.launch {
+            preferenceService.setNotificationActive(active)
             loadPreference()
         }
     }
