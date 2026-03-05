@@ -18,7 +18,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.limargent.Domain.ObjectifEpargne
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
@@ -76,10 +75,10 @@ fun ObjectifScreen(
                         ObjectifItem(
                             objectif = objectif,
                             onUpdateEpargne = { montant ->
-                                viewModel.mettreAJourEpargne(objectif.id, montant)
+                                viewModel.update(objectif.id, montant)
                             },
                             onDelete = {
-                                viewModel.supprimerObjectif(objectif.id)
+                                viewModel.delete(objectif.id)
                             }
                         )
                     }
@@ -91,8 +90,8 @@ fun ObjectifScreen(
     if (showAddDialog) {
         AddObjectifDialog(
             onDismiss = { showAddDialog = false },
-            onConfirm = { nom, montant, date ->
-                viewModel.ajouterObjectif(nom, montant, date)
+            onConfirm = { nom, montant, date, taux ->
+                viewModel.addObjectif(nom, montant, date, taux)
                 showAddDialog = false
             }
         )
@@ -148,7 +147,14 @@ fun ObjectifItem(
                 color = if (objectif.estAtteint) Color(0xFF4CAF50) else MaterialTheme.colorScheme.primary,
                 trackColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
             )
-
+            if (objectif.tauxInteret > 0) {
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = "Simulation : + ${"%.2f".format(objectif.estimation)} €/an (à ${objectif.tauxInteret}%)",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Color(0xFF4CAF50)
+                )
+            }
             Spacer(modifier = Modifier.height(8.dp))
 
             Row(
@@ -201,12 +207,12 @@ fun ObjectifItem(
 @Composable
 fun AddObjectifDialog(
     onDismiss: () -> Unit,
-    onConfirm: (String, Double, LocalDate?) -> Unit
+    onConfirm: (String, Double, LocalDate?, Double) -> Unit // Modifier la signature
 ) {
     var nom by remember { mutableStateOf("") }
     var montant by remember { mutableStateOf("") }
-    // Date handling could be improved with a DatePicker, keeping it simple for now
-    
+    var taux by remember { mutableStateOf("") } // Nouveau state
+
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text("Nouvel objectif") },
@@ -225,19 +231,25 @@ fun AddObjectifDialog(
                     label = { Text("Montant cible (€)") },
                     singleLine = true
                 )
+                Spacer(modifier = Modifier.height(8.dp))
+                OutlinedTextField( // Nouveau champ pour le taux
+                    value = taux,
+                    onValueChange = { if (it.all { char -> char.isDigit() || char == '.' }) taux = it },
+                    label = { Text("Taux d'intérêt annuel (%)") },
+                    singleLine = true
+                )
             }
         },
         confirmButton = {
             TextButton(
                 onClick = {
                     val montantDouble = montant.toDoubleOrNull()
+                    val tauxDouble = taux.toDoubleOrNull() ?: 0.0 // 0.0 par défaut si vide
                     if (nom.isNotBlank() && montantDouble != null && montantDouble > 0) {
-                        onConfirm(nom, montantDouble, null) // Date is null for simplicity
+                        onConfirm(nom, montantDouble, null, tauxDouble)
                     }
                 }
-            ) {
-                Text("Ajouter")
-            }
+            ) { Text("Ajouter") }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {

@@ -32,19 +32,20 @@ class ObjectifViewModel @Inject constructor(
         }
     }
 
-    fun ajouterObjectif(nom: String, montantCible: Double, dateEcheance: LocalDate? = null) {
+    fun addObjectif(nom: String, montantCible: Double, dateEcheance: LocalDate? = null, tauxInteret: Double = 0.0) {
         viewModelScope.launch {
             val nouvelObjectif = ObjectifEpargne(
                 id = UUID.randomUUID().toString(),
                 nom = nom,
                 montantCible = montantCible,
-                dateEcheance = dateEcheance
+                dateEcheance = dateEcheance,
+                tauxInteret = tauxInteret 
             )
             objectifService.addObjectif(nouvelObjectif)
         }
     }
 
-    fun mettreAJourEpargne(id: String, montantAjoute: Double) {
+    fun update(id: String, montantAjoute: Double) {
         viewModelScope.launch {
             val objectif = p_objectifs.value.find { it.id == id }
             if (objectif != null) {
@@ -54,7 +55,7 @@ class ObjectifViewModel @Inject constructor(
         }
     }
 
-    fun supprimerObjectif(id: String) {
+    fun delete(id: String) {
         viewModelScope.launch {
             objectifService.deleteObjectif(id)
         }

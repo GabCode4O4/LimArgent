@@ -8,11 +8,15 @@ data class ObjectifEpargne(
     val nom: String,
     val montantCible: Double,
     var montantActuel: Double = 0.0,
-    val dateEcheance: LocalDate? = null
+    val dateEcheance: LocalDate? = null,
+    val tauxInteret: Double = 0.0
 ) {
     val progression: Float
         get() = if (montantCible > 0) (montantActuel / montantCible).toFloat().coerceIn(0f, 1f) else 0f
-        
+
     val estAtteint: Boolean
         get() = montantActuel >= montantCible
+
+    val estimation: Double
+        get() = montantActuel * (tauxInteret / 100.0)
 }
