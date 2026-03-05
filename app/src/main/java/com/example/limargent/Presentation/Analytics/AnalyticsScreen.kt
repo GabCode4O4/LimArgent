@@ -45,6 +45,8 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.BasicText
+import androidx.compose.material3.CardDefaults
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.*
 import androidx.compose.ui.text.font.FontWeight
@@ -57,32 +59,33 @@ import kotlin.math.abs
 import kotlin.math.absoluteValue
 import kotlin.math.max
 
-enum class ModeAnalytique {
+enum class AnalyticsMode {
     DEPENSES,
     RECETTES
 }
 
-enum class OngletAnalytique {
-    CAMEMBERT,
-    COURBE
+enum class AnalyticsTab {
+    BUDGETCHARTS,
+    EPARGNECHARTS
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AnalyticsScreen(viewModel: AnalyticsViewModel) {
 
-    var graphiqueActuel by remember { mutableStateOf(OngletAnalytique.CAMEMBERT) }
+    var currentGraph by remember { mutableStateOf(AnalyticsTab.BUDGETCHARTS) }
 
     // --- N'est nécessaire que pour l'onglet des piecharts je peux pas le mettre dans la fonction car j'en ai besoin pour la topbar
-    var mode by remember { mutableStateOf(ModeAnalytique.DEPENSES) }
-    var categorieSelectionnee by remember { mutableStateOf<String?>(null) }
+    var mode by remember { mutableStateOf(AnalyticsMode.DEPENSES) }
+    var selectedCategory by remember { mutableStateOf<String?>(null) }
+    // ----------------------------------------------------------------------------
 
     Scaffold(
         topBar = {
-            if (categorieSelectionnee == null && graphiqueActuel== OngletAnalytique.CAMEMBERT) {
+            if (selectedCategory == null && currentGraph== AnalyticsTab.BUDGETCHARTS) {
                 Column (modifier = Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally){
-                    TopAppBar(title = { Text("Analytique") })
-                    BoutonsSegmentesAnalytique(
+                    TopAppBar(title = { Text("Analytics") })
+                    AnalyticsSegmentedButtons(
                         mode = mode,
                         onModeChange = { mode = it }
                     )
@@ -90,12 +93,11 @@ fun AnalyticsScreen(viewModel: AnalyticsViewModel) {
             }
         },
         bottomBar = {
-            BarreNavigationInferieure(
-                graphiqueActuel = graphiqueActuel,
-                onGraphChange = { graphiqueActuel = it }
+            BottomNavigationBar(
+                currentGraph = currentGraph,
+                onGraphChange = { currentGraph = it }
             )
         },
-        containerColor = Color(0xFF1A1D21)
     ) { paddingValues ->
 
         Column(
@@ -106,16 +108,19 @@ fun AnalyticsScreen(viewModel: AnalyticsViewModel) {
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
 
+            // --- N'apparait que quand on est dans un graphique de catégorie
             BoutonRetour(
-                categorieSelectionnee = categorieSelectionnee,
-                onClick = { categorieSelectionnee = null },
+                selectedCategory = selectedCategory,
+                onClick = { selectedCategory = null },
                 modifier = Modifier.align(Alignment.Start)
             )
-            categorieSelectionnee?.let { Text(text = it); Spacer(modifier = Modifier.height(16.dp)) }
+            selectedCategory?.let { Text(text = it); Spacer(modifier = Modifier.height(16.dp)) }
+            // --------------------------------------------------------------
 
-            when (graphiqueActuel) {
-                OngletAnalytique.CAMEMBERT -> OngletCamembert(viewModel=viewModel, mode=mode,categorieSelectionnee=categorieSelectionnee,onCategoryClick = { categorieSelectionnee = it })
-                OngletAnalytique.COURBE -> OngletCourbe(viewModel)
+            // Affichage des graphique selon le type de graphe choisi en onglet
+            when (currentGraph) {
+                AnalyticsTab.BUDGETCHARTS -> BudgetChartsTab(viewModel=viewModel, mode=mode,selectedCategory=selectedCategory,onCategoryClick = { selectedCategory = it })
+                AnalyticsTab.EPARGNECHARTS -> EpargneChartTab(viewModel)
             }
 
         }
@@ -123,54 +128,87 @@ fun AnalyticsScreen(viewModel: AnalyticsViewModel) {
 }
 
 @Composable
-fun OngletCamembert(
+fun BudgetChartsTab(
     viewModel: AnalyticsViewModel,
-    mode: ModeAnalytique,
-    categorieSelectionnee: String?,
+    mode: AnalyticsMode,
+    selectedCategory: String?,
     onCategoryClick: (String) -> Unit
 ) {
-    val donnees = when {
-        categorieSelectionnee != null -> viewModel.getCategoryData(categorieSelectionnee)
-        mode == ModeAnalytique.DEPENSES -> viewModel.getCategoriesData(MovType.sortie)
-        else -> viewModel.getCategoriesData(MovType.entree)
+
+    val mouvements by viewModel.mouvements.collectAsState()
+
+    val data = remember(mouvements, mode, selectedCategory) {
+        when {
+            selectedCategory != null ->
+                viewModel.getCategoryData(selectedCategory)
+
+            mode == AnalyticsMode.DEPENSES ->
+                viewModel.getCategoriesData(MovType.sortie)
+
+            else ->
+                viewModel.getCategoriesData(MovType.entree)
+        }
     }
 
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        GraphiqueCamembertAnime(donnees = donnees)
-        Spacer(modifier = Modifier.height(16.dp))
 
-        val couleurs = obtenirCouleursGraphique(donnees.size)
-        LazyColumn(
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            items(donnees.size) { index ->
-                val entree = donnees.entries.elementAt(index)
-                CarteItemCategorie(
-                    nom = entree.key,
-                    couleur = couleurs[index % couleurs.size],
-                    onClick = { onCategoryClick(entree.key) }
+    val colors = getChartColors(data.size)
+
+    LazyColumn(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier.fillMaxSize()
+    ) {
+
+        item {
+
+            if (selectedCategory == null) {
+                Spacer(modifier = Modifier.height(32.dp))
+
+                LineChart(viewModel.getBudgetByDateList())
+
+                Spacer(modifier = Modifier.height(32.dp))
+            }
+        }
+
+        item {
+            AnimatedPieChart(data = data)
+
+            Spacer(modifier = Modifier.height(16.dp))
+        }
+
+        items(data.size) { index ->
+            val entry = data.entries.elementAt(index)
+
+            if (selectedCategory == null) {
+                CategoryItemCard(
+                    name = entry.key,
+                    color = colors[index % colors.size],
+                    onClick = { onCategoryClick(entry.key) }
+                )
+            } else {
+                LabelItemCard(
+                    name = entry.key,
+                    color = colors[index % colors.size]
                 )
             }
         }
+
     }
 }
 
-/*@Composable
-fun OngletCourbe(viewModel: AnalyticsViewModel) {
-    Text("Graphique en courbe (67)", color=Color.White)
+@Composable
+fun EpargneChartTab(viewModel: AnalyticsViewModel) {
+    Text("Graphique en radial (67)", color = Color.White)
+}
 
-    val data = viewModel.getBudgetByDateList()
-
+@Composable
+fun LineChart(data : List<Pair<LocalDate, Float>>){
     if (data.isEmpty()) return
-
-    Canvas(modifier = Modifier.fillMaxWidth().height(300.dp)) {
+    Canvas(modifier = Modifier.fillMaxWidth().height(300.dp).offset(x=(-16).dp)) {
         val w = size.width
         val h = size.height
         val centerY = h / 2f
 
-        // Calcul de l'échelle verticale
+        // Échelle verticale
         val maxAbsValue = data.maxOf { abs(it.second) }
         val scaleY = if (maxAbsValue == 0f) 1f else (h / 2f) / maxAbsValue
 
@@ -187,15 +225,23 @@ fun OngletCourbe(viewModel: AnalyticsViewModel) {
             Offset(x, y)
         }
 
-        // Chemin de la courbe
+        // --- Path Bézier pour lisser la courbe ---
         val path = Path().apply {
-            points.forEachIndexed { index, offset ->
-                if (index == 0) moveTo(offset.x, offset.y)
-                else lineTo(offset.x, offset.y)
+            if (points.isNotEmpty()) {
+                moveTo(points.first().x, points.first().y)
+                for (i in 0 until points.size - 1) {
+                    val p0 = points[i]
+                    val p1 = points[i + 1]
+                    val midX = (p0.x + p1.x) / 2
+                    val midY = (p0.y + p1.y) / 2
+                    quadraticTo(p0.x, p0.y, midX, midY)
+                }
+                // relier le dernier point exactement
+                lineTo(points.last().x, points.last().y)
             }
         }
 
-        // Dessiner la barre du milieu (0)
+        // Barre du milieu (0)
         drawLine(
             color = Color.Gray,
             start = Offset(0f, centerY),
@@ -204,15 +250,15 @@ fun OngletCourbe(viewModel: AnalyticsViewModel) {
             pathEffect = PathEffect.dashPathEffect(floatArrayOf(10f, 10f), 0f)
         )
 
-        // Dessiner la courbe
+        // Dessiner la courbe avec cap arrondi
         val lastValue = data.last().second
         drawPath(
             path = path,
             color = if (lastValue > 0f) Color.Green else Color.Red,
-            style = Stroke(width = 5f, cap = StrokeCap.Round)
+            style = Stroke(width = 10f, cap = StrokeCap.Round)
         )
 
-        // Axe des X (4 dates)
+        // Axe X avec 4 dates
         val axisDates = listOf(
             startDate,
             startDate.plusDays((totalDays / 3f).toLong()),
@@ -221,14 +267,14 @@ fun OngletCourbe(viewModel: AnalyticsViewModel) {
         )
         axisDates.forEach { date ->
             val daysFromStart = ChronoUnit.DAYS.between(startDate, date).toFloat()
-            val x = (daysFromStart / totalDays) * w
+            val x = if (daysFromStart == 0f) (0.05*w).toFloat() else ((daysFromStart / totalDays) * w)
             val day = date.dayOfMonth
             val month = date.month.getDisplayName(TextStyle.SHORT, Locale.getDefault())
             drawContext.canvas.nativeCanvas.apply {
                 drawText(
                     "$day $month",
                     x,
-                    h + 20f,
+                    h + 40f,
                     android.graphics.Paint().apply {
                         color = android.graphics.Color.GRAY
                         textAlign = android.graphics.Paint.Align.CENTER
@@ -238,110 +284,50 @@ fun OngletCourbe(viewModel: AnalyticsViewModel) {
                 )
             }
         }
-    }
-}*/
 
-@Composable
-fun OngletCourbe(viewModel: AnalyticsViewModel) {
-    Text("Graphique en courbe", color = Color.White)
+        val yValues = listOf(
+            maxAbsValue,
+            maxAbsValue / 2f,
+            -maxAbsValue / 2f,
+            -maxAbsValue
+        )
 
-    val donnees = viewModel.getBudgetByDateList()
-    if (donnees.isEmpty()) return
+        yValues.forEach { value ->
+            val y = centerY - value * scaleY
 
-    Canvas(modifier = Modifier.fillMaxWidth().height(300.dp).offset(x=(-16).dp)) {
-        val w = size.width
-        val h = size.height
-        val centreY = h / 2f
-
-        val valeurAbsMax = donnees.maxOf { abs(it.second) }
-        val echelleY = if (valeurAbsMax == 0f) 1f else (h / 2f) / valeurAbsMax
-
-        val dateDebut = donnees.first().first
-        val dateFin = donnees.last().first
-        val joursTotal = max(ChronoUnit.DAYS.between(dateDebut, dateFin).toFloat(), 1f)
-
-        val points = donnees.map { (date, valeur) ->
-            val joursDepuisDebut = ChronoUnit.DAYS.between(dateDebut, date).toFloat()
-            val x = (joursDepuisDebut / joursTotal) * w
-            val y = centreY - valeur * echelleY
-            Offset(x, y)
-        }
-
-        val chemin = Path().apply {
-            if (points.isNotEmpty()) {
-                moveTo(points.first().x, points.first().y)
-                for (i in 0 until points.size - 1) {
-                    val p0 = points[i]
-                    val p1 = points[i + 1]
-                    val milX = (p0.x + p1.x) / 2
-                    val milY = (p0.y + p1.y) / 2
-                    quadraticBezierTo(p0.x, p0.y, milX, milY)
+            drawContext.canvas.nativeCanvas.drawText(
+                String.format("%.0f", value),
+                w + 10f, // 👉 à droite du graphique
+                y + 10f,
+                android.graphics.Paint().apply {
+                    color = android.graphics.Color.GRAY
+                    textSize = 28f
+                    textAlign = android.graphics.Paint.Align.LEFT
+                    isFakeBoldText = true
                 }
-                lineTo(points.last().x, points.last().y)
-            }
-        }
-
-        drawLine(
-            color = Color.Gray,
-            start = Offset(0f, centreY),
-            end = Offset(w, centreY),
-            strokeWidth = 2f,
-            pathEffect = PathEffect.dashPathEffect(floatArrayOf(10f, 10f), 0f)
-        )
-
-        val derniereValeur = donnees.last().second
-        drawPath(
-            path = chemin,
-            color = if (derniereValeur > 0f) Color.Green else Color.Red,
-            style = Stroke(width = 10f, cap = StrokeCap.Round)
-        )
-
-        val datesAxe = listOf(
-            dateDebut,
-            dateDebut.plusDays((joursTotal / 3f).toLong()),
-            dateDebut.plusDays((2 * joursTotal / 3f).toLong()),
-            dateFin
-        )
-        datesAxe.forEach { date ->
-            val joursDepuisDebut = ChronoUnit.DAYS.between(dateDebut, date).toFloat()
-            val x = if (joursDepuisDebut == 0f) (0.05*w).toFloat() else ((joursDepuisDebut / joursTotal) * w)
-            val jour = date.dayOfMonth
-            val mois = date.month.getDisplayName(TextStyle.SHORT, Locale.getDefault())
-            drawContext.canvas.nativeCanvas.apply {
-                drawText(
-                    "$jour $mois",
-                    x,
-                    h + 20f,
-                    android.graphics.Paint().apply {
-                        color = android.graphics.Color.GRAY
-                        textAlign = android.graphics.Paint.Align.CENTER
-                        textSize = 30f
-                        isFakeBoldText = true
-                    }
-                )
-            }
+            )
         }
     }
 }
 
 @Composable
-fun BoutonsSegmentesAnalytique(
-    mode: ModeAnalytique,
-    onModeChange: (ModeAnalytique) -> Unit
+fun AnalyticsSegmentedButtons(
+    mode: AnalyticsMode,
+    onModeChange: (AnalyticsMode) -> Unit
 ) {
 
     SingleChoiceSegmentedButtonRow {
         SegmentedButton(
-            selected = mode == ModeAnalytique.DEPENSES,
-            onClick = { onModeChange(ModeAnalytique.DEPENSES) },
+            selected = mode == AnalyticsMode.DEPENSES,
+            onClick = { onModeChange(AnalyticsMode.DEPENSES) },
             shape = SegmentedButtonDefaults.itemShape(index = 0, count = 2)
         ) {
             Text("Dépenses")
         }
 
         SegmentedButton(
-            selected = mode == ModeAnalytique.RECETTES,
-            onClick = { onModeChange(ModeAnalytique.RECETTES) },
+            selected = mode == AnalyticsMode.RECETTES,
+            onClick = { onModeChange(AnalyticsMode.RECETTES) },
             shape = SegmentedButtonDefaults.itemShape(index = 1, count = 2)
         ) {
             Text("Recettes")
@@ -350,9 +336,9 @@ fun BoutonsSegmentesAnalytique(
 }
 
 @Composable
-fun BarreNavigationInferieure(
-    graphiqueActuel: OngletAnalytique,
-    onGraphChange: (OngletAnalytique) -> Unit
+fun BottomNavigationBar(
+    currentGraph: AnalyticsTab,
+    onGraphChange: (AnalyticsTab) -> Unit
 ) {
     Row(
         modifier = Modifier
@@ -361,25 +347,25 @@ fun BarreNavigationInferieure(
         horizontalArrangement = Arrangement.SpaceEvenly
     ) {
         Text(
-            text = "Camembert",
-            color = if (graphiqueActuel == OngletAnalytique.CAMEMBERT) Color.Blue else Color.Black,
-            modifier = Modifier.clickable { onGraphChange(OngletAnalytique.CAMEMBERT) }
+            text = "BudgetCharts",
+            color = if (currentGraph == AnalyticsTab.BUDGETCHARTS) Color.Blue else Color.Black,
+            modifier = Modifier.clickable { onGraphChange(AnalyticsTab.BUDGETCHARTS) }
         )
         Text(
-            text = "Courbe",
-            color = if (graphiqueActuel == OngletAnalytique.COURBE) Color.Blue else Color.Black,
-            modifier = Modifier.clickable { onGraphChange(OngletAnalytique.COURBE) }
+            text = "EpargneCharts",
+            color = if (currentGraph == AnalyticsTab.EPARGNECHARTS) Color.Blue else Color.Black,
+            modifier = Modifier.clickable { onGraphChange(AnalyticsTab.EPARGNECHARTS) }
         )
     }
 }
 
 @Composable
 fun BoutonRetour(
-    categorieSelectionnee: String?,
+    selectedCategory: String?,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    if (categorieSelectionnee != null) {
+    if (selectedCategory != null) {
         Spacer(modifier = Modifier.height(16.dp))
         Text(
             "Retour",
@@ -391,80 +377,98 @@ fun BoutonRetour(
 }
 
 @Composable
-fun GraphiqueCamembertAnime(donnees: Map<String, Float>) {
+fun AnimatedPieChart(data: Map<String, Float>) {
 
     Spacer(modifier = Modifier.height(32.dp))
 
-    // Animation de progression de 0f à 1f
-    val progression = remember { Animatable(0f) }
-    LaunchedEffect(donnees) {
-        progression.snapTo(0f)      // reset si les données changent
-        progression.animateTo(
+    val progress = remember { Animatable(0f) }
+
+    LaunchedEffect(data) {
+        progress.snapTo(0f)
+        progress.animateTo(
             targetValue = 1f,
-            animationSpec = tween(durationMillis = 1000, easing = LinearOutSlowInEasing)
+            animationSpec = tween(
+                durationMillis = 1000,
+                easing = LinearOutSlowInEasing
+            )
         )
     }
 
-    Canvas(modifier = Modifier.size(200.dp)) {
-        val total = donnees.values.sum()
-        val couleurs = obtenirCouleursGraphique(donnees.size)
-        val epaisseur = size.minDimension / 8
+    val total = data.values.sum()
 
-        var angleDebut = -90f
-        donnees.entries.forEachIndexed { index, entree ->
-            val angleBalayage = (entree.value / total) * 360f * progression.value
+    Box(
+        contentAlignment = Alignment.Center
+    ) {
 
-            drawArc(
-                color = couleurs[index % couleurs.size],
-                startAngle = angleDebut,
-                sweepAngle = angleBalayage,
-                useCenter = false,
-                style = Stroke(width = epaisseur)
-            )
+        Canvas(modifier = Modifier.size(200.dp)) {
 
-            angleDebut += (entree.value / total) * 360f
+            val colors = getChartColors(data.size)
+            val thickness = size.minDimension / 8
+
+            var startAngle = -90f
+
+            data.entries.forEachIndexed { index, entry ->
+
+                val sweepAngle = (entry.value / total) * 360f * progress.value
+
+                drawArc(
+                    color = colors[index % colors.size],
+                    startAngle = startAngle,
+                    sweepAngle = sweepAngle,
+                    useCenter = false,
+                    style = Stroke(width = thickness)
+                )
+
+                startAngle += (entry.value / total) * 360f
+            }
         }
+
+        Text(
+            text = total.toInt().toString() + " €",
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.Bold
+        )
     }
 
     Spacer(modifier = Modifier.height(48.dp))
 }
 
 @Composable
-fun GraphiqueCamembertAnimeV2(donnees: Map<String, Float>) {
+fun AnimatedPieChartV2(data: Map<String, Float>) {
 
     Spacer(modifier = Modifier.height(32.dp))
 
-    val progression = remember { Animatable(0f) }
-    LaunchedEffect(donnees) {
-        progression.snapTo(0f)
-        progression.animateTo(
+    val progress = remember { Animatable(0f) }
+    LaunchedEffect(data) {
+        progress.snapTo(0f)
+        progress.animateTo(
             1f,
             animationSpec = tween(durationMillis = 1000, easing = LinearOutSlowInEasing)
         )
     }
 
     Canvas(modifier = Modifier.size(200.dp)) {
-        val total = donnees.values.sum()
-        val couleurs = obtenirCouleursGraphique(donnees.size)
-        val epaisseur = size.minDimension / 8
+        val total = data.values.sum()
+        val colors = getChartColors(data.size)
+        val thickness = size.minDimension / 8
 
-        var angleDebut = -90f
-        val ecart = 2f
-        donnees.entries.forEachIndexed { index, entree ->
-            val angleBalayage = (entree.value / total) * 360f * progression.value
+        var startAngle = -90f
+        val gap = 2f
+        data.entries.forEachIndexed { index, entry ->
+            val sweepAngle = (entry.value / total) * 360f * progress.value
 
             drawArc(
-                color = couleurs[index % couleurs.size],
-                startAngle = angleDebut,
-                sweepAngle = angleBalayage - ecart,
+                color = colors[index % colors.size],
+                startAngle = startAngle,
+                sweepAngle = sweepAngle - gap,
                 useCenter = false,
                 style = Stroke(
-                    width = epaisseur,
+                    width = thickness,
                     cap = StrokeCap.Round
                 )
             )
 
-            angleDebut += (entree.value / total) * 360f
+            startAngle += (entry.value / total) * 360f
         }
     }
 
@@ -472,9 +476,9 @@ fun GraphiqueCamembertAnimeV2(donnees: Map<String, Float>) {
 }
 
 @Composable
-fun CarteItemCategorie(
-    nom: String,
-    couleur: Color,
+fun CategoryItemCard(
+    name: String,
+    color: Color,
     onClick: () -> Unit
 ) {
     Card(
@@ -490,17 +494,46 @@ fun CarteItemCategorie(
             Box(
                 modifier = Modifier
                     .size(12.dp)
-                    .background(couleur, CircleShape)
+                    .background(color, CircleShape)
             )
             Spacer(modifier = Modifier.width(8.dp))
-            Text(nom)
+            Text(name)
         }
     }
 }
 
-fun obtenirCouleursGraphique(longueur:Int) : List<Color>{
-    return List(longueur) { i ->
-        val teinte = i * 360f / longueur       // couleurs bien séparées
-        Color.hsv(teinte, 0.6f, 0.85f)         // pastel, pas néon
+@Composable
+fun LabelItemCard(
+    name: String,
+    color: Color
+) {
+    Card(
+        colors = CardDefaults.cardColors(
+            containerColor = Color.Transparent
+        ),
+        elevation = CardDefaults.cardElevation(0.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp)
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.padding(12.dp)
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(12.dp)
+                    .background(color, CircleShape)
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(name)
+        }
+    }
+}
+
+fun getChartColors(length:Int) : List<Color>{
+    return List(length) { i ->
+        val hue = i * 360f / length       // couleurs bien séparées
+        Color.hsv(hue, 0.6f, 0.85f)         // pastel, pas néon
     }
 }

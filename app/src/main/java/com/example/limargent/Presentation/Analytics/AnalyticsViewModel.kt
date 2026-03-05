@@ -11,68 +11,72 @@ import com.example.limargent.Domain.MoneyMovement
 import com.example.limargent.Domain.Mouvements.MovementsRepository
 import com.example.limargent.Domain.MovType
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.math.BigDecimal
 import java.time.LocalDate
 import javax.inject.Inject
+import kotlin.collections.emptyList
 
 @HiltViewModel
 class AnalyticsViewModel @Inject constructor(
     private val movementsRepository : MovementsRepository
 ) : ViewModel() {
 
-    var mouvements by mutableStateOf<List<MoneyMovement>>(emptyList())
-        private set
+    val mouvements: StateFlow<List<MoneyMovement>> =
+        movementsRepository
+            .getMouvementsFlow()
+            .stateIn(
+                viewModelScope,
+                SharingStarted.WhileSubscribed(5000),
+                emptyList()
+            )
 
-    init {
-        loadData()
-    }
-
-    fun loadData() {
-        viewModelScope.launch {
-            mouvements = movementsRepository.getMouvements()
-        }
-    }
-
-    fun getCategoriesData(type: MovType) : Map<String, Float>{
+    fun getCategoriesData(type: MovType): Map<String, Float> {
+        val list = mouvements.value
         val chartData = mutableMapOf<String, Float>()
 
-        for (m in mouvements) {
-            if (m.type != type) continue // Si c'est pas le type de mouvement qu'on veut on l'ignore
-            // On ajoute le montant à la catégorie si elle existe déjà sinon on la créé dans une map
-            chartData[m.categorie] = (chartData[m.categorie] ?: 0f) + m.montant.toFloat()
+        for (m in list) {
+            if (m.type != type) continue
+            chartData[m.categorie] =
+                (chartData[m.categorie] ?: 0f) + m.montant.toFloat()
         }
 
-        return chartData
+        return chartData.entries
+            .sortedByDescending { it.value }
+            .associate { it.toPair() }
     }
 
     fun getCategoryData(category: String) : Map<String, Float>{
+        val list = mouvements.value
         val chartData = mutableMapOf<String, Float>()
 
-        for (m in mouvements) {
+        for (m in list) {
             if (m.categorie != category) continue
             chartData[m.titre] = (chartData[m.titre] ?: 0f) + m.montant.toFloat()
         }
 
-        return chartData
+        return chartData.entries
+            .sortedByDescending { it.value }
+            .associate { it.toPair() }
     }
 
     fun getBudgetByDateList(): List<Pair<LocalDate, Float>> {
-        val sortedMovements = mouvements.sortedBy { it.date }
-        val budget = mutableListOf<Pair<LocalDate, Float>>()
+        val sortedMovements = mouvements.value.sortedBy { it.date }
 
+        val budgetMap = mutableMapOf<LocalDate, Float>()
         var tempM = 0f
 
         for (m in sortedMovements) {
-            if (m.type == MovType.entree) {
-                tempM+=m.montant.toFloat()
-            } else {
-                tempM-=m.montant.toFloat()
-            }
-            budget.add(m.date to tempM)
+            if (m.type == MovType.entree) tempM += m.montant.toFloat()
+            else tempM -= m.montant.toFloat()
+
+            budgetMap[m.date] = tempM  // écrase si la date existe déjà
         }
 
-        return budget
+        return budgetMap.toList()
     }
 
     // 67
