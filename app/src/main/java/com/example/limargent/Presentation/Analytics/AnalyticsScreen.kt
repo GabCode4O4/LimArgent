@@ -29,11 +29,9 @@ import kotlin.math.abs
 import kotlin.math.max
 
 enum class AnalyticsMode { DEPENSES, RECETTES }
-enum class AnalyticsTab { BUDGET}
 
 @Composable
 fun AnalyticsScreen(viewModel: AnalyticsViewModel) {
-    var currentTab by remember { mutableStateOf(AnalyticsTab.BUDGET) }
     var mode by remember { mutableStateOf(AnalyticsMode.DEPENSES) }
     var selectedCategory by remember { mutableStateOf<String?>(null) }
 
@@ -63,16 +61,15 @@ fun AnalyticsScreen(viewModel: AnalyticsViewModel) {
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            when (currentTab) {
-                AnalyticsTab.BUDGET -> BudgetChartsTab(
-                    viewModel = viewModel,
-                    mode = mode,
-                    onModeChange = { mode = it },
-                    selectedCategory = selectedCategory,
-                    onCategoryClick = { selectedCategory = it },
-                    onBackClick = { selectedCategory = null }
-                )
-            }
+            BudgetChartsTab(
+                viewModel = viewModel,
+                mode = mode,
+                onModeChange = { mode = it },
+                selectedCategory = selectedCategory,
+                onCategoryClick = { selectedCategory = it },
+                onBackClick = { selectedCategory = null }
+            )
+
         }
     }
 }
@@ -103,13 +100,6 @@ fun BudgetChartsTab(
     ) {
         item {
             if (selectedCategory == null) {
-                IOSSegmentedControl(
-                    items = listOf("Dépenses", "Recettes"),
-                    selectedIndex = if (mode == AnalyticsMode.DEPENSES) 0 else 1,
-                    onItemSelected = { onModeChange(if (it == 0) AnalyticsMode.DEPENSES else AnalyticsMode.RECETTES) }
-                )
-                Spacer(modifier = Modifier.height(32.dp))
-
                 ChartCard {
                     Text(
                         text = "Évolution du solde",
@@ -125,11 +115,22 @@ fun BudgetChartsTab(
                     modifier = Modifier.fillMaxWidth().clickable { onBackClick() },
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text("← Retour", color = Color(0xFF007AFF), fontWeight = FontWeight.Medium)
-                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Retour", color = Color(0xFF007AFF), fontWeight = FontWeight.Medium)
+                    Spacer(modifier = Modifier.width(24.dp))
                     Text(selectedCategory, fontWeight = FontWeight.Bold, fontSize = 18.sp)
                 }
                 Spacer(modifier = Modifier.height(24.dp))
+            }
+        }
+        item{
+            if (selectedCategory == null) {
+                Spacer(modifier = Modifier.height(32.dp))
+                IOSSegmentedControl(
+                    items = listOf("Dépenses", "Recettes"),
+                    selectedIndex = if (mode == AnalyticsMode.DEPENSES) 0 else 1,
+                    onItemSelected = { onModeChange(if (it == 0) AnalyticsMode.DEPENSES else AnalyticsMode.RECETTES) }
+                )
+                Spacer(modifier = Modifier.height(16.dp))
             }
         }
 
@@ -156,6 +157,7 @@ fun BudgetChartsTab(
                 color = colors[index % colors.size],
                 onClick = { if (selectedCategory == null) onCategoryClick(entry.key) }
             )
+            Spacer(modifier = Modifier.height(8.dp))
         }
     }
 }
@@ -225,6 +227,10 @@ fun CleanCategoryRow(name: String, amount: Float, color: Color, onClick: () -> U
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
             .fillMaxWidth()
+            .background(
+                MaterialTheme.colorScheme.surfaceVariant,
+                RoundedCornerShape(12.dp)
+            )
             .clickable { onClick() }
             .padding(vertical = 12.dp, horizontal = 8.dp)
     ) {
