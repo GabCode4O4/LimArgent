@@ -93,10 +93,10 @@ fun AddMouvementContent(
     var menuFrequenceOuvert by remember { mutableStateOf(false) }
 
     var dateTypeToSelect by remember { mutableStateOf(0) }
-    var nextExecutionDate by remember { mutableStateOf(mouvementToEdit?.nextExecutionDate ?: LocalDate.now().plusMonths(1)) }
+    var nextExecutionDate by remember { mutableStateOf(mouvementToEdit?.nextExecutionDate) }
 
     if (afficherSelecteurDate) {
-        val dateInitiale = if (dateTypeToSelect == 0) dateSelectionnee else nextExecutionDate
+        val dateInitiale = if (dateTypeToSelect == 0) dateSelectionnee else nextExecutionDate ?: LocalDate.now().plusDays(1)
         val datePickerState = rememberDatePickerState(
             initialSelectedDateMillis = dateInitiale.atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli(),
             selectableDates = if (dateTypeToSelect == 0) maDate else object : SelectableDates {
@@ -296,13 +296,6 @@ fun AddMouvementContent(
                             onClick = {
                                 frequenceSelectionnee = freq
                                 menuFrequenceOuvert = false
-                                nextExecutionDate = when(freq) {
-                                    Frequence.QUOTIDIEN -> dateSelectionnee.plusDays(1)
-                                    Frequence.HEBDOMADAIRE -> dateSelectionnee.plusWeeks(1)
-                                    Frequence.MENSUEL -> dateSelectionnee.plusMonths(1)
-                                    Frequence.ANNUEL -> dateSelectionnee.plusYears(1)
-                                    else -> dateSelectionnee
-                                }
                             }
                         )
                     }
@@ -312,7 +305,7 @@ fun AddMouvementContent(
             Spacer(modifier = Modifier.height(16.dp))
 
             OutlinedTextField(
-                value = nextExecutionDate.format(DateTimeFormatter.ofPattern("dd/MM/yyyy")),
+                value = nextExecutionDate?.format(DateTimeFormatter.ofPattern("dd/MM/yyyy")) ?: "Sélectionner une date",
                 onValueChange = {},
                 readOnly = true,
                 label = { Text("Prochaine exécution") },
@@ -330,21 +323,18 @@ fun AddMouvementContent(
 
         Button(
             onClick = {
-                val montantDecimal = montant.toBigDecimalOrNull()
-                if (titre.isNotBlank() && montantDecimal != null && categorieSelectionnee.isNotBlank()) {
-                    val movement = MoneyMovement(
-                        id = mouvementToEdit?.id,
-                        titre = titre,
-                        montant = montantDecimal,
-                        categorie = categorieSelectionnee,
-                        date = dateSelectionnee,
-                        type = type,
-                        isRecurrent = isRecurrent,
-                        frequence = if (isRecurrent) frequenceSelectionnee else Frequence.AUCUNE,
-                        nextExecutionDate = if (isRecurrent) nextExecutionDate else null
-                    )
-                    onConfirm(movement)
-                }
+                val movement = MoneyMovement(
+                    id = mouvementToEdit?.id,
+                    titre = titre,
+                    montant = montant.toBigDecimalOrNull() ?: BigDecimal.ZERO,
+                    categorie = categorieSelectionnee,
+                    date = dateSelectionnee,
+                    type = type,
+                    isRecurrent = isRecurrent,
+                    frequence = if (isRecurrent) frequenceSelectionnee else Frequence.AUCUNE,
+                    nextExecutionDate = if (isRecurrent) nextExecutionDate else null
+                )
+                onConfirm(movement)
             },
             modifier = Modifier
                 .fillMaxWidth()

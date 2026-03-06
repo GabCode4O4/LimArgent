@@ -5,6 +5,8 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
+import androidx.compose.animation.Crossfade
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.LaunchedEffect
@@ -23,8 +25,6 @@ import com.example.limargent.Presentation.Register.RegisterViewModel
 import com.example.limargent.ui.theme.LimArgentTheme
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
-import androidx.compose.animation.Crossfade
-import androidx.compose.animation.core.tween
 
 enum class ScreenState { LOGIN, REGISTER, HOME }
 
@@ -54,7 +54,6 @@ class MainActivity : ComponentActivity() {
                     configurationViewModel.loadUserPreferences()
                     screenAct = ScreenState.HOME
                 } else {
-                    configurationViewModel.resetToDefault()
                     if (screenAct == ScreenState.HOME) {
                         screenAct = ScreenState.LOGIN
                     }
@@ -83,12 +82,11 @@ class MainActivity : ComponentActivity() {
                             ScreenState.HOME -> {
                                 MainAppScreen(onLogout = {
                                     sessionManager.logout()
-                                    loginViewModel.clearFields()
+                                    loginViewModel.clearError()
                                 })
                             }
                         }
                     }
-
                 }
             }
         }

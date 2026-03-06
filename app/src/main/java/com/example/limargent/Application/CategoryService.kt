@@ -1,32 +1,40 @@
 package com.example.limargent.Application
 
 import com.example.limargent.Domain.Categorie.CategoryRepository
+import com.example.limargent.Domain.Mouvements.MovementsRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 class CategoryService @Inject constructor(
-    private val categoryRepository: CategoryRepository
+    private val categoryRepository: CategoryRepository,
+    private val movementsRepository: MovementsRepository
 ) {
-    suspend fun getCategories(): List<String> {
-        return withContext(Dispatchers.IO) {
-            categoryRepository.getCategories()
-        }
-    }
 
-    suspend fun addCategorie(nom: String) {
-        withContext(Dispatchers.IO) {
-            categoryRepository.addCategorie(nom)
-        }
-    }
-
-    suspend fun supprimer(nom: String) {
-        withContext(Dispatchers.IO) {
-            categoryRepository.supprimer(nom)
-        }
-    }
     fun getCategoriesFlow(): Flow<List<String>> {
         return categoryRepository.getCategoriesFlow()
+    }
+
+    suspend fun addCategorie(nom: String): Result<Unit> = withContext(Dispatchers.IO) {
+        if (nom.isBlank()) {
+            return@withContext Result.failure(IllegalArgumentException("Le nom de la catégorie ne peut pas être vide."))
+        }
+        val categoriesActuelles = categoryRepository.getCategoriesFlow().first()
+        if (categoriesActuelles.any { it.equals(nom, ignoreCase = true) }) {
+            return@withContext Result.failure(IllegalArgumentException("Cette catégorie existe déjà."))
+        }
+        categoryRepository.addCategorie(nom)
+        Result.success(Unit)
+    }
+
+    suspend fun supprimer(nom: String): Result<Unit> = withContext(Dispatchers.IO) {
+        val mouvements = movementsRepository.getMouvementsFlow().first()
+        if (mouvements.any { it.categorie.equals(nom, ignoreCase = true) }) {
+            return@withContext Result.failure(Exception("Impossible de supprimer une catégorie utilisée par un ou plusieurs mouvements."))
+        }
+        categoryRepository.supprimer(nom)
+        Result.success(Unit)
     }
 }

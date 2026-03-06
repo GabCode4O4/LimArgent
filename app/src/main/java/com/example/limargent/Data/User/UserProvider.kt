@@ -1,6 +1,5 @@
 package com.example.limargent.Data.User
 
-import com.example.limargent.Data.Movements.MovementsProvider
 import com.example.limargent.Domain.DataClasse.User
 import com.example.limargent.Domain.Users.UserRepository
 import com.google.firebase.auth.FirebaseAuth
@@ -12,8 +11,7 @@ import javax.inject.Singleton
 @Singleton
 class UserProvider @Inject constructor(
     private val firestore: FirebaseFirestore,
-    private val auth: FirebaseAuth,
-    private val movementsProvider: MovementsProvider
+    private val auth: FirebaseAuth
 ) : UserRepository {
 
     private val currentUserUid: String?
@@ -23,9 +21,7 @@ class UserProvider @Inject constructor(
         val uid = currentUserUid ?: return null
         return try {
             val doc = firestore.collection("users").document(uid).get().await()
-            val user = doc.toObject(User::class.java)
-            user?.mouvements = movementsProvider.getMouvements().toMutableList()
-            user
+            doc.toObject(User::class.java)
         } catch (e: Exception) {
             e.printStackTrace()
             null

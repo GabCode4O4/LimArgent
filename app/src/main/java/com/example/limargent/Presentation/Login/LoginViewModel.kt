@@ -17,24 +17,28 @@ class LoginViewModel @Inject constructor(
 
     var identifiant by mutableStateOf("")
     var motDePasse by mutableStateOf("")
-    var isError by mutableStateOf(false)
+    var errorMessage by mutableStateOf<String?>(null)
+        private set
+    var isLoading by mutableStateOf(false)
         private set
 
     fun onLog(onLoginSuccess: () -> Unit) {
         viewModelScope.launch {
-            val success = loginService.authentification(identifiant, motDePasse)
-            if (success) {
-                isError = false
+            isLoading = true
+            errorMessage = null
+            val result = loginService.authentification(identifiant, motDePasse)
+
+            result.onSuccess {
+                isLoading = false
                 onLoginSuccess()
-            } else {
-                isError = true
+            }.onFailure { error ->
+                isLoading = false
+                errorMessage = error.message
             }
         }
     }
 
-    fun clearFields() {
-        identifiant = ""
-        motDePasse = ""
-        isError = false
+    fun clearError() {
+        errorMessage = null
     }
 }

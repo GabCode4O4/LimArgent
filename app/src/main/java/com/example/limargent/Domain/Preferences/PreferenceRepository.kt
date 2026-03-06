@@ -1,4 +1,4 @@
-package com.example.limargent.Domain.Preference
+package com.example.limargent.Domain.Preferences
 
 interface PreferenceRepository {
     suspend fun getTheme(): String

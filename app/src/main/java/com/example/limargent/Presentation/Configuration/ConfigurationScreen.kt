@@ -8,6 +8,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
@@ -42,6 +43,8 @@ private val DividerColor = Color.Gray.copy(alpha = 0.2f)
 @Composable
 fun ConfigurationScreen(viewModel: ConfigurationViewModel, onLogout: () -> Unit) {
     var selectedTabIndex by remember { mutableStateOf(0) }
+    val mouvementsRecurrents by viewModel.mouvementRec.collectAsState()
+    val categories by viewModel.categories.collectAsState()
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background
@@ -60,55 +63,33 @@ fun ConfigurationScreen(viewModel: ConfigurationViewModel, onLogout: () -> Unit)
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onBackground
                 )
-
                 Spacer(modifier = Modifier.height(24.dp))
-
                 IOSSegmentedControl(
                     items = listOf("Préférences", "Catégories", "Récurrences"),
                     selectedIndex = selectedTabIndex,
                     onItemSelected = { selectedTabIndex = it }
                 )
-
                 Spacer(modifier = Modifier.height(32.dp))
             }
 
-            if (selectedTabIndex == 0) {
-                item { PreferenceSection(viewModel, onLogout) }
-            } else if (selectedTabIndex == 1) {
-                item { CategorieSection(viewModel) }
-            } else {
-                item { RecurrenceSection(viewModel) }
-            }
-
-
-        }
-    }
-}
-
-@Composable
-fun RecurrenceSection(viewModel: ConfigurationViewModel) {
-    val  MouvementRec by viewModel.  MouvementRec.collectAsState()
-
-    if ( MouvementRec.isEmpty()) {
-        Box(modifier = Modifier.fillMaxWidth().padding(top = 32.dp), contentAlignment = Alignment.Center) {
-            Text("Aucun mouvement récurrent actif.", color = MaterialTheme.colorScheme.onSurfaceVariant)
-        }
-    } else {
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(16.dp),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-            elevation = CardDefaults.cardElevation(0.dp)
-        ) {
-            Column {
-                MouvementRec.forEachIndexed { index, mouvement ->
-                    RecurrenceItem(
-                        mouvement = mouvement,
-                        onStopRecurrence = { viewModel.stopRecurrence(mouvement) },
-                        onUpdateDate = { newDate -> viewModel.updateRecurrenceDate(mouvement, newDate) }
-                    )
-                    if (index < MouvementRec.size - 1) {
-                        HorizontalDivider(color = DividerColor, modifier = Modifier.padding(start = 16.dp))
+            when (selectedTabIndex) {
+                0 -> item { PreferenceSection(viewModel, onLogout) }
+                1 -> item { CategorieSection(viewModel, categories) }
+                2 -> {
+                    if (mouvementsRecurrents.isEmpty()) {
+                        item {
+                            Box(modifier = Modifier.fillMaxWidth().padding(top = 32.dp), contentAlignment = Alignment.Center) {
+                                Text("Aucun mouvement récurrent actif.", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            }
+                        }
+                    } else {
+                        items(mouvementsRecurrents) { mouvement ->
+                            RecurrenceItem(
+                                mouvement = mouvement,
+                                onStopRecurrence = { viewModel.stopRecurrence(mouvement) },
+                                onUpdateDate = { newDate -> viewModel.updateRecurrenceDate(mouvement, newDate) }
+                            )
+                        }
                     }
                 }
             }
@@ -256,28 +237,25 @@ fun PreferenceSection(viewModel: ConfigurationViewModel, onLogout: () -> Unit) {
                             }
                         )
                     }
-
-                        Spacer(modifier = Modifier.height(32.dp))
-                        IconButton(
-                            onClick = onLogout,
-                            modifier = Modifier.fillMaxWidth(),
-                        ) {
-                            Icon(
-                                imageVector = Icons.AutoMirrored.Filled.ExitToApp,
-                                contentDescription = "Se déconnecter",
-                                tint = MaterialTheme.colorScheme.error
-                            )
-                        }
-
                 }
             }
         }
     }
+    Spacer(modifier = Modifier.height(32.dp))
+    IconButton(
+        onClick = onLogout,
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        Icon(
+            imageVector = Icons.AutoMirrored.Filled.ExitToApp,
+            contentDescription = "Se déconnecter",
+            tint = MaterialTheme.colorScheme.error
+        )
+    }
 }
 
 @Composable
-fun CategorieSection(viewModel: ConfigurationViewModel) {
-    val categories by viewModel.categories.collectAsState()
+fun CategorieSection(viewModel: ConfigurationViewModel, categories: List<String>) {
     var newCat by remember { mutableStateOf("") }
 
     Card(

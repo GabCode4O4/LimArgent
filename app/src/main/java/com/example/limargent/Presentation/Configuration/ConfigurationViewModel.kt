@@ -5,12 +5,13 @@ import androidx.lifecycle.viewModelScope
 import com.example.limargent.Application.CategoryService
 import com.example.limargent.Application.MovementsService
 import com.example.limargent.Application.PreferenceService
-import com.example.limargent.Domain.DataClasse.Frequence
 import com.example.limargent.Domain.DataClasse.MoneyMovement
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 import javax.inject.Inject
@@ -19,7 +20,7 @@ import javax.inject.Inject
 class ConfigurationViewModel @Inject constructor(
     private val categoryService: CategoryService,
     private val preferenceService: PreferenceService,
-    private val movementsService: MovementsService // <-- Injection du service de mouvements
+    private val movementsService: MovementsService
 ) : ViewModel() {
 
     private val p_categories = MutableStateFlow<List<String>>(emptyList())
@@ -34,27 +35,28 @@ class ConfigurationViewModel @Inject constructor(
     private val p_notificationActive = MutableStateFlow(false)
     val notificationActive: StateFlow<Boolean> = p_notificationActive.asStateFlow()
 
-    private val p_MouvementRec = MutableStateFlow<List<MoneyMovement>>(emptyList())
-    val MouvementRec: StateFlow<List<MoneyMovement>> = p_MouvementRec.asStateFlow()
+    private val p_mouvementRec = MutableStateFlow<List<MoneyMovement>>(emptyList())
+    val mouvementRec: StateFlow<List<MoneyMovement>> = p_mouvementRec.asStateFlow()
+
+    private val p_toastMessage = Channel<String>()
+    val toastMessage = p_toastMessage.receiveAsFlow()
 
     init {
+        loadUserPreferences()
+        observeRecurrentMovements()
+    }
+
+    private fun observeRecurrentMovements() {
         viewModelScope.launch {
             movementsService.getMouvementsFlow().collect { list ->
-                p_MouvementRec.value = list.filter { it.isRecurrent }
+                p_mouvementRec.value = list.filter { it.isRecurrent }
             }
         }
     }
 
     fun loadUserPreferences() {
-        loadCategories()
+        observeCategories()
         loadPreference()
-    }
-
-    fun resetToDefault() {
-        p_categories.value = emptyList()
-        p_theme.value = "system"
-        p_seuilBudget.value = 0.0
-        p_notificationActive.value = false
     }
 
     private fun loadPreference() {
@@ -65,66 +67,71 @@ class ConfigurationViewModel @Inject constructor(
         }
     }
 
-    private fun loadCategories() {
+    private fun observeCategories() {
         viewModelScope.launch {
-            p_categories.value = categoryService.getCategories()
+            categoryService.getCategoriesFlow().collect {
+                p_categories.value = it
+            }
         }
     }
 
     fun addCategorie(name: String) {
         viewModelScope.launch {
-            if (name.isNotBlank()) {
-                categoryService.addCategorie(name)
-                loadCategories()
+            val result = categoryService.addCategorie(name)
+            result.onFailure { error ->
+                p_toastMessage.send(error.message ?: "Erreur inconnue")
             }
         }
     }
 
     fun delCategorie(name: String) {
         viewModelScope.launch {
-            categoryService.supprimer(name)
-            loadCategories()
+            val result = categoryService.supprimer(name)
+            result.onFailure { error ->
+                p_toastMessage.send(error.message ?: "Erreur inconnue")
+            }
         }
     }
 
     fun setThemePreference(theme: String) {
         viewModelScope.launch {
-            preferenceService.setTheme(theme)
-            loadPreference()
+            preferenceService.setTheme(theme).onSuccess {
+                loadPreference()
+            }
         }
     }
 
     fun setSeuilBudget(seuil: Double) {
         viewModelScope.launch {
             preferenceService.setSeuilBudget(seuil)
-            loadPreference()
+                .onSuccess { loadPreference() }
+                .onFailure { error -> p_toastMessage.send(error.message ?: "Erreur") }
         }
     }
 
     fun setNotificationActive(active: Boolean) {
         viewModelScope.launch {
-            preferenceService.setNotificationActive(active)
-            loadPreference()
+            preferenceService.setNotificationActive(active).onSuccess {
+                loadPreference()
+            }
         }
     }
 
     fun stopRecurrence(mouvement: MoneyMovement) {
         viewModelScope.launch {
-            val updatedMouvement = mouvement.copy(
-                isRecurrent = false,
-                frequence = Frequence.AUCUNE,
-                nextExecutionDate = null
-            )
-            movementsService.updateMouvement(updatedMouvement)
+            val result = movementsService.stopRecurrence(mouvement)
+            result.onFailure { error ->
+                p_toastMessage.send(error.message ?: "Erreur")
+            }
         }
     }
 
     fun updateRecurrenceDate(mouvement: MoneyMovement, newDate: LocalDate) {
         viewModelScope.launch {
-            val updatedMouvement = mouvement.copy(
-                nextExecutionDate = newDate
-            )
-            movementsService.updateMouvement(updatedMouvement)
+            val result = movementsService.updateRecurrenceDate(mouvement, newDate)
+            result.onFailure { error ->
+                p_toastMessage.send(error.message ?: "Erreur")
+            }
         }
     }
 }

@@ -1,6 +1,5 @@
 package com.example.limargent.Presentation.Objectif
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -16,11 +15,12 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.limargent.Domain.DataClasse.ObjectifEpargne
+import kotlinx.coroutines.flow.collectLatest
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
+import java.util.UUID
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -29,8 +29,16 @@ fun ObjectifScreen(
 ) {
     val objectifs by viewModel.objectifs.collectAsState()
     var showAddDialog by remember { mutableStateOf(false) }
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    LaunchedEffect(key1 = viewModel) {
+        viewModel.toastMessage.collectLatest { message ->
+            snackbarHostState.showSnackbar(message)
+        }
+    }
 
     Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
                 title = { Text("Objectifs d'épargne", fontWeight = FontWeight.Bold) },
@@ -69,13 +77,13 @@ fun ObjectifScreen(
             } else {
                 LazyColumn(
                     verticalArrangement = Arrangement.spacedBy(12.dp),
-                    contentPadding = PaddingValues(bottom = 80.dp)
+                    contentPadding = PaddingValues(top = 16.dp, bottom = 80.dp)
                 ) {
                     items(objectifs) { objectif ->
                         ObjectifItem(
                             objectif = objectif,
                             onUpdateEpargne = { montant ->
-                                viewModel.update(objectif.id, montant)
+                                viewModel.addProgress(objectif.id, montant)
                             },
                             onDelete = {
                                 viewModel.delete(objectif.id)
@@ -91,7 +99,14 @@ fun ObjectifScreen(
         AddObjectifDialog(
             onDismiss = { showAddDialog = false },
             onConfirm = { nom, montant, date, taux ->
-                viewModel.addObjectif(nom, montant, date, taux)
+                val newObjectif = ObjectifEpargne(
+                    id = UUID.randomUUID().toString(),
+                    nom = nom,
+                    montantCible = montant,
+                    dateEcheance = date,
+                    tauxInteret = taux
+                )
+                viewModel.saveObjectif(newObjectif)
                 showAddDialog = false
             }
         )
@@ -172,10 +187,10 @@ fun ObjectifItem(
                 )
             }
             
-            if (objectif.dateEcheance != null) {
+            objectif.dateEcheance?.let {
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
-                    text = "Échéance : ${objectif.dateEcheance.format(DateTimeFormatter.ofPattern("dd/MM/yyyy"))}",
+                    text = "Échéance : ${it.format(DateTimeFormatter.ofPattern("dd/MM/yyyy"))}",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -217,21 +232,19 @@ fun AddObjectifDialog(
         onDismissRequest = onDismiss,
         title = { Text("Nouvel objectif") },
         text = {
-            Column {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 OutlinedTextField(
                     value = nom,
                     onValueChange = { nom = it },
                     label = { Text("Nom de l'objectif") },
                     singleLine = true
                 )
-                Spacer(modifier = Modifier.height(8.dp))
                 OutlinedTextField(
                     value = montant,
                     onValueChange = { if (it.all { char -> char.isDigit() || char == '.' }) montant = it },
                     label = { Text("Montant cible (€)") },
                     singleLine = true
                 )
-                Spacer(modifier = Modifier.height(8.dp))
                 OutlinedTextField(
                     value = taux,
                     onValueChange = { if (it.all { char -> char.isDigit() || char == '.' }) taux = it },
@@ -243,11 +256,12 @@ fun AddObjectifDialog(
         confirmButton = {
             TextButton(
                 onClick = {
-                    val montantDouble = montant.toDoubleOrNull()
-                    val tauxDouble = taux.toDoubleOrNull() ?: 0.0
-                    if (nom.isNotBlank() && montantDouble != null && montantDouble > 0) {
-                        onConfirm(nom, montantDouble, null, tauxDouble)
-                    }
+                    onConfirm(
+                        nom,
+                        montant.toDoubleOrNull() ?: 0.0,
+                        null,
+                        taux.toDoubleOrNull() ?: 0.0
+                    )
                 }
             ) { Text("Ajouter") }
         },
@@ -280,10 +294,7 @@ fun UpdateEpargneDialog(
         confirmButton = {
             TextButton(
                 onClick = {
-                    val montantDouble = montant.toDoubleOrNull()
-                    if (montantDouble != null && montantDouble > 0) {
-                        onConfirm(montantDouble)
-                    }
+                    onConfirm(montant.toDoubleOrNull() ?: 0.0)
                 }
             ) {
                 Text("Valider")

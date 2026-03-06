@@ -1,57 +1,37 @@
 package com.example.limargent.Data.Preference
 
-import com.example.limargent.Data.User.UserProvider
-import com.example.limargent.Domain.Preference.PreferenceRepository
+import com.example.limargent.Domain.Preferences.PreferenceRepository
 import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
-class PreferenceProvider @Inject constructor(
-    private val userProvider: UserProvider
-) : PreferenceRepository {
+class PreferenceProvider @Inject constructor() : PreferenceRepository {
+
+    private var currentTheme = "system"
+    private var currentSeuil = 100.0
+    private var notificationsActive = true
 
     override suspend fun getTheme(): String {
-        val user = userProvider.getCurrentUser()
-        return user?.preference?.firstOrNull { it.startsWith("theme:") }?.substringAfter("theme:") ?: "system"
+        return currentTheme
     }
 
     override suspend fun setTheme(theme: String) {
-        val user = userProvider.getCurrentUser()
-        user?.let {
-            val newPreferences = it.preference.filter { pref -> !pref.startsWith("theme:") }.toMutableList()
-            newPreferences.add("theme:$theme")
-            val updatedUser = it.copy(preference = newPreferences)
-            userProvider.updateUser(updatedUser)
-        }
+        currentTheme = theme
     }
 
     override suspend fun getSeuilBudget(): Double {
-        val user = userProvider.getCurrentUser()
-        return user?.preference?.firstOrNull { it.startsWith("seuil:") }?.substringAfter("seuil:")?.toDoubleOrNull() ?: 0.0
+        return currentSeuil
     }
 
     override suspend fun setSeuilBudget(seuil: Double) {
-        val user = userProvider.getCurrentUser()
-        user?.let {
-            val newPreferences = it.preference.filter { pref -> !pref.startsWith("seuil:") }.toMutableList()
-            newPreferences.add("seuil:$seuil")
-            val updatedUser = it.copy(preference = newPreferences)
-            userProvider.updateUser(updatedUser)
-        }
+        currentSeuil = seuil
     }
 
     override suspend fun isNotificationActive(): Boolean {
-        val user = userProvider.getCurrentUser()
-        return user?.preference?.firstOrNull { it.startsWith("notif:") }?.substringAfter("notif:")?.toBoolean() ?: false
+        return notificationsActive
     }
 
     override suspend fun setNotificationActive(active: Boolean) {
-        val user = userProvider.getCurrentUser()
-        user?.let {
-            val newPreferences = it.preference.filter { pref -> !pref.startsWith("notif:") }.toMutableList()
-            newPreferences.add("notif:$active")
-            val updatedUser = it.copy(preference = newPreferences)
-            userProvider.updateUser(updatedUser)
-        }
+        notificationsActive = active
     }
 }

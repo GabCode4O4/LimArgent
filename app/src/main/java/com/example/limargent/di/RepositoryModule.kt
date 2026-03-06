@@ -8,7 +8,7 @@ import com.example.limargent.Data.User.UserProvider
 import com.example.limargent.Domain.Categorie.CategoryRepository
 import com.example.limargent.Domain.Mouvements.MovementsRepository
 import com.example.limargent.Domain.Objectif.ObjectifRepository
-import com.example.limargent.Domain.Preference.PreferenceRepository
+import com.example.limargent.Domain.Preferences.PreferenceRepository // <-- BON IMPORT
 import com.example.limargent.Domain.Users.UserRepository
 import dagger.Binds
 import dagger.Module
@@ -49,5 +49,4 @@ abstract class RepositoryModule {
     abstract fun bindObjectifRepository(
         impl: ObjectifProvider
         ): ObjectifRepository
-
 }

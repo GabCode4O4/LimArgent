@@ -20,25 +20,22 @@ class RegisterViewModel @Inject constructor(
     var confirmMotDePasse by mutableStateOf("")
     var errorMessage by mutableStateOf<String?>(null)
         private set
+    var isLoading by mutableStateOf(false)
+        private set
 
     fun attemptRegister(onRegisterSuccess: () -> Unit) {
-        if (identifiant.isBlank() || motDePasse.isBlank()) {
-            errorMessage = "Veuillez remplir tous les champs."
-            return
-        }
-
-        if (motDePasse != confirmMotDePasse) {
-            errorMessage = "Mot de passe de confirmation incorrect"
-            return
-        }
-
         viewModelScope.launch {
-            val error = registerService.register(identifiant, motDePasse)
-            if (error == null) {
-                errorMessage = null
+            isLoading = true
+            errorMessage = null
+
+            val result = registerService.register(identifiant, motDePasse, confirmMotDePasse)
+
+            result.onSuccess {
+                isLoading = false
                 onRegisterSuccess()
-            } else {
-                errorMessage = error
+            }.onFailure { error ->
+                isLoading = false
+                errorMessage = error.message
             }
         }
     }

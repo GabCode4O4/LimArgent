@@ -26,51 +26,39 @@ class MovementsProvider @Inject constructor(
     private val UserId: String?
         get() = auth.currentUser?.uid
 
-    override suspend fun getMouvements(): List<MoneyMovement> {
-        val uid = UserId ?: return emptyList()
+    override suspend fun addMouvement(mouvement: MoneyMovement): Result<Unit> {
+        val uid = UserId ?: return Result.failure(Exception("Utilisateur non connecté."))
         return try {
-            val querySnapshot = firestore.collection("users").document(uid)
-                .collection("mouvements").get().await()
-
-            querySnapshot.documents.mapNotNull { doc ->
-                doc.toMoneyMovement()
-            }
-        } catch (e: Exception) {
-            e.printStackTrace()
-            emptyList()
-        }
-    }
-
-    override suspend fun addMouvement(mouvement: MoneyMovement) {
-        val uid = UserId ?: return
-        try {
             firestore.collection("users").document(uid)
-                .collection("mouvements").add(mouvement.toFirestoreMap())
+                .collection("mouvements").add(mouvement.toFirestoreMap()).await()
+            Result.success(Unit)
         } catch (e: Exception) {
-            e.printStackTrace()
+            Result.failure(e)
         }
     }
 
-    override suspend fun deleteMouvement(mouvement: MoneyMovement) {
-        val uid = UserId ?: return
-        val mouvementId = mouvement.id ?: return
-        try {
+    override suspend fun deleteMouvement(mouvement: MoneyMovement): Result<Unit> {
+        val uid = UserId ?: return Result.failure(Exception("Utilisateur non connecté."))
+        val mouvementId = mouvement.id ?: return Result.failure(Exception("ID de mouvement manquant."))
+        return try {
             firestore.collection("users").document(uid)
-                .collection("mouvements").document(mouvementId).delete()
+                .collection("mouvements").document(mouvementId).delete().await()
+            Result.success(Unit)
         } catch (e: Exception) {
-            e.printStackTrace()
+            Result.failure(e)
         }
     }
 
-    override suspend fun updateMouvement(mouvement: MoneyMovement) {
-        val uid = UserId ?: return
-        val mouvementId = mouvement.id ?: return
-        try {
+    override suspend fun updateMouvement(mouvement: MoneyMovement): Result<Unit> {
+        val uid = UserId ?: return Result.failure(Exception("Utilisateur non connecté."))
+        val mouvementId = mouvement.id ?: return Result.failure(Exception("ID de mouvement manquant."))
+        return try {
             firestore.collection("users").document(uid)
                 .collection("mouvements").document(mouvementId)
-                .set(mouvement.toFirestoreMap())
+                .set(mouvement.toFirestoreMap()).await()
+            Result.success(Unit)
         } catch (e: Exception) {
-            e.printStackTrace()
+            Result.failure(e)
         }
     }
 
@@ -102,7 +90,7 @@ class MovementsProvider @Inject constructor(
             "categorie" to categorie,
             "date" to Date.from(date.atStartOfDay(ZoneOffset.UTC).toInstant()),
             "type" to type.name,
-            "isRecurring" to isRecurrent,
+            "isRecurrent" to isRecurrent,
             "frequence" to frequence.name,
             "nextExecutionDate" to nextExecutionDate?.let { Date.from(it.atStartOfDay(ZoneOffset.UTC).toInstant()) }
         )
@@ -114,7 +102,7 @@ class MovementsProvider @Inject constructor(
             val categorie = getString("categorie")!!
             val date = (getTimestamp("date")?.toDate()?.toInstant()?.atZone(ZoneOffset.UTC)?.toLocalDate()) ?: LocalDate.now()
             val type = MovType.valueOf(getString("type")!!)
-            val isRecurrent = getBoolean("isRecurring") ?: false
+            val isRecurrent = getBoolean("isRecurrent") ?: false
             val frequenceStr = getString("frequence") ?: Frequence.AUCUNE.name
             val frequence = try { Frequence.valueOf(frequenceStr) } catch (e: Exception) { Frequence.AUCUNE }
             val nextExecutionDate = getTimestamp("nextExecutionDate")?.toDate()?.toInstant()?.atZone(ZoneOffset.UTC)?.toLocalDate()

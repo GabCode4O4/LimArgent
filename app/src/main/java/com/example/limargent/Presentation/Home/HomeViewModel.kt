@@ -9,8 +9,6 @@ import com.example.limargent.Application.CategoryService
 import com.example.limargent.Application.MovementsService
 import com.example.limargent.Application.PreferenceService
 import com.example.limargent.Data.Classe.SessionManager
-import com.example.limargent.Data.Classe.BudgetManager
-import com.example.limargent.Domain.DataClasse.Frequence
 import com.example.limargent.Domain.DataClasse.MoneyMovement
 import com.example.limargent.Domain.DataClasse.MovType
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -20,8 +18,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
-import java.math.BigDecimal
-import java.time.LocalDate
 import javax.inject.Inject
 
 @HiltViewModel
@@ -32,9 +28,8 @@ class HomeViewModel @Inject constructor(
     private val preferenceService: PreferenceService,
 ) : ViewModel() {
 
-    private val userN = MutableStateFlow("Utilisateur")
-    val userName: StateFlow<String> = userN.asStateFlow()
-    val manager = BudgetManager()
+    private val p_userName = MutableStateFlow("Utilisateur")
+    val userName: StateFlow<String> = p_userName.asStateFlow()
 
     var budget by mutableStateOf(0.0)
         private set
@@ -58,7 +53,7 @@ class HomeViewModel @Inject constructor(
         get() = mouvements.filter {
             (recherche.isBlank() || it.titre.contains(recherche, ignoreCase = true) || it.categorie.contains(recherche, ignoreCase = true)) &&
                     (moisFiltre == null || it.date.monthValue == moisFiltre) &&
-                        (anneeFiltre == null || it.date.year == anneeFiltre) &&
+                    (anneeFiltre == null || it.date.year == anneeFiltre) &&
                     (catFiltre == null || it.categorie == catFiltre) &&
                     (typeFiltre == null || it.type == typeFiltre)
         }.sortedByDescending { it.date }
@@ -71,11 +66,7 @@ class HomeViewModel @Inject constructor(
     private fun currentUser() {
         viewModelScope.launch {
             sessionManager.currentUser.collect { firebaseUser ->
-                if (firebaseUser != null) {
-                    userN.value = firebaseUser.email?.split("@")?.get(0) ?: firebaseUser.uid
-                } else {
-                    userN.value = "Invité"
-                }
+                p_userName.value = firebaseUser?.email?.split("@")?.get(0) ?: firebaseUser?.uid ?: "Invité"
             }
         }
     }
@@ -87,10 +78,9 @@ class HomeViewModel @Inject constructor(
                     launch {
                         movementsService.getMouvementsFlow().collect { lesMouvements ->
                             mouvements = lesMouvements
-                            val ancienBudget = budget
-                            val nouveauBudget = manager.getBudget(lesMouvements).toDouble()
-                            budget = nouveauBudget
-                            verifierSeuilBudget(ancienBudget, nouveauBudget)
+                            budget = lesMouvements.sumOf {
+                                if (it.type == MovType.entree) it.montant.toDouble() else -it.montant.toDouble()
+                            }
                         }
                     }
                     launch {
@@ -107,15 +97,6 @@ class HomeViewModel @Inject constructor(
         }
     }
 
-    private suspend fun verifierSeuilBudget(ancienBudget: Double, nouveauBudget: Double) {
-        if (preferenceService.isNotificationActive()) {
-            val seuil = preferenceService.getSeuilBudget()
-            if (nouveauBudget < seuil && ancienBudget >= seuil) {
-               p_toastMessage.send("Vous etes en dessous de votre seuil de budget !")
-            }
-        }
-    }
-
     fun onEditMouvement(mouvement: MoneyMovement) {
         mouvementEnEdition = mouvement
     }
@@ -126,22 +107,26 @@ class HomeViewModel @Inject constructor(
 
     fun saveMouvement(mouvement: MoneyMovement) {
         viewModelScope.launch {
-            if (mouvement.id == null) {
-                movementsService.addMouvement(mouvement)
-            } else {
-                movementsService.updateMouvement(mouvement)
+            val result = movementsService.saveMouvement(mouvement)
+            result.onSuccess {
+                p_toastMessage.send("Mouvement enregistré !")
+                onDismissMouvement()
+            }.onFailure { error ->
+                p_toastMessage.send(error.message ?: "Une erreur est survenue.")
             }
-            onDismissMouvement() // Fermer la feuille après la sauvegarde
         }
     }
 
-
-    fun delMouvement(mouvement: MoneyMovement){
+    fun delMouvement(mouvement: MoneyMovement) {
         viewModelScope.launch {
-            movementsService.deleteMouvement(mouvement)
+            val result = movementsService.deleteMouvement(mouvement)
+            result.onSuccess {
+                p_toastMessage.send("Mouvement supprimé.")
+            }.onFailure { error ->
+                p_toastMessage.send(error.message ?: "Erreur lors de la suppression.")
+            }
         }
     }
-
 
     fun resetFilters() {
         recherche = ""

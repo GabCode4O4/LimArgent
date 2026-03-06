@@ -4,6 +4,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -21,10 +22,13 @@ fun LoginScreen(
 ) {
     val scrollState = rememberScrollState()
 
+    LaunchedEffect(Unit) {
+        viewModel.clearError()
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
-
             .windowInsetsPadding(WindowInsets.systemBars)
             .verticalScroll(scrollState)
             .padding(32.dp),
@@ -41,6 +45,7 @@ fun LoginScreen(
             onValueChange = { viewModel.identifiant = it },
             label = { Text("Identifiant") },
             modifier = Modifier.fillMaxWidth(),
+            isError = viewModel.errorMessage != null,
             shape = MaterialTheme.shapes.medium
         )
 
@@ -52,18 +57,20 @@ fun LoginScreen(
             label = { Text("Mot de passe") },
             visualTransformation = PasswordVisualTransformation(),
             modifier = Modifier.fillMaxWidth(),
+            isError = viewModel.errorMessage != null,
             shape = MaterialTheme.shapes.medium
         )
 
-        if (viewModel.isError) {
+        viewModel.errorMessage?.let {
             Spacer(modifier = Modifier.height(8.dp))
-            Text("Identifiants incorrects", color = MaterialTheme.colorScheme.error)
+            Text(it, color = MaterialTheme.colorScheme.error)
         }
 
         Spacer(modifier = Modifier.height(32.dp))
 
         Button(
             onClick = { viewModel.onLog(onLoginSuccess = onNavigateToMain) },
+            enabled = !viewModel.isLoading,
             modifier = Modifier.fillMaxWidth().height(56.dp),
             shape = MaterialTheme.shapes.large,
             colors = ButtonDefaults.buttonColors(
@@ -71,7 +78,11 @@ fun LoginScreen(
                 contentColor = MaterialTheme.colorScheme.onPrimary
             )
         ) {
-            Text("Se connecter", fontSize = 18.sp, fontWeight = FontWeight.SemiBold)
+            if (viewModel.isLoading) {
+                CircularProgressIndicator(color = MaterialTheme.colorScheme.onPrimary)
+            } else {
+                Text("Se connecter", fontSize = 18.sp, fontWeight = FontWeight.SemiBold)
+            }
         }
 
         Spacer(modifier = Modifier.height(16.dp))
