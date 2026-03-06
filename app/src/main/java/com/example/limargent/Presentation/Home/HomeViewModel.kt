@@ -58,7 +58,7 @@ class HomeViewModel @Inject constructor(
                         (anneeFiltre == null || it.date.year == anneeFiltre) &&
                     (catFiltre == null || it.categorie == catFiltre) &&
                     (typeFiltre == null || it.type == typeFiltre)
-        }.reversed()
+        }.sortedByDescending { it.date }
 
     init {
         currentUser()

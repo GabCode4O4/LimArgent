@@ -23,6 +23,8 @@ import com.example.limargent.Presentation.Register.RegisterViewModel
 import com.example.limargent.ui.theme.LimArgentTheme
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
+import androidx.compose.animation.Crossfade
+import androidx.compose.animation.core.tween
 
 enum class ScreenState { LOGIN, REGISTER, HOME }
 
@@ -61,20 +63,32 @@ class MainActivity : ComponentActivity() {
 
             LimArgentTheme(theme = theme) {
                 Surface(modifier = Modifier.fillMaxSize()) {
-                    when (screenAct) {
-                        ScreenState.LOGIN -> {
-                            LoginScreen(viewModel = loginViewModel, onNavigateToMain = {screenAct = ScreenState.HOME}, onNavigateToRegister = { screenAct = ScreenState.REGISTER })
-                        }
-                        ScreenState.REGISTER -> {
-                            RegisterScreen(viewModel = registerViewModel, onNavigateToMain = {screenAct = ScreenState.HOME }, onNavigateToLogin = { screenAct = ScreenState.LOGIN })
-                        }
-                        ScreenState.HOME -> {
-                            MainAppScreen(onLogout = {
-                                sessionManager.logout()
-                                loginViewModel.clearFields()
-                            })
+                    Crossfade(
+                        targetState = screenAct,
+                        animationSpec = tween(durationMillis = 300),
+                        label = "AnimationTransitionEcran"
+                    ) { ecranCourant ->
+
+                        when (ecranCourant) {
+                            ScreenState.LOGIN -> {
+                                LoginScreen(
+                                    viewModel = loginViewModel, onNavigateToMain = { screenAct = ScreenState.HOME }, onNavigateToRegister = { screenAct = ScreenState.REGISTER }
+                                )
+                            }
+                            ScreenState.REGISTER -> {
+                                RegisterScreen(
+                                    viewModel = registerViewModel, onNavigateToMain = { screenAct = ScreenState.HOME }, onNavigateToLogin = { screenAct = ScreenState.LOGIN }
+                                )
+                            }
+                            ScreenState.HOME -> {
+                                MainAppScreen(onLogout = {
+                                    sessionManager.logout()
+                                    loginViewModel.clearFields()
+                                })
+                            }
                         }
                     }
+
                 }
             }
         }

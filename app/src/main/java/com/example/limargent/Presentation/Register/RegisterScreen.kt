@@ -11,6 +11,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.limargent.Presentation.Main.LogoLimArgent
 
 @Composable
 fun RegisterScreen(
@@ -27,17 +28,14 @@ fun RegisterScreen(
             .verticalScroll(scrollState)
             .padding(32.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
+
     ) {
         Spacer(modifier = Modifier.height(48.dp))
 
-        Text(
-            text = "Inscription",
-            style = MaterialTheme.typography.displaySmall.copy(fontWeight = FontWeight.Bold),
-            color = MaterialTheme.colorScheme.onBackground
+        LogoLimArgent(
+            modifier = Modifier.fillMaxWidth(0.7f).aspectRatio(1f)
         )
 
-        Spacer(modifier = Modifier.height(48.dp))
 
         OutlinedTextField(
             value = viewModel.identifiant,

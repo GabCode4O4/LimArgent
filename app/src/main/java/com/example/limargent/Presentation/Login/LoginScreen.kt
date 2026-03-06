@@ -1,5 +1,4 @@
 package com.example.limargent.Presentation.Login
-
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -11,6 +10,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.limargent.Presentation.Main.LogoLimArgent
+
 
 @Composable
 fun LoginScreen(
@@ -32,14 +33,9 @@ fun LoginScreen(
     ) {
         Spacer(modifier = Modifier.height(48.dp))
 
-        Text(
-            text = "LimArgent",
-            style = MaterialTheme.typography.displaySmall.copy(fontWeight = FontWeight.Bold),
-            color = MaterialTheme.colorScheme.onBackground
+        LogoLimArgent(
+            modifier = Modifier.fillMaxWidth(0.7f).aspectRatio(1f)
         )
-
-        Spacer(modifier = Modifier.height(48.dp))
-
         OutlinedTextField(
             value = viewModel.identifiant,
             onValueChange = { viewModel.identifiant = it },

@@ -21,6 +21,11 @@ import com.example.limargent.Presentation.Home.HomeScreen
 import com.example.limargent.Presentation.Home.HomeViewModel
 import com.example.limargent.Presentation.Objectif.ObjectifScreen
 import com.example.limargent.Presentation.Objectif.ObjectifViewModel
+import androidx.compose.foundation.Image
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.graphics.luminance
+import androidx.compose.ui.res.painterResource
+import com.example.limargent.R
 
 enum class AppScreen(val title: String, val icon: ImageVector) {
     HOME("Accueil", Icons.Default.Home),
@@ -98,4 +103,22 @@ fun MainAppScreen(
             )
         }
     }
+}
+
+@Composable
+fun LogoLimArgent(
+    modifier: Modifier = Modifier
+) {
+    val isDark = MaterialTheme.colorScheme.background.luminance() < 0.5f
+    val imageId = if (isDark) {
+        R.drawable.logo_blanc
+    } else {
+        R.drawable.logo_noir
+    }
+
+    Image(
+        painter = painterResource(id = imageId),
+        contentDescription = "Logo de l'application LimArgent",
+        modifier = modifier
+    )
 }
