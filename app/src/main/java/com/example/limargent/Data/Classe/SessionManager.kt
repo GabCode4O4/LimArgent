@@ -1,4 +1,4 @@
-package com.example.limargent.Data
+package com.example.limargent.Data.Classe
 
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser

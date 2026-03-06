@@ -1,7 +1,7 @@
 package com.example.limargent.Data.User
 
 import com.example.limargent.Data.Movements.MovementsProvider
-import com.example.limargent.Domain.User
+import com.example.limargent.Domain.DataClasse.User
 import com.example.limargent.Domain.Users.UserRepository
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore

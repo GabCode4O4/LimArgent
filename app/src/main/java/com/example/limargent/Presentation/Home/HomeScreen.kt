@@ -10,7 +10,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.FilterList
@@ -26,8 +25,9 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.limargent.Domain.MoneyMovement
-import com.example.limargent.Domain.MovType
+import com.example.limargent.Domain.DataClasse.MoneyMovement
+import com.example.limargent.Domain.DataClasse.MovType
+import com.example.limargent.Presentation.Main.LogoLimArgent
 import com.example.limargent.ui.theme.AppleGreen
 import com.example.limargent.ui.theme.AppleRed
 import java.time.format.DateTimeFormatter
@@ -37,7 +37,7 @@ import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HomeScreen(viewModel: HomeViewModel, onLogout: () -> Unit) {
+fun HomeScreen(viewModel: HomeViewModel) {
     val userName by viewModel.userName.collectAsState()
     val budget = viewModel.budget
     val mouvements = viewModel.filtrage
@@ -52,19 +52,8 @@ fun HomeScreen(viewModel: HomeViewModel, onLogout: () -> Unit) {
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("LimArgent", fontWeight = FontWeight.Bold) },
-                actions = {
-                    IconButton(onClick = {
-                        viewModel.logout()
-                        onLogout()
-                    }) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ExitToApp,
-                            contentDescription = "Se déconnecter",
-                            tint = MaterialTheme.colorScheme.error
-                        )
-                    }
-                },
+                title = {LogoLimArgent(modifier = Modifier.fillMaxWidth(0.4f).aspectRatio(1f)
+                ) },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.background,
                     titleContentColor = MaterialTheme.colorScheme.primary
@@ -88,14 +77,8 @@ fun HomeScreen(viewModel: HomeViewModel, onLogout: () -> Unit) {
                     style = MaterialTheme.typography.headlineMedium,
                     color = MaterialTheme.colorScheme.onBackground
                 )
-                Text(
-                    text = "Bienvenue sur LimArgent",
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.primary,
-                    fontWeight = FontWeight.Bold
-                )
 
-                Spacer(modifier = Modifier.height(24.dp))
+
                 BalanceCard(budget = budget)
                 Spacer(modifier = Modifier.height(24.dp))
 

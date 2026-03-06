@@ -18,7 +18,7 @@ class ConfigurationActivity : ComponentActivity() {
         setContent {
             val theme by viewModel.theme.collectAsState()
             LimArgentTheme(theme = theme) {
-                ConfigurationScreen(viewModel = viewModel)
+                ConfigurationScreen(viewModel = viewModel, onLogout = {})
             }
         }
     }

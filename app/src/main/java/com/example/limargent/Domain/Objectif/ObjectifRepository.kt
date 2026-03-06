@@ -1,6 +1,6 @@
 package com.example.limargent.Domain.Objectif
 
-import com.example.limargent.Domain.ObjectifEpargne
+import com.example.limargent.Domain.DataClasse.ObjectifEpargne
 import kotlinx.coroutines.flow.Flow
 
 interface ObjectifRepository {

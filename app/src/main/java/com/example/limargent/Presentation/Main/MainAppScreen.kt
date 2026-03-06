@@ -31,7 +31,7 @@ enum class AppScreen(val title: String, val icon: ImageVector) {
     HOME("Accueil", Icons.Default.Home),
     ANALYTICS("Analytique", Icons.Default.Analytics),
     CONFIGURATION("Config", Icons.Default.Settings),
-    OBJECTIF("Objecfit", Icons.Default.AddBusiness)
+    OBJECTIF("Objectif", Icons.Default.AddBusiness)
 
 }
 
@@ -72,8 +72,7 @@ fun MainAppScreen(
             when (screenAct) {
                 AppScreen.HOME -> {
                     HomeScreen(
-                        viewModel = homeViewModel,
-                        onLogout = onLogout
+                        viewModel = homeViewModel
                     )
                 }
                 AppScreen.ANALYTICS -> {
@@ -86,7 +85,7 @@ fun MainAppScreen(
                 }
                 AppScreen.CONFIGURATION -> {
                     val viewModel = hiltViewModel<ConfigurationViewModel>()
-                    ConfigurationScreen(viewModel = viewModel)
+                    ConfigurationScreen(viewModel = viewModel, onLogout = onLogout)
                 }
 
             }
@@ -96,8 +95,8 @@ fun MainAppScreen(
             AddMouvement(
                 categories = homeViewModel.categories,
                 onDismiss = { showAddMouv = false },
-                onConfirm = { titre, montant, categorie, date, type ->
-                    homeViewModel.addMouvement(titre, montant, categorie, date, type)
+                onConfirm = { titre, montant, categorie, date, type, isRecurrent, frequence, nextDate ->
+                    homeViewModel.addMouvement(titre, montant, categorie, date, type, isRecurrent, frequence, nextDate)
                     showAddMouv = false
                 }
             )

@@ -14,7 +14,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import com.example.limargent.Data.SessionManager
+import com.example.limargent.Data.Classe.SessionManager
 import com.example.limargent.Presentation.Configuration.ConfigurationViewModel
 import com.example.limargent.Presentation.Login.LoginScreen
 import com.example.limargent.Presentation.Login.LoginViewModel

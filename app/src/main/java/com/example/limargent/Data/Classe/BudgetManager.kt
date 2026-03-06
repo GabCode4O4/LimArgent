@@ -1,10 +1,11 @@
-package com.example.limargent.Domain
-import java.math.BigDecimal
-import java.util.ArrayList
+package com.example.limargent.Data.Classe
 
+import com.example.limargent.Domain.DataClasse.MoneyMovement
+import com.example.limargent.Domain.DataClasse.MovType
+import java.math.BigDecimal
 
 class BudgetManager{
-    fun getBudget(mouvements: List<MoneyMovement>) : BigDecimal{
+    fun getBudget(mouvements: List<MoneyMovement>) : BigDecimal {
         var total = BigDecimal.ZERO
         for (mouv in mouvements){
             if(mouv.type == MovType.entree){

@@ -1,21 +1,14 @@
 package com.example.limargent.Presentation.Analytics
 
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.limargent.Domain.BudgetManager
-import com.example.limargent.Domain.MoneyMovement
+import com.example.limargent.Domain.DataClasse.MoneyMovement
 import com.example.limargent.Domain.Mouvements.MovementsRepository
-import com.example.limargent.Domain.MovType
+import com.example.limargent.Domain.DataClasse.MovType
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.launch
-import java.math.BigDecimal
 import java.time.LocalDate
 import javax.inject.Inject
 import kotlin.collections.emptyList

@@ -1,6 +1,6 @@
 package com.example.limargent.Application
 
-import com.example.limargent.Domain.MoneyMovement
+import com.example.limargent.Domain.DataClasse.MoneyMovement
 import com.example.limargent.Domain.Mouvements.MovementsRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
@@ -31,5 +31,10 @@ class MovementsService @Inject constructor(
     
     override fun getMouvementsFlow(): Flow<List<MoneyMovement>> {
         return movementsRepository.getMouvementsFlow()
+    }
+    override suspend fun updateMouvement(mouvement: MoneyMovement) {
+        withContext(Dispatchers.IO) {
+            movementsRepository.updateMouvement(mouvement)
+        }
     }
 }

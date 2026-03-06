@@ -18,7 +18,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.example.limargent.Domain.ObjectifEpargne
+import com.example.limargent.Domain.DataClasse.ObjectifEpargne
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 

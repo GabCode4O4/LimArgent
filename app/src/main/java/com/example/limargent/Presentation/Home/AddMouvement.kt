@@ -18,7 +18,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.limargent.Domain.MovType
+import com.example.limargent.Domain.DataClasse.MovType
+import com.example.limargent.Domain.DataClasse.Frequence
 import java.math.BigDecimal
 import java.time.Instant
 import java.time.LocalDate
@@ -41,10 +42,10 @@ object maDate : SelectableDates {
 fun AddMouvement(
     categories: List<String>,
     onDismiss: () -> Unit,
-    onConfirm: (titre: String, montant: BigDecimal, categorie: String, date: LocalDate, type: MovType) -> Unit
+    onConfirm: (titre: String, montant: BigDecimal, categorie: String, date: LocalDate, type: MovType, isRecurrent: Boolean, frequence: Frequence, nextExecutionDate: LocalDate?) -> Unit
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-    
+
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
@@ -64,7 +65,7 @@ fun AddMouvement(
 fun AddMouvementContent(
     categories: List<String>,
     onDismiss: () -> Unit,
-    onConfirm: (titre: String, montant: BigDecimal, categorie: String, date: LocalDate, type: MovType) -> Unit
+    onConfirm: (titre: String, montant: BigDecimal, categorie: String, date: LocalDate, type: MovType, isRecurrent: Boolean, frequence: Frequence, nextExecutionDate: LocalDate?) -> Unit
 ) {
     var titre by remember { mutableStateOf("") }
     var montant by remember { mutableStateOf("") }
@@ -74,27 +75,35 @@ fun AddMouvementContent(
     var dateSelectionnee by remember { mutableStateOf(LocalDate.now()) }
     var afficherSelecteurDate by remember { mutableStateOf(false) }
 
+    var isRecurrent by remember { mutableStateOf(false) }
+    var frequenceSelectionnee by remember { mutableStateOf(Frequence.MENSUEL) }
+    var menuFrequenceOuvert by remember { mutableStateOf(false) }
+
+
+    var dateTypeToSelect by remember { mutableStateOf(0) }
+    var nextExecutionDate by remember { mutableStateOf(LocalDate.now().plusMonths(1)) }
+
     if (afficherSelecteurDate) {
+        val dateInitiale = if (dateTypeToSelect == 0) dateSelectionnee else nextExecutionDate
         val datePickerState = rememberDatePickerState(
-            initialSelectedDateMillis = dateSelectionnee.atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli(),
-            selectableDates = maDate
+            initialSelectedDateMillis = dateInitiale.atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli(),
+            selectableDates = if (dateTypeToSelect == 0) maDate else object : SelectableDates {
+                override fun isSelectableDate(time: Long): Boolean = time >= System.currentTimeMillis() - 86400000
+            }
         )
         DatePickerDialog(
             onDismissRequest = { afficherSelecteurDate = false },
             confirmButton = {
                 TextButton(onClick = {
                     datePickerState.selectedDateMillis?.let { millis ->
-                        dateSelectionnee = Instant.ofEpochMilli(millis).atZone(ZoneId.systemDefault()).toLocalDate()
+                        val selected = Instant.ofEpochMilli(millis).atZone(ZoneId.systemDefault()).toLocalDate()
+                        if (dateTypeToSelect == 0) dateSelectionnee = selected else nextExecutionDate = selected
                     }
                     afficherSelecteurDate = false
-                }) {
-                    Text("OK")
-                }
+                }) { Text("OK") }
             },
             dismissButton = {
-                TextButton(onClick = { afficherSelecteurDate = false }) {
-                    Text("Annuler")
-                }
+                TextButton(onClick = { afficherSelecteurDate = false }) { Text("Annuler") }
             }
         ) {
             DatePicker(state = datePickerState)
@@ -161,7 +170,7 @@ fun AddMouvementContent(
 
         OutlinedTextField(
             value = montant,
-            onValueChange = { 
+            onValueChange = {
                 if (it.all { char -> char.isDigit() || char == '.' }) {
                     montant = it
                 }
@@ -208,29 +217,115 @@ fun AddMouvementContent(
 
         Spacer(modifier = Modifier.height(16.dp))
 
+        // DATE DU MOUVEMENT
         OutlinedTextField(
             value = dateSelectionnee.format(DateTimeFormatter.ofPattern("dd/MM/yyyy")),
             onValueChange = {},
             readOnly = true,
             label = { Text("Date") },
             trailingIcon = {
-                IconButton(onClick = { afficherSelecteurDate = true }) {
+                IconButton(onClick = { dateTypeToSelect = 0; afficherSelecteurDate = true }) {
                     Icon(Icons.Default.DateRange, contentDescription = "Sélectionner une date")
                 }
             },
             modifier = Modifier
                 .fillMaxWidth()
-                .clickable { afficherSelecteurDate = true },
+                .clickable { dateTypeToSelect = 0; afficherSelecteurDate = true },
             shape = RoundedCornerShape(12.dp)
         )
 
+        Spacer(modifier = Modifier.height(24.dp))
+
+        // --- SECTION RÉCURRENCE ---
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Text(
+                text = "Mouvement récurrent",
+                style = MaterialTheme.typography.bodyLarge,
+                fontWeight = FontWeight.Medium
+            )
+            Switch(checked = isRecurrent, onCheckedChange = { isRecurrent = it })
+        }
+
+        if (isRecurrent) {
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Sélection de la fréquence
+            ExposedDropdownMenuBox(
+                expanded = menuFrequenceOuvert,
+                onExpandedChange = { menuFrequenceOuvert = !menuFrequenceOuvert }
+            ) {
+                OutlinedTextField(
+                    value = frequenceSelectionnee.libelle,
+                    onValueChange = {},
+                    readOnly = true,
+                    label = { Text("Fréquence") },
+                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = menuFrequenceOuvert) },
+                    modifier = Modifier.menuAnchor().fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp)
+                )
+                ExposedDropdownMenu(
+                    expanded = menuFrequenceOuvert,
+                    onDismissRequest = { menuFrequenceOuvert = false }
+                ) {
+                    Frequence.entries.filter { it != Frequence.AUCUNE }.forEach { freq ->
+                        DropdownMenuItem(
+                            text = { Text(freq.libelle) },
+                            onClick = {
+                                frequenceSelectionnee = freq
+                                menuFrequenceOuvert = false
+                                // Auto-calcule la prochaine date pour aider l'utilisateur
+                                nextExecutionDate = when(freq) {
+                                    Frequence.QUOTIDIEN -> dateSelectionnee.plusDays(1)
+                                    Frequence.HEBDOMADAIRE -> dateSelectionnee.plusWeeks(1)
+                                    Frequence.MENSUEL -> dateSelectionnee.plusMonths(1)
+                                    Frequence.ANNUEL -> dateSelectionnee.plusYears(1)
+                                    else -> dateSelectionnee
+                                }
+                            }
+                        )
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Sélection de la prochaine date d'exécution
+            OutlinedTextField(
+                value = nextExecutionDate.format(DateTimeFormatter.ofPattern("dd/MM/yyyy")),
+                onValueChange = {},
+                readOnly = true,
+                label = { Text("Prochaine exécution") },
+                trailingIcon = {
+                    IconButton(onClick = { dateTypeToSelect = 1; afficherSelecteurDate = true }) {
+                        Icon(Icons.Default.DateRange, contentDescription = "Sélectionner la date")
+                    }
+                },
+                modifier = Modifier.fillMaxWidth().clickable { dateTypeToSelect = 1; afficherSelecteurDate = true },
+                shape = RoundedCornerShape(12.dp)
+            )
+        }
+
         Spacer(modifier = Modifier.height(32.dp))
 
+        // --- BOUTON AJOUTER ---
         Button(
             onClick = {
                 val montantDecimal = montant.toBigDecimalOrNull()
                 if (titre.isNotBlank() && montantDecimal != null && categorieSelectionnee.isNotBlank()) {
-                    onConfirm(titre, montantDecimal, categorieSelectionnee, dateSelectionnee, type)
+                    onConfirm(
+                        titre,
+                        montantDecimal,
+                        categorieSelectionnee,
+                        dateSelectionnee,
+                        type,
+                        isRecurrent,
+                        if (isRecurrent) frequenceSelectionnee else Frequence.AUCUNE,
+                        if (isRecurrent) nextExecutionDate else null
+                    )
                 }
             },
             modifier = Modifier

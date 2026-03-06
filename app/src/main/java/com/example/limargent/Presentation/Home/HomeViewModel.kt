@@ -8,16 +8,16 @@ import androidx.lifecycle.viewModelScope
 import com.example.limargent.Application.CategoryService
 import com.example.limargent.Application.MovementsService
 import com.example.limargent.Application.PreferenceService
-import com.example.limargent.Data.SessionManager
-import com.example.limargent.Domain.BudgetManager
-import com.example.limargent.Domain.MoneyMovement
-import com.example.limargent.Domain.MovType
+import com.example.limargent.Data.Classe.SessionManager
+import com.example.limargent.Data.Classe.BudgetManager
+import com.example.limargent.Domain.DataClasse.Frequence
+import com.example.limargent.Domain.DataClasse.MoneyMovement
+import com.example.limargent.Domain.DataClasse.MovType
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import java.math.BigDecimal
@@ -113,9 +113,27 @@ class HomeViewModel @Inject constructor(
         }
     }
 
-    fun addMouvement(titre: String, montant: BigDecimal, categorie: String, date: LocalDate, type: MovType) {
+    fun addMouvement(
+        titre: String,
+        montant: BigDecimal,
+        categorie: String,
+        date: LocalDate,
+        type: MovType,
+        isRecurring: Boolean,
+        frequence: Frequence,
+        nextExecutionDate: LocalDate?
+    ) {
         viewModelScope.launch {
-            val mouvement = MoneyMovement(titre, montant, categorie, date, type)
+            val mouvement = MoneyMovement(
+                titre = titre,
+                montant = montant,
+                categorie = categorie,
+                date = date,
+                type = type,
+                isRecurrent = isRecurring,
+                frequence = frequence,
+                nextExecutionDate = nextExecutionDate
+            )
             movementsService.addMouvement(mouvement)
         }
     }
@@ -133,9 +151,5 @@ class HomeViewModel @Inject constructor(
         anneeFiltre = null
         catFiltre = null
         typeFiltre = null
-    }
-
-    fun logout() {
-        sessionManager.logout()
     }
 }

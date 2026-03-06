@@ -1,4 +1,4 @@
-package com.example.limargent.Domain
+package com.example.limargent.Domain.DataClasse
 
 import java.time.LocalDate
 import java.util.UUID

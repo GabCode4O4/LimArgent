@@ -1,6 +1,6 @@
 package com.example.limargent.Data.Objectifs
 
-import com.example.limargent.Domain.ObjectifEpargne
+import com.example.limargent.Domain.DataClasse.ObjectifEpargne
 import com.example.limargent.Domain.Objectif.ObjectifRepository
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore

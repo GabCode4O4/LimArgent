@@ -1,7 +1,7 @@
 package com.example.limargent.Data.Categorie
 
 import com.example.limargent.Domain.Categorie.CategoryRepository
-import com.example.limargent.Domain.User
+import com.example.limargent.Domain.DataClasse.User
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore

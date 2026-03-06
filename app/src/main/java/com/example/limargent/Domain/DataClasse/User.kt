@@ -1,6 +1,4 @@
-package com.example.limargent.Domain
-
-import android.preference.Preference
+package com.example.limargent.Domain.DataClasse
 
 data class User(
     val identifiant: String="",

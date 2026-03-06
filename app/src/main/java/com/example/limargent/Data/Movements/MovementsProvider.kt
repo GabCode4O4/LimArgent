@@ -1,7 +1,8 @@
 package com.example.limargent.Data.Movements
 
-import com.example.limargent.Domain.MoneyMovement
-import com.example.limargent.Domain.MovType
+import com.example.limargent.Domain.DataClasse.Frequence
+import com.example.limargent.Domain.DataClasse.MoneyMovement
+import com.example.limargent.Domain.DataClasse.MovType
 import com.example.limargent.Domain.Mouvements.MovementsRepository
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
@@ -61,6 +62,18 @@ class MovementsProvider @Inject constructor(
         }
     }
 
+    override suspend fun updateMouvement(mouvement: MoneyMovement) {
+        val uid = UserId ?: return
+        val mouvementId = mouvement.id ?: return
+        try {
+            firestore.collection("users").document(uid)
+                .collection("mouvements").document(mouvementId)
+                .set(mouvement.toFirestoreMap())
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
     override fun getMouvementsFlow(): Flow<List<MoneyMovement>> = callbackFlow {
         val uid = UserId
         if (uid == null) {
@@ -88,10 +101,12 @@ class MovementsProvider @Inject constructor(
             "montant" to montant.toString(),
             "categorie" to categorie,
             "date" to Date.from(date.atStartOfDay(ZoneOffset.UTC).toInstant()),
-            "type" to type.name
+            "type" to type.name,
+            "isRecurring" to isRecurrent,
+            "frequence" to frequence.name,
+            "nextExecutionDate" to nextExecutionDate?.let { Date.from(it.atStartOfDay(ZoneOffset.UTC).toInstant()) }
         )
     }
-
     private fun com.google.firebase.firestore.DocumentSnapshot.toMoneyMovement(): MoneyMovement? {
         return try {
             val titre = getString("titre")!!
@@ -99,7 +114,11 @@ class MovementsProvider @Inject constructor(
             val categorie = getString("categorie")!!
             val date = (getTimestamp("date")?.toDate()?.toInstant()?.atZone(ZoneOffset.UTC)?.toLocalDate()) ?: LocalDate.now()
             val type = MovType.valueOf(getString("type")!!)
-            MoneyMovement(titre, montant, categorie, date, type, id = this.id)
+            val isRecurrent = getBoolean("isRecurring") ?: false
+            val frequenceStr = getString("frequence") ?: Frequence.AUCUNE.name
+            val frequence = try { Frequence.valueOf(frequenceStr) } catch (e: Exception) { Frequence.AUCUNE }
+            val nextExecutionDate = getTimestamp("nextExecutionDate")?.toDate()?.toInstant()?.atZone(ZoneOffset.UTC)?.toLocalDate()
+            MoneyMovement(titre, montant, categorie, date, type, id = this.id,isRecurrent, frequence, nextExecutionDate)
         } catch (e: Exception) {
             e.printStackTrace()
             null
