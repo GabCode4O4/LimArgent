@@ -48,6 +48,9 @@ class HomeViewModel @Inject constructor(
     var catFiltre by mutableStateOf<String?>(null)
     var typeFiltre by mutableStateOf<MovType?>(null)
 
+    var mouvementEnEdition by mutableStateOf<MoneyMovement?>(null)
+        private set
+
     private val p_toastMessage = Channel<String>()
     val toastMessage = p_toastMessage.receiveAsFlow()
 
@@ -113,30 +116,25 @@ class HomeViewModel @Inject constructor(
         }
     }
 
-    fun addMouvement(
-        titre: String,
-        montant: BigDecimal,
-        categorie: String,
-        date: LocalDate,
-        type: MovType,
-        isRecurring: Boolean,
-        frequence: Frequence,
-        nextExecutionDate: LocalDate?
-    ) {
+    fun onEditMouvement(mouvement: MoneyMovement) {
+        mouvementEnEdition = mouvement
+    }
+
+    fun onDismissMouvement() {
+        mouvementEnEdition = null
+    }
+
+    fun saveMouvement(mouvement: MoneyMovement) {
         viewModelScope.launch {
-            val mouvement = MoneyMovement(
-                titre = titre,
-                montant = montant,
-                categorie = categorie,
-                date = date,
-                type = type,
-                isRecurrent = isRecurring,
-                frequence = frequence,
-                nextExecutionDate = nextExecutionDate
-            )
-            movementsService.addMouvement(mouvement)
+            if (mouvement.id == null) {
+                movementsService.addMouvement(mouvement)
+            } else {
+                movementsService.updateMouvement(mouvement)
+            }
+            onDismissMouvement() // Fermer la feuille après la sauvegarde
         }
     }
+
 
     fun delMouvement(mouvement: MoneyMovement){
         viewModelScope.launch {
