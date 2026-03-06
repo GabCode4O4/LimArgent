@@ -11,24 +11,28 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
 
 private val DarkColorScheme = darkColorScheme(
-    primary = MinimalWhite, // Le texte principal et les boutons seront blancs sur fond noir
+    primary = MinimalWhite,
     onPrimary = MinimalBlack,
     background = MinimalBackgroundDark,
     surface = MinimalSurfaceDark,
     onBackground = MinimalWhite,
     onSurface = MinimalWhite,
     surfaceVariant = MinimalSurfaceDark,
-    onSurfaceVariant = MinimalGrayText
+    onSurfaceVariant = MinimalGrayText,
+    primaryContainer = MinimalWhite,
+    onPrimaryContainer = MinimalBlack,
 )
 
 private val LightColorScheme = lightColorScheme(
-    primary = MinimalBlack, // Le texte principal et les boutons seront noirs sur fond blanc
+    primary = MinimalBlack,
     onPrimary = MinimalWhite,
     background = MinimalBackgroundLight,
     surface = MinimalSurfaceLight,
     onBackground = MinimalBlack,
     onSurface = MinimalBlack,
     surfaceVariant = MinimalSurfaceLight,
+    primaryContainer = MinimalBlack,
+    onPrimaryContainer = MinimalWhite,
     onSurfaceVariant = MinimalGrayText
 )
 
