@@ -39,6 +39,7 @@ fun AnalyticsScreen(viewModel: AnalyticsViewModel) {
         containerColor = MaterialTheme.colorScheme.background
     ) { paddingValues ->
         Column(
+
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
