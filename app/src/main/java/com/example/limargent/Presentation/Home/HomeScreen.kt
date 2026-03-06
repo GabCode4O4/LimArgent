@@ -5,13 +5,13 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Clear
-import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.FilterListOff
 import androidx.compose.material.icons.filled.Search
@@ -19,7 +19,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
@@ -42,6 +41,23 @@ fun HomeScreen(viewModel: HomeViewModel) {
     val budget = viewModel.budget
     val mouvements = viewModel.filtrage
     val context = LocalContext.current
+    val mouvementEnEdition = viewModel.mouvementEnEdition
+
+    if (mouvementEnEdition != null) {
+        AddMouvement(
+            mouvementToEdit = mouvementEnEdition,
+            categories = viewModel.categories,
+            onDismiss = { viewModel.onDismissMouvement() },
+            onConfirm = { mouvement ->
+                viewModel.saveMouvement(mouvement)
+            },
+            onDelete = { mouvement ->
+                viewModel.delMouvement(mouvement)
+                viewModel.onDismissMouvement()
+            }
+        )
+    }
+
 
     LaunchedEffect(Unit) {
         viewModel.toastMessage.collect { message -> Toast.makeText(context, message, Toast.LENGTH_LONG).show() }
@@ -165,7 +181,7 @@ fun HomeScreen(viewModel: HomeViewModel) {
                         Spacer(modifier = Modifier.height(8.dp))
 
                         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            val months = listOf("Tous") + Month.values().map { it.getDisplayName(TextStyle.FULL, Locale.FRANCE).replaceFirstChar { char -> char.uppercase() } }
+                            val months = listOf("Tous") + Month.entries.map { it.getDisplayName(TextStyle.FULL, Locale.FRANCE).replaceFirstChar { char -> char.uppercase() } }
                             Filtrer(
                                 modifier = Modifier.weight(1f),
                                 label = "Mois",
@@ -217,45 +233,9 @@ fun HomeScreen(viewModel: HomeViewModel) {
                     items = mouvements,
                     key = { it.id ?: it.hashCode() }
                 ) { mouvement ->
-                    val dismissState = rememberSwipeToDismissBoxState(
-                        confirmValueChange = {
-                            if (it == SwipeToDismissBoxValue.EndToStart) {
-                                viewModel.delMouvement(mouvement)
-                                true
-                            } else {
-                                false
-                            }
-                        }
-                    )
-
-                    SwipeToDismissBox(
-                        state = dismissState,
-                        backgroundContent = {
-                            val color = if (dismissState.dismissDirection == SwipeToDismissBoxValue.EndToStart) {
-                                MaterialTheme.colorScheme.errorContainer
-                            } else {
-                                Color.Transparent
-                            }
-
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .clip(RoundedCornerShape(16.dp))
-                                    .background(color)
-                                    .padding(horizontal = 20.dp),
-                                contentAlignment = Alignment.CenterEnd
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.Delete,
-                                    contentDescription = "Supprimer",
-                                    tint = MaterialTheme.colorScheme.onErrorContainer
-                                )
-                            }
-                        },
-                        content = {
-                            MouvementItem(mouvement = mouvement)
-                        },
-                        enableDismissFromStartToEnd = false
+                    MouvementItem(
+                        mouvement = mouvement,
+                        onClick = { viewModel.onEditMouvement(mouvement) }
                     )
                 }
             }
@@ -345,7 +325,7 @@ fun BalanceCard(budget: Double) {
 }
 
 @Composable
-fun MouvementItem(mouvement: MoneyMovement) {
+fun MouvementItem(mouvement: MoneyMovement, onClick: () -> Unit) {
     val isIncome = mouvement.type == MovType.entree
     val amountColor = if (isIncome) AppleGreen else AppleRed
     val formatDate = DateTimeFormatter.ofPattern("dd MMM yyyy")
@@ -353,6 +333,7 @@ fun MouvementItem(mouvement: MoneyMovement) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
+            .clickable(onClick = onClick)
             .background(MaterialTheme.colorScheme.background)
             .padding(vertical = 12.dp, horizontal = 8.dp),
         verticalAlignment = Alignment.CenterVertically

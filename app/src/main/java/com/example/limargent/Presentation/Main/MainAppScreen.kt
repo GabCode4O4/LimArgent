@@ -93,10 +93,11 @@ fun MainAppScreen(
 
         if (showAddMouv) {
             AddMouvement(
+                mouvementToEdit = null,
                 categories = homeViewModel.categories,
                 onDismiss = { showAddMouv = false },
-                onConfirm = { titre, montant, categorie, date, type, isRecurrent, frequence, nextDate ->
-                    homeViewModel.addMouvement(titre, montant, categorie, date, type, isRecurrent, frequence, nextDate)
+                onConfirm = { mouvement ->
+                    homeViewModel.saveMouvement(mouvement)
                     showAddMouv = false
                 }
             )

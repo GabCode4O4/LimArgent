@@ -3,11 +3,14 @@ package com.example.limargent.Presentation.Home
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.DateRange
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -18,8 +21,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.limargent.Domain.DataClasse.MovType
 import com.example.limargent.Domain.DataClasse.Frequence
+import com.example.limargent.Domain.DataClasse.MoneyMovement
+import com.example.limargent.Domain.DataClasse.MovType
 import java.math.BigDecimal
 import java.time.Instant
 import java.time.LocalDate
@@ -40,9 +44,11 @@ object maDate : SelectableDates {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddMouvement(
+    mouvementToEdit: MoneyMovement?,
     categories: List<String>,
     onDismiss: () -> Unit,
-    onConfirm: (titre: String, montant: BigDecimal, categorie: String, date: LocalDate, type: MovType, isRecurrent: Boolean, frequence: Frequence, nextExecutionDate: LocalDate?) -> Unit
+    onConfirm: (MoneyMovement) -> Unit,
+    onDelete: ((MoneyMovement) -> Unit)? = null
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
@@ -53,9 +59,11 @@ fun AddMouvement(
         dragHandle = { BottomSheetDefaults.DragHandle() }
     ) {
         AddMouvementContent(
+            mouvementToEdit = mouvementToEdit,
             categories = categories,
             onDismiss = onDismiss,
-            onConfirm = onConfirm
+            onConfirm = onConfirm,
+            onDelete = onDelete
         )
     }
 }
@@ -63,25 +71,29 @@ fun AddMouvement(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddMouvementContent(
+    mouvementToEdit: MoneyMovement?,
     categories: List<String>,
     onDismiss: () -> Unit,
-    onConfirm: (titre: String, montant: BigDecimal, categorie: String, date: LocalDate, type: MovType, isRecurrent: Boolean, frequence: Frequence, nextExecutionDate: LocalDate?) -> Unit
+    onConfirm: (MoneyMovement) -> Unit,
+    onDelete: ((MoneyMovement) -> Unit)?
 ) {
-    var titre by remember { mutableStateOf("") }
-    var montant by remember { mutableStateOf("") }
-    var type by remember { mutableStateOf(MovType.sortie) }
+    val isEditing = mouvementToEdit != null
+    val scrollState = rememberScrollState()
+
+    var titre by remember { mutableStateOf(mouvementToEdit?.titre ?: "") }
+    var montant by remember { mutableStateOf(mouvementToEdit?.montant?.toString() ?: "") }
+    var type by remember { mutableStateOf(mouvementToEdit?.type ?: MovType.sortie) }
     var menuCategorieOuvert by remember { mutableStateOf(false) }
-    var categorieSelectionnee by remember { mutableStateOf(categories.firstOrNull() ?: "") }
-    var dateSelectionnee by remember { mutableStateOf(LocalDate.now()) }
+    var categorieSelectionnee by remember { mutableStateOf(mouvementToEdit?.categorie ?: categories.firstOrNull() ?: "") }
+    var dateSelectionnee by remember { mutableStateOf(mouvementToEdit?.date ?: LocalDate.now()) }
     var afficherSelecteurDate by remember { mutableStateOf(false) }
 
-    var isRecurrent by remember { mutableStateOf(false) }
-    var frequenceSelectionnee by remember { mutableStateOf(Frequence.MENSUEL) }
+    var isRecurrent by remember { mutableStateOf(mouvementToEdit?.isRecurrent ?: false) }
+    var frequenceSelectionnee by remember { mutableStateOf(mouvementToEdit?.frequence ?: Frequence.MENSUEL) }
     var menuFrequenceOuvert by remember { mutableStateOf(false) }
 
-
     var dateTypeToSelect by remember { mutableStateOf(0) }
-    var nextExecutionDate by remember { mutableStateOf(LocalDate.now().plusMonths(1)) }
+    var nextExecutionDate by remember { mutableStateOf(mouvementToEdit?.nextExecutionDate ?: LocalDate.now().plusMonths(1)) }
 
     if (afficherSelecteurDate) {
         val dateInitiale = if (dateTypeToSelect == 0) dateSelectionnee else nextExecutionDate
@@ -115,6 +127,7 @@ fun AddMouvementContent(
             .fillMaxWidth()
             .padding(horizontal = 24.dp)
             .padding(bottom = 48.dp)
+            .verticalScroll(scrollState)
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -122,12 +135,21 @@ fun AddMouvementContent(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = "Nouveau Mouvement",
+                text = if (isEditing) "Modifier le Mouvement" else "Nouveau Mouvement",
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.Bold
             )
-            IconButton(onClick = onDismiss) {
-                Icon(Icons.Default.Close, contentDescription = "Fermer")
+            Row {
+                if (isEditing && onDelete != null) {
+                    IconButton(onClick = {
+                        mouvementToEdit?.let { onDelete(it) }
+                    }) {
+                        Icon(Icons.Default.Delete, contentDescription = "Supprimer", tint = MaterialTheme.colorScheme.error)
+                    }
+                }
+                IconButton(onClick = onDismiss) {
+                    Icon(Icons.Default.Close, contentDescription = "Fermer")
+                }
             }
         }
 
@@ -217,7 +239,6 @@ fun AddMouvementContent(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // DATE DU MOUVEMENT
         OutlinedTextField(
             value = dateSelectionnee.format(DateTimeFormatter.ofPattern("dd/MM/yyyy")),
             onValueChange = {},
@@ -236,7 +257,6 @@ fun AddMouvementContent(
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        // --- SECTION RÉCURRENCE ---
         Row(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
@@ -253,7 +273,6 @@ fun AddMouvementContent(
         if (isRecurrent) {
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Sélection de la fréquence
             ExposedDropdownMenuBox(
                 expanded = menuFrequenceOuvert,
                 onExpandedChange = { menuFrequenceOuvert = !menuFrequenceOuvert }
@@ -277,7 +296,6 @@ fun AddMouvementContent(
                             onClick = {
                                 frequenceSelectionnee = freq
                                 menuFrequenceOuvert = false
-                                // Auto-calcule la prochaine date pour aider l'utilisateur
                                 nextExecutionDate = when(freq) {
                                     Frequence.QUOTIDIEN -> dateSelectionnee.plusDays(1)
                                     Frequence.HEBDOMADAIRE -> dateSelectionnee.plusWeeks(1)
@@ -293,7 +311,6 @@ fun AddMouvementContent(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Sélection de la prochaine date d'exécution
             OutlinedTextField(
                 value = nextExecutionDate.format(DateTimeFormatter.ofPattern("dd/MM/yyyy")),
                 onValueChange = {},
@@ -311,21 +328,22 @@ fun AddMouvementContent(
 
         Spacer(modifier = Modifier.height(32.dp))
 
-        // --- BOUTON AJOUTER ---
         Button(
             onClick = {
                 val montantDecimal = montant.toBigDecimalOrNull()
                 if (titre.isNotBlank() && montantDecimal != null && categorieSelectionnee.isNotBlank()) {
-                    onConfirm(
-                        titre,
-                        montantDecimal,
-                        categorieSelectionnee,
-                        dateSelectionnee,
-                        type,
-                        isRecurrent,
-                        if (isRecurrent) frequenceSelectionnee else Frequence.AUCUNE,
-                        if (isRecurrent) nextExecutionDate else null
+                    val movement = MoneyMovement(
+                        id = mouvementToEdit?.id,
+                        titre = titre,
+                        montant = montantDecimal,
+                        categorie = categorieSelectionnee,
+                        date = dateSelectionnee,
+                        type = type,
+                        isRecurrent = isRecurrent,
+                        frequence = if (isRecurrent) frequenceSelectionnee else Frequence.AUCUNE,
+                        nextExecutionDate = if (isRecurrent) nextExecutionDate else null
                     )
+                    onConfirm(movement)
                 }
             },
             modifier = Modifier
@@ -334,7 +352,7 @@ fun AddMouvementContent(
             shape = RoundedCornerShape(16.dp)
         ) {
             Text(
-                text = "Ajouter",
+                text = if (isEditing) "Enregistrer" else "Ajouter",
                 fontSize = 18.sp,
                 fontWeight = FontWeight.Bold
             )
