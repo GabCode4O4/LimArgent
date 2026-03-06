@@ -3,20 +3,23 @@ package com.example.limargent.Presentation.Configuration
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.limargent.Application.CategoryService
+import com.example.limargent.Application.MovementsService
 import com.example.limargent.Application.PreferenceService
-import com.example.limargent.Domain.Categorie.CategoryRepository
-import com.example.limargent.Domain.Preference.PreferenceRepository
+import com.example.limargent.Domain.DataClasse.Frequence
+import com.example.limargent.Domain.DataClasse.MoneyMovement
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import java.time.LocalDate
 import javax.inject.Inject
 
 @HiltViewModel
 class ConfigurationViewModel @Inject constructor(
     private val categoryService: CategoryService,
-    private val preferenceService: PreferenceService
+    private val preferenceService: PreferenceService,
+    private val movementsService: MovementsService // <-- Injection du service de mouvements
 ) : ViewModel() {
 
     private val p_categories = MutableStateFlow<List<String>>(emptyList())
@@ -30,6 +33,17 @@ class ConfigurationViewModel @Inject constructor(
 
     private val p_notificationActive = MutableStateFlow(false)
     val notificationActive: StateFlow<Boolean> = p_notificationActive.asStateFlow()
+
+    private val p_MouvementRec = MutableStateFlow<List<MoneyMovement>>(emptyList())
+    val MouvementRec: StateFlow<List<MoneyMovement>> = p_MouvementRec.asStateFlow()
+
+    init {
+        viewModelScope.launch {
+            movementsService.getMouvementsFlow().collect { list ->
+                p_MouvementRec.value = list.filter { it.isRecurrent }
+            }
+        }
+    }
 
     fun loadUserPreferences() {
         loadCategories()
@@ -91,6 +105,26 @@ class ConfigurationViewModel @Inject constructor(
         viewModelScope.launch {
             preferenceService.setNotificationActive(active)
             loadPreference()
+        }
+    }
+
+    fun stopRecurrence(mouvement: MoneyMovement) {
+        viewModelScope.launch {
+            val updatedMouvement = mouvement.copy(
+                isRecurrent = false,
+                frequence = Frequence.AUCUNE,
+                nextExecutionDate = null
+            )
+            movementsService.updateMouvement(updatedMouvement)
+        }
+    }
+
+    fun updateRecurrenceDate(mouvement: MoneyMovement, newDate: LocalDate) {
+        viewModelScope.launch {
+            val updatedMouvement = mouvement.copy(
+                nextExecutionDate = newDate
+            )
+            movementsService.updateMouvement(updatedMouvement)
         }
     }
 }
