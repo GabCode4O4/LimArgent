@@ -10,7 +10,6 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -25,6 +24,7 @@ import com.example.limargent.presentation.register.RegisterViewModel
 import com.example.limargent.ui.theme.LimArgentTheme
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 
 enum class ScreenState { LOGIN, REGISTER, HOME }
 
@@ -43,8 +43,8 @@ class MainActivity : ComponentActivity() {
         val configurationViewModel: ConfigurationViewModel by viewModels()
 
         setContent {
-            val theme by configurationViewModel.theme.collectAsState()
-            val currentUser by sessionManager.currentUser.collectAsState()
+            val theme by configurationViewModel.theme.collectAsStateWithLifecycle()
+            val currentUser by sessionManager.currentUser.collectAsStateWithLifecycle()
             var screenAct by remember(currentUser) {
                 mutableStateOf(if (currentUser != null) ScreenState.HOME else ScreenState.LOGIN)
             }
