@@ -30,11 +30,11 @@ class BudgetManager @Inject constructor() {
         return categories.entries.sortedByDescending { it.value }.associate { it.toPair() }
     }
 
-    fun getSousCategories(mouvements: List<MoneyMovement>, category: String): Map<String, Float> {
+    fun getSousCategories(mouvements: List<MoneyMovement>, categorie: String): Map<String, Float> {
         val chartData = mutableMapOf<String, Float>()
         for (mouv in mouvements) {
-            if (mouv.categorie == category) {
-                val actuel = chartData.getOrDefault(mouv.titre, 0f)
+            if (mouv.categorie == categorie) {
+                val actuel = chartData.getOrDefault(mouv.categorie, 0f)
                 chartData[mouv.titre] = actuel + mouv.montant.toFloat()
             }
         }

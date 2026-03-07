@@ -20,7 +20,4 @@ class SessionManager @Inject constructor(
     fun logout() {
         firebaseAuth.signOut()
     }
-    fun isLoggedIn(): Boolean {
-        return UserAct.value != null
-    }
 }

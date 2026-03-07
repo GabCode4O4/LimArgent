@@ -50,7 +50,6 @@ class HomeViewModel @Inject constructor(
 
     private val p_toastMessage = Channel<String>()
     val toastMessage = p_toastMessage.receiveAsFlow()
-
     val filtrage: List<MoneyMovement>
         get() = mouvements.filter {
             (recherche.isBlank() || it.titre.contains(recherche, ignoreCase = true) || it.categorie.contains(recherche, ignoreCase = true)) &&
@@ -83,6 +82,9 @@ class HomeViewModel @Inject constructor(
                         mouvementsService.getMouvementsFlow().collect { lesMouvements ->
                             mouvements = lesMouvements
                             budget = budgetManager.getBudget(lesMouvements).toDouble()
+                            if(preferenceService.isNotificationActive()){
+                                verifierSeuil(budget)
+                            }
                         }
                     }
                     launch {
@@ -130,6 +132,18 @@ class HomeViewModel @Inject constructor(
         }
     }
 
+    private fun verifierSeuil(budgetActuel: Double) {
+        viewModelScope.launch {
+            try {
+                    val seuil = preferenceService.getSeuilBudget()
+                    if (budgetActuel < seuil) {
+                        p_toastMessage.send("Alerte : Budget critique ! Il vous reste moins de $seuil €.")
+                    }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+    }
     fun resetFilters() {
         recherche = ""
         moisFiltre = null

@@ -48,8 +48,8 @@ fun HomeScreen(viewModel: HomeViewModel) {
         AddMouvement(
             mouvementToEdit = mouvementEnEdition,
             categories = viewModel.categories,
-            onDismiss = { viewModel.onDismissMouvement() },
-            onConfirm = { mouvement ->
+            onDismiss = {viewModel.onDismissMouvement()},
+            onConfirm = {mouvement ->
                 viewModel.saveMouvement(mouvement)
             },
             onDelete = { mouvement ->
