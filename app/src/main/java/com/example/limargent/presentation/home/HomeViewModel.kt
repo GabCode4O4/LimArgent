@@ -72,11 +72,13 @@ class HomeViewModel @Inject constructor(
             }
         }
     }
-
     private fun observeData() {
         viewModelScope.launch {
             sessionManager.currentUser.collect { user ->
                 if (user != null) {
+                    launch {
+                        mouvementsService.verifierMouvementsRecurrents()
+                    }
                     launch {
                         mouvementsService.getMouvementsFlow().collect { lesMouvements ->
                             mouvements = lesMouvements

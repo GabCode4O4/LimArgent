@@ -116,4 +116,37 @@ class MouvementsService @Inject constructor(
             }
         }
     }
+
+    suspend fun verifierMouvementsRecurrents() = withContext(Dispatchers.IO) {
+        val aujourdHui = LocalDate.now()
+        val mouvements = movementsRepository.getMouvementsFlow().first()
+        val mouvementsATraiter = mouvements.filter {
+            it.isRecurrent && it.nextExecutionDate != null && !it.nextExecutionDate.isAfter(aujourdHui)
+        }
+
+        for (mouvement in mouvementsATraiter) {
+            var dateExecution = mouvement.nextExecutionDate!!
+
+            while (!dateExecution.isAfter(aujourdHui)) {
+
+                val nouvelleTransaction = mouvement.copy(
+                    id = null,
+                    date = dateExecution,
+                    isRecurrent = false,
+                    frequence = Frequence.AUCUNE,
+                    nextExecutionDate = null
+                )
+                movementsRepository.addMouvement(nouvelleTransaction)
+                dateExecution = when (mouvement.frequence) {
+                    Frequence.QUOTIDIEN -> dateExecution.plusDays(1)
+                    Frequence.HEBDOMADAIRE -> dateExecution.plusWeeks(1)
+                    Frequence.MENSUEL -> dateExecution.plusMonths(1)
+                    Frequence.ANNUEL -> dateExecution.plusYears(1)
+                    Frequence.AUCUNE -> dateExecution.plusDays(1)
+                }
+            }
+            val parentMisAJour = mouvement.copy(nextExecutionDate = dateExecution)
+            movementsRepository.updateMouvement(parentMisAJour)
+        }
+    }
 }
