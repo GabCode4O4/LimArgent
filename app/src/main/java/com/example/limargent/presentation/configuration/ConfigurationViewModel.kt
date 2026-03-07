@@ -3,9 +3,10 @@ package com.example.limargent.presentation.configuration
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.limargent.application.CategoryService
-import com.example.limargent.application.MouvementsService
+import com.example.limargent.application.MouvementService
 import com.example.limargent.application.PreferenceService
-import com.example.limargent.domain.dataClasse.MoneyMovement
+import com.example.limargent.application.classe.SessionManager
+import com.example.limargent.domain.model.MoneyMovement
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -20,7 +21,8 @@ import javax.inject.Inject
 class ConfigurationViewModel @Inject constructor(
     private val categoryService: CategoryService,
     private val preferenceService: PreferenceService,
-    private val mouvementsService: MouvementsService
+    private val mouvementService: MouvementService,
+    private val sessionManager: SessionManager
 ) : ViewModel() {
 
     private val p_categories = MutableStateFlow<List<String>>(emptyList())
@@ -48,8 +50,16 @@ class ConfigurationViewModel @Inject constructor(
 
     private fun observeRecurrentMovements() {
         viewModelScope.launch {
-            mouvementsService.getMouvementsFlow().collect { list ->
-                p_mouvementRec.value = list.filter { it.isRecurrent }
+            sessionManager.currentUser.collect { user ->
+                if (user != null) {
+                    launch {
+                        mouvementService.getMouvementsFlow().collect { list ->
+                            p_mouvementRec.value = list.filter { it.isRecurrent }
+                        }
+                    }
+                } else {
+                    p_mouvementRec.value = emptyList()
+                }
             }
         }
     }
@@ -74,6 +84,7 @@ class ConfigurationViewModel @Inject constructor(
             }
         }
     }
+
 
     fun addCategorie(name: String) {
         viewModelScope.launch {
@@ -119,7 +130,7 @@ class ConfigurationViewModel @Inject constructor(
 
     fun stopRecurrence(mouvement: MoneyMovement) {
         viewModelScope.launch {
-            val result = mouvementsService.stopRecurrence(mouvement)
+            val result = mouvementService.stopRecurrence(mouvement)
             result.onFailure { error ->
                 p_toastMessage.send(error.message ?: "Erreur")
             }
@@ -128,7 +139,7 @@ class ConfigurationViewModel @Inject constructor(
 
     fun updateRecurrenceDate(mouvement: MoneyMovement, newDate: LocalDate) {
         viewModelScope.launch {
-            val result = mouvementsService.updateRecurrenceDate(mouvement, newDate)
+            val result = mouvementService.updateRecurrenceDate(mouvement, newDate)
             result.onFailure { error ->
                 p_toastMessage.send(error.message ?: "Erreur")
             }

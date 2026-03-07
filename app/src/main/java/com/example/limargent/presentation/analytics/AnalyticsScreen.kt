@@ -6,7 +6,6 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
@@ -15,29 +14,34 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.*
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.limargent.domain.dataClasse.MovType
+import com.example.limargent.domain.model.MovType
 import java.time.LocalDate
 import java.time.temporal.ChronoUnit
 import kotlin.math.abs
 import kotlin.math.max
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.limargent.presentation.util.LaTopAppBar
+import com.example.limargent.presentation.util.SelectOnglet
+import com.example.limargent.presentation.util.toArgent
 
 enum class AnalyticsMode { DEPENSES, RECETTES }
-
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AnalyticsScreen(viewModel: AnalyticsViewModel) {
     var mode by remember { mutableStateOf(AnalyticsMode.DEPENSES) }
     var selectedCategory by remember { mutableStateOf<String?>(null) }
 
     Scaffold(
-        containerColor = MaterialTheme.colorScheme.background
+        containerColor = MaterialTheme.colorScheme.background,
+        topBar = {
+            LaTopAppBar("Analyse")
+        }
     ) { paddingValues ->
         Column(
 
@@ -47,19 +51,6 @@ fun AnalyticsScreen(viewModel: AnalyticsViewModel) {
                 .padding(horizontal = 24.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = "Analyses",
-                    style = MaterialTheme.typography.headlineLarge,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onBackground
-                )
-            }
-
 
             Spacer(modifier = Modifier.height(24.dp))
 
@@ -127,7 +118,7 @@ fun BudgetChartsTab(
         item{
             if (selectedCategory == null) {
                 Spacer(modifier = Modifier.height(32.dp))
-                IOSSegmentedControl(
+                SelectOnglet(
                     items = listOf("Dépenses", "Recettes"),
                     selectedIndex = if (mode == AnalyticsMode.DEPENSES) 0 else 1,
                     onItemSelected = { onModeChange(if (it == 0) AnalyticsMode.DEPENSES else AnalyticsMode.RECETTES) }
@@ -182,46 +173,6 @@ fun ChartCard(content: @Composable ColumnScope.() -> Unit) {
     }
 }
 
-@Composable
-fun IOSSegmentedControl(
-    items: List<String>,
-    selectedIndex: Int,
-    onItemSelected: (Int) -> Unit
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(40.dp)
-            .clip(RoundedCornerShape(8.dp))
-            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
-            .padding(2.dp),
-        horizontalArrangement = Arrangement.SpaceBetween
-    ) {
-        items.forEachIndexed { index, text ->
-            val isSelected = selectedIndex == index
-            Box(
-                modifier = Modifier
-                    .weight(1f)
-                    .fillMaxHeight()
-                    .clip(RoundedCornerShape(6.dp))
-                    .background(if (isSelected) MaterialTheme.colorScheme.surface else Color.Transparent)
-                    .clickable(
-                        interactionSource = remember { MutableInteractionSource() },
-                        indication = null,
-                        onClick = { onItemSelected(index) }
-                    ),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = text,
-                    fontSize = 14.sp,
-                    fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Medium,
-                    color = if (isSelected) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-        }
-    }
-}
 
 @Composable
 fun CleanCategoryRow(name: String, amount: Float, color: Color, onClick: () -> Unit) {
@@ -249,7 +200,7 @@ fun CleanCategoryRow(name: String, amount: Float, color: Color, onClick: () -> U
             fontSize = 16.sp
         )
         Text(
-            text = "${String.format("%.2f", amount)} €",
+            text = amount.toArgent(),
             fontWeight = FontWeight.SemiBold,
             fontSize = 16.sp
         )

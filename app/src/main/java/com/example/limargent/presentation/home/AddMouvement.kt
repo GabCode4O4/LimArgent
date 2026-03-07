@@ -21,9 +21,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.limargent.domain.dataClasse.Frequence
-import com.example.limargent.domain.dataClasse.MoneyMovement
-import com.example.limargent.domain.dataClasse.MovType
+import com.example.limargent.domain.model.Frequence
+import com.example.limargent.domain.model.MoneyMovement
+import com.example.limargent.domain.model.MovType
 import java.math.BigDecimal
 import java.time.Instant
 import java.time.LocalDate
@@ -93,10 +93,10 @@ fun AddMouvementContent(
     var menuFrequenceOuvert by remember { mutableStateOf(false) }
 
     var dateTypeToSelect by remember { mutableStateOf(0) }
-    var nextExecutionDate by remember { mutableStateOf(mouvementToEdit?.nextExecutionDate) }
+    var nextDate by remember { mutableStateOf(mouvementToEdit?.nextDate) }
 
     if (afficherSelecteurDate) {
-        val dateInitiale = if (dateTypeToSelect == 0) dateSelectionnee else nextExecutionDate ?: LocalDate.now().plusDays(1)
+        val dateInitiale = if (dateTypeToSelect == 0) dateSelectionnee else nextDate ?: LocalDate.now().plusDays(1)
         val datePickerState = rememberDatePickerState(
             initialSelectedDateMillis = dateInitiale.atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli(),
             selectableDates = if (dateTypeToSelect == 0) maDate else object : SelectableDates {
@@ -109,7 +109,7 @@ fun AddMouvementContent(
                 TextButton(onClick = {
                     datePickerState.selectedDateMillis?.let { millis ->
                         val selected = Instant.ofEpochMilli(millis).atZone(ZoneId.systemDefault()).toLocalDate()
-                        if (dateTypeToSelect == 0) dateSelectionnee = selected else nextExecutionDate = selected
+                        if (dateTypeToSelect == 0) dateSelectionnee = selected else nextDate = selected
                     }
                     afficherSelecteurDate = false
                 }) { Text("OK") }
@@ -306,7 +306,7 @@ fun AddMouvementContent(
             Spacer(modifier = Modifier.height(16.dp))
 
             OutlinedTextField(
-                value = nextExecutionDate?.format(DateTimeFormatter.ofPattern("dd/MM/yyyy")) ?: "Sélectionner une date",
+                value = nextDate?.format(DateTimeFormatter.ofPattern("dd/MM/yyyy")) ?: "Sélectionner une date",
                 onValueChange = {},
                 readOnly = true,
                 label = { Text("Prochaine exécution") },
@@ -333,7 +333,7 @@ fun AddMouvementContent(
                     type = type,
                     isRecurrent = isRecurrent,
                     frequence = if (isRecurrent) frequenceSelectionnee else Frequence.AUCUNE,
-                    nextExecutionDate = if (isRecurrent) nextExecutionDate else null
+                    nextDate = if (isRecurrent) nextDate else null
                 )
                 onConfirm(movement)
             },

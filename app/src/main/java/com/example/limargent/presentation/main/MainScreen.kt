@@ -105,20 +105,3 @@ fun MainAppScreen(
     }
 }
 
-@Composable
-fun LogoLimArgent(
-    modifier: Modifier = Modifier
-) {
-    val isDark = MaterialTheme.colorScheme.background.luminance() < 0.5f
-    val imageId = if (isDark) {
-        R.drawable.logo_blanc
-    } else {
-        R.drawable.logo_noir
-    }
-
-    Image(
-        painter = painterResource(id = imageId),
-        contentDescription = "Logo de l'application LimArgent",
-        modifier = modifier
-    )
-}

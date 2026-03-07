@@ -1,4 +1,4 @@
-package com.example.limargent.domain.dataClasse
+package com.example.limargent.domain.model
 
 data class User(
     val identifiant: String="",

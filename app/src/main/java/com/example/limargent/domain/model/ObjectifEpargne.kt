@@ -1,4 +1,4 @@
-package com.example.limargent.domain.dataClasse
+package com.example.limargent.domain.model
 
 import java.math.BigDecimal
 import java.time.LocalDate

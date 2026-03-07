@@ -1,5 +1,6 @@
 package com.example.limargent.presentation.objectif
 
+import android.widget.Toast
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -13,15 +14,18 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.example.limargent.domain.dataClasse.ObjectifEpargne
+import com.example.limargent.domain.model.ObjectifEpargne
 import kotlinx.coroutines.flow.collectLatest
 import java.time.LocalDate
-import java.time.format.DateTimeFormatter
 import java.util.UUID
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.limargent.presentation.util.LaTopAppBar
+import com.example.limargent.presentation.util.toArgent
+import com.example.limargent.presentation.util.toDateFormat
 import java.math.BigDecimal
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -30,29 +34,22 @@ fun ObjectifScreen(
     viewModel: ObjectifViewModel = hiltViewModel()
 ) {
     val objectifs by viewModel.objectifs.collectAsStateWithLifecycle()
-    var showAddDialog by remember { mutableStateOf(false) }
-    val snackbarHostState = remember { SnackbarHostState() }
+    var showDialog by remember {mutableStateOf(false)}
+    val context = LocalContext.current
 
     LaunchedEffect(key1 = viewModel) {
         viewModel.toastMessage.collectLatest { message ->
-            snackbarHostState.showSnackbar(message)
+            Toast.makeText(context, message, Toast.LENGTH_LONG).show()
         }
     }
 
     Scaffold(
-        snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
-            TopAppBar(
-                title = { Text("Objectifs d'épargne", fontWeight = FontWeight.Bold) },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.background,
-                    titleContentColor = MaterialTheme.colorScheme.primary
-                )
-            )
-        },
+            LaTopAppBar("Objectifs d'épargne")
+                 },
         floatingActionButton = {
             FloatingActionButton(
-                onClick = { showAddDialog = true },
+                onClick = { showDialog = true },
                 containerColor = MaterialTheme.colorScheme.primary,
                 contentColor = MaterialTheme.colorScheme.onPrimary
             ) {
@@ -97,9 +94,9 @@ fun ObjectifScreen(
         }
     }
 
-    if (showAddDialog) {
+    if (showDialog) {
         AddObjectifDialog(
-            onDismiss = { showAddDialog = false },
+            onDismiss = { showDialog = false },
             onConfirm = { nom, montant, date, taux ->
                 val newObjectif = ObjectifEpargne(
                     id = UUID.randomUUID().toString(),
@@ -109,7 +106,7 @@ fun ObjectifScreen(
                     tauxInteret = taux
                 )
                 viewModel.saveObjectif(newObjectif)
-                showAddDialog = false
+                showDialog = false
             }
         )
     }
@@ -167,7 +164,7 @@ fun ObjectifItem(
             if (objectif.tauxInteret > BigDecimal.ZERO) {
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
-                    text = "Simulation : + ${"%.2f".format(objectif.estimation)} €/an (à ${objectif.tauxInteret}%)",
+                    text = "Simulation : + ${objectif.estimation.toArgent()}/an (à ${objectif.tauxInteret}%)",
                     style = MaterialTheme.typography.bodySmall,
                     color = Color(0xFF4CAF50)
                 )
@@ -179,7 +176,7 @@ fun ObjectifItem(
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Text(
-                    text = "${"%.2f".format(objectif.montantActuel)} € / ${"%.2f".format(objectif.montantCible)} €",
+                    text = "${objectif.montantActuel.toArgent()} / ${objectif.montantCible.toArgent()}",
                     style = MaterialTheme.typography.bodyMedium
                 )
                 Text(
@@ -192,7 +189,7 @@ fun ObjectifItem(
             objectif.dateEcheance?.let {
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
-                    text = "Échéance : ${it.format(DateTimeFormatter.ofPattern("dd/MM/yyyy"))}",
+                    text = "Échéance : ${it.toDateFormat()}",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )

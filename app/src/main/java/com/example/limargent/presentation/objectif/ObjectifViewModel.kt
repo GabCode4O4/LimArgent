@@ -3,7 +3,7 @@ package com.example.limargent.presentation.objectif
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.limargent.application.ObjectifService
-import com.example.limargent.domain.dataClasse.ObjectifEpargne
+import com.example.limargent.domain.model.ObjectifEpargne
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow

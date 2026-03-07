@@ -3,9 +3,7 @@ package com.example.limargent.presentation.configuration
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.shrinkVertically
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -22,7 +20,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.text.TextStyle
@@ -31,17 +28,19 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.limargent.domain.dataClasse.MoneyMovement
+import com.example.limargent.domain.model.MoneyMovement
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
-import java.time.format.DateTimeFormatter
 import com.example.limargent.ui.theme.AppleRed
 import com.example.limargent.ui.theme.AppleBlue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.limargent.presentation.util.LaTopAppBar
+import com.example.limargent.presentation.util.SelectOnglet
+import com.example.limargent.presentation.util.toDateFormat
 
 private val DividerColor = Color.Gray.copy(alpha = 0.2f)
-
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ConfigurationScreen(viewModel: ConfigurationViewModel, onLogout: () -> Unit) {
     var selectedTabIndex by remember { mutableIntStateOf(0) }
@@ -49,7 +48,10 @@ fun ConfigurationScreen(viewModel: ConfigurationViewModel, onLogout: () -> Unit)
     val categories by viewModel.categories.collectAsStateWithLifecycle()
 
     Scaffold(
-        containerColor = MaterialTheme.colorScheme.background
+            containerColor = MaterialTheme.colorScheme.background,
+            topBar = {
+                LaTopAppBar("Configuration")
+            }
     ) { paddingValues ->
         LazyColumn(
             modifier = Modifier
@@ -59,14 +61,8 @@ fun ConfigurationScreen(viewModel: ConfigurationViewModel, onLogout: () -> Unit)
             contentPadding = PaddingValues(top = 24.dp, bottom = 40.dp)
         ) {
             item {
-                Text(
-                    text = "Réglages",
-                    style = MaterialTheme.typography.headlineLarge,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onBackground
-                )
                 Spacer(modifier = Modifier.height(24.dp))
-                IOSSegmentedControl(
+                SelectOnglet(
                     items = listOf("Préférences", "Catégories", "Récurrences"),
                     selectedIndex = selectedTabIndex,
                     onItemSelected = { selectedTabIndex = it }
@@ -110,7 +106,7 @@ fun RecurrenceItem(
 
     if (showDatePicker) {
         val datePickerState = rememberDatePickerState(
-            initialSelectedDateMillis = mouvement.nextExecutionDate?.atStartOfDay(ZoneId.systemDefault())?.toInstant()?.toEpochMilli() ?: System.currentTimeMillis()
+            initialSelectedDateMillis = mouvement.nextDate?.atStartOfDay(ZoneId.systemDefault())?.toInstant()?.toEpochMilli() ?: System.currentTimeMillis()
         )
         DatePickerDialog(
             onDismissRequest = { showDatePicker = false },
@@ -143,7 +139,7 @@ fun RecurrenceItem(
             Text(text = "${mouvement.montant} € • ${mouvement.frequence.libelle}", fontSize = 14.sp, color = AppleBlue, fontWeight = FontWeight.Medium)
             Spacer(modifier = Modifier.height(2.dp))
             Text(
-                text = "Prochaine exécution : ${mouvement.nextExecutionDate?.format(DateTimeFormatter.ofPattern("dd/MM/yyyy")) ?: "Inconnue"}",
+                text = "Prochaine exécution : ${mouvement.nextDate?.toDateFormat() ?: "Inconnue"}",
                 fontSize = 13.sp,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -338,47 +334,6 @@ fun CategorieSection(viewModel: ConfigurationViewModel, categories: List<String>
                         HorizontalDivider(color = DividerColor, modifier = Modifier.padding(start = 16.dp))
                     }
                 }
-            }
-        }
-    }
-}
-
-@Composable
-fun IOSSegmentedControl(
-    items: List<String>,
-    selectedIndex: Int,
-    onItemSelected: (Int) -> Unit
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(40.dp)
-            .clip(RoundedCornerShape(8.dp))
-            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
-            .padding(2.dp),
-        horizontalArrangement = Arrangement.SpaceBetween
-    ) {
-        items.forEachIndexed { index, text ->
-            val isSelected = selectedIndex == index
-            Box(
-                modifier = Modifier
-                    .weight(1f)
-                    .fillMaxHeight()
-                    .clip(RoundedCornerShape(6.dp))
-                    .background(if (isSelected) MaterialTheme.colorScheme.surface else Color.Transparent)
-                    .clickable(
-                        interactionSource = remember { MutableInteractionSource() },
-                        indication = null,
-                        onClick = { onItemSelected(index) }
-                    ),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = text,
-                    fontSize = 14.sp,
-                    fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Medium,
-                    color = if (isSelected) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant
-                )
             }
         }
     }

@@ -1,6 +1,6 @@
 package com.example.limargent.application
 
-import com.example.limargent.domain.dataClasse.ObjectifEpargne
+import com.example.limargent.domain.model.ObjectifEpargne
 import com.example.limargent.domain.objectif.ObjectifRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow

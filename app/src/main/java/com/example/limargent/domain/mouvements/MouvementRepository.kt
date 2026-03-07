@@ -1,9 +1,9 @@
 package com.example.limargent.domain.mouvements
 
-import com.example.limargent.domain.dataClasse.MoneyMovement
+import com.example.limargent.domain.model.MoneyMovement
 import kotlinx.coroutines.flow.Flow
 
-interface MovementsRepository {
+interface MouvementRepository {
     suspend fun addMouvement(mouvement: MoneyMovement): Result<Unit>
     suspend fun deleteMouvement(mouvement: MoneyMovement): Result<Unit>
     suspend fun updateMouvement(mouvement: MoneyMovement): Result<Unit>

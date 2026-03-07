@@ -24,9 +24,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.limargent.domain.dataClasse.MoneyMovement
-import com.example.limargent.domain.dataClasse.MovType
-import com.example.limargent.presentation.main.LogoLimArgent
+import com.example.limargent.domain.model.MoneyMovement
+import com.example.limargent.domain.model.MovType
 import com.example.limargent.ui.theme.AppleGreen
 import com.example.limargent.ui.theme.AppleRed
 import java.time.format.DateTimeFormatter
@@ -34,6 +33,8 @@ import java.time.Month
 import java.time.format.TextStyle
 import java.util.Locale
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.limargent.presentation.util.LogoLimArgent
+import com.example.limargent.presentation.util.toArgent
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -69,8 +70,10 @@ fun HomeScreen(viewModel: HomeViewModel) {
     Scaffold(
         topBar = {
             TopAppBar(
-                title = {LogoLimArgent(modifier = Modifier.fillMaxWidth(0.4f).aspectRatio(1f)
-                ) },
+                modifier = Modifier.height(70.dp),
+                title = {
+                    LogoLimArgent(modifier = Modifier.height(70.dp))
+                },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.background,
                     titleContentColor = MaterialTheme.colorScheme.primary
@@ -316,7 +319,7 @@ fun BalanceCard(budget: Double) {
             )
             Spacer(modifier = Modifier.height(8.dp))
             Text(
-                text = "${"%.2f".format(budget)} €",
+                text = budget.toArgent(),
                 fontSize = 42.sp,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onSurface

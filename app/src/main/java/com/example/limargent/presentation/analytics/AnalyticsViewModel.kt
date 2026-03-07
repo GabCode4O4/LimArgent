@@ -2,10 +2,10 @@ package com.example.limargent.presentation.analytics
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.limargent.data.classe.BudgetManager
-import com.example.limargent.domain.dataClasse.MoneyMovement
-import com.example.limargent.domain.dataClasse.MovType
-import com.example.limargent.domain.mouvements.MovementsRepository
+import com.example.limargent.application.classe.BudgetManager
+import com.example.limargent.domain.model.MoneyMovement
+import com.example.limargent.domain.model.MovType
+import com.example.limargent.domain.mouvements.MouvementRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -15,12 +15,12 @@ import javax.inject.Inject
 
 @HiltViewModel
 class AnalyticsViewModel @Inject constructor(
-    movementsRepository: MovementsRepository,
+    mouvementRepository: MouvementRepository,
     private val budgetManager: BudgetManager
 ) : ViewModel() {
 
     val mouvements: StateFlow<List<MoneyMovement>> =
-        movementsRepository
+        mouvementRepository
             .getMouvementsFlow()
             .stateIn(
                 viewModelScope,

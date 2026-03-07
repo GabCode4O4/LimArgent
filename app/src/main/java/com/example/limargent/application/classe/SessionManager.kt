@@ -1,4 +1,4 @@
-package com.example.limargent.data.classe
+package com.example.limargent.application.classe
 
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
@@ -6,6 +6,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import javax.inject.Inject
 import javax.inject.Singleton
+
 @Singleton
 class SessionManager @Inject constructor(
     private val firebaseAuth: FirebaseAuth

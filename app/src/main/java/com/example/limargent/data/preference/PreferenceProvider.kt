@@ -36,7 +36,7 @@ class PreferenceProvider @Inject constructor(
         val uid = userId ?: return 100.0
         return try {
             val doc = firestore.collection("users").document(uid).get().await()
-            doc.getDouble("preference.seuilBudget") ?: 100.0
+            doc.getDouble("preference.seuilBudget") ?: 0.0
         } catch (e: Exception) { 100.0 }
     }
 
@@ -44,15 +44,15 @@ class PreferenceProvider @Inject constructor(
         val uid = userId ?: return
         try {
             firestore.collection("users").document(uid).update("preference.seuilBudget", seuil).await()
-        } catch (e: Exception) { e.printStackTrace() }
+        } catch (e: Exception) {e.printStackTrace()}
     }
 
     override suspend fun isNotificationActive(): Boolean {
-        val uid = userId ?: return true
+        val uid = userId ?: return false
         return try {
             val doc = firestore.collection("users").document(uid).get().await()
-            doc.getBoolean("preference.notificationsActive") ?: true
-        } catch (e: Exception) { true }
+            doc.getBoolean("preference.notificationsActive") ?: false
+        } catch (e: Exception) {false}
     }
 
     override suspend fun setNotificationActive(active: Boolean) {

@@ -1,4 +1,4 @@
-package com.example.limargent.domain.dataClasse
+package com.example.limargent.domain.model
 
 import java.math.BigDecimal
 import java.time.LocalDate
@@ -24,5 +24,5 @@ data class MoneyMovement(
     val id: String? = null,
     val isRecurrent: Boolean = false,
     val frequence: Frequence = Frequence.AUCUNE,
-    val nextExecutionDate: LocalDate? = null
+    val nextDate: LocalDate? = null
 )

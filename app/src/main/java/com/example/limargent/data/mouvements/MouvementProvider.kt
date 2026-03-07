@@ -1,9 +1,9 @@
 package com.example.limargent.data.mouvements
 
-import com.example.limargent.domain.dataClasse.Frequence
-import com.example.limargent.domain.dataClasse.MoneyMovement
-import com.example.limargent.domain.dataClasse.MovType
-import com.example.limargent.domain.mouvements.MovementsRepository
+import com.example.limargent.domain.model.Frequence
+import com.example.limargent.domain.model.MoneyMovement
+import com.example.limargent.domain.model.MovType
+import com.example.limargent.domain.mouvements.MouvementRepository
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.channels.awaitClose
@@ -18,10 +18,10 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
-class MovementsProvider @Inject constructor(
+class MouvementProvider @Inject constructor(
     private val firestore: FirebaseFirestore,
     private val auth: FirebaseAuth
-) : MovementsRepository {
+) : MouvementRepository {
 
     private val UserId: String?
         get() = auth.currentUser?.uid
@@ -92,7 +92,7 @@ class MovementsProvider @Inject constructor(
             "type" to type.name,
             "isRecurrent" to isRecurrent,
             "frequence" to frequence.name,
-            "nextExecutionDate" to nextExecutionDate?.let { Date.from(it.atStartOfDay(ZoneOffset.UTC).toInstant()) }
+            "nextExecutionDate" to nextDate?.let { Date.from(it.atStartOfDay(ZoneOffset.UTC).toInstant()) }
         )
     }
     private fun com.google.firebase.firestore.DocumentSnapshot.toMoneyMovement(): MoneyMovement? {

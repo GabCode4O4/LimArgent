@@ -1,7 +1,7 @@
 package com.example.limargent.application
 
 import com.example.limargent.domain.categorie.CategoryRepository
-import com.example.limargent.domain.mouvements.MovementsRepository
+import com.example.limargent.domain.mouvements.MouvementRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
@@ -10,7 +10,7 @@ import javax.inject.Inject
 
 class CategoryService @Inject constructor(
     private val categoryRepository: CategoryRepository,
-    private val movementsRepository: MovementsRepository
+    private val mouvementRepository: MouvementRepository
 ) {
 
     fun getCategoriesFlow(): Flow<List<String>> {
@@ -30,7 +30,7 @@ class CategoryService @Inject constructor(
     }
 
     suspend fun supprimer(nom: String): Result<Unit> = withContext(Dispatchers.IO) {
-        val mouvements = movementsRepository.getMouvementsFlow().first()
+        val mouvements = mouvementRepository.getMouvementsFlow().first()
         if (mouvements.any { it.categorie.equals(nom, ignoreCase = true) }) {
             return@withContext Result.failure(Exception("Impossible de supprimer une catégorie utilisée par un ou plusieurs mouvements."))
         }

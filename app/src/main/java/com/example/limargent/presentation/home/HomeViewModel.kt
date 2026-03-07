@@ -6,12 +6,12 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.limargent.application.CategoryService
-import com.example.limargent.application.MouvementsService
+import com.example.limargent.application.MouvementService
 import com.example.limargent.application.PreferenceService
-import com.example.limargent.data.classe.BudgetManager
-import com.example.limargent.data.classe.SessionManager
-import com.example.limargent.domain.dataClasse.MoneyMovement
-import com.example.limargent.domain.dataClasse.MovType
+import com.example.limargent.application.classe.BudgetManager
+import com.example.limargent.application.classe.SessionManager
+import com.example.limargent.domain.model.MoneyMovement
+import com.example.limargent.domain.model.MovType
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -24,7 +24,7 @@ import javax.inject.Inject
 @HiltViewModel
 class HomeViewModel @Inject constructor(
     private val sessionManager: SessionManager,
-    private val mouvementsService: MouvementsService,
+    private val mouvementService: MouvementService,
     private val categoryService: CategoryService,
     private val preferenceService: PreferenceService,
     private val budgetManager: BudgetManager
@@ -60,26 +60,19 @@ class HomeViewModel @Inject constructor(
         }.sortedByDescending { it.date }
 
     init {
-        currentUser()
         observeData()
     }
 
-    private fun currentUser() {
-        viewModelScope.launch {
-            sessionManager.currentUser.collect { firebaseUser ->
-                p_userName.value = firebaseUser?.email?.split("@")?.get(0) ?: firebaseUser?.uid ?: "Invité"
-            }
-        }
-    }
     private fun observeData() {
         viewModelScope.launch {
             sessionManager.currentUser.collect { user ->
                 if (user != null) {
+                    p_userName.value = user.email?.split("@")?.get(0) ?: user.uid
                     launch {
-                        mouvementsService.verifierMouvementsRecurrents()
+                        mouvementService.verifierMouvRec()
                     }
                     launch {
-                        mouvementsService.getMouvementsFlow().collect { lesMouvements ->
+                        mouvementService.getMouvementsFlow().collect { lesMouvements ->
                             mouvements = lesMouvements
                             budget = budgetManager.getBudget(lesMouvements).toDouble()
                             if(preferenceService.isNotificationActive()){
@@ -111,7 +104,7 @@ class HomeViewModel @Inject constructor(
 
     fun saveMouvement(mouvement: MoneyMovement) {
         viewModelScope.launch {
-            val result = mouvementsService.saveMouvement(mouvement)
+            val result = mouvementService.saveMouvement(mouvement)
             result.onSuccess {
                 p_toastMessage.send("Mouvement enregistré")
                 onDismissMouvement()
@@ -123,7 +116,7 @@ class HomeViewModel @Inject constructor(
 
     fun delMouvement(mouvement: MoneyMovement) {
         viewModelScope.launch {
-            val result = mouvementsService.deleteMouvement(mouvement)
+            val result = mouvementService.deleteMouvement(mouvement)
             result.onSuccess {
                 p_toastMessage.send("Mouvement supprimé.")
             }.onFailure { error ->
