@@ -38,7 +38,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(viewModel: HomeViewModel) {
-    val userName by viewModel.userName.collectAsState()
+    val userName by viewModel.userName.collectAsStateWithLifecycle()
     val budget = viewModel.budget
     val mouvements = viewModel.filtrage
     val context = LocalContext.current
