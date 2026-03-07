@@ -13,7 +13,7 @@
             android:supportsRtl="true"
             android:theme="@style/Theme.LimArgent">
         <activity
-                android:name=".Presentation.Main.MainActivity"
+                android:name=".presentation.main.MainActivity"
                 android:exported="true"
                 android:screenOrientation="portrait"
                 android:label="@string/app_name"
@@ -24,9 +24,9 @@
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
-        <activity android:name=".Presentation.Configuration.ConfigurationActivity" />
-        <activity android:name=".Presentation.Analytics.AnalyticsActivity" />
-        <activity android:name=".Presentation.Objectif.ObjectifActivity" />
+        <activity android:name=".presentation.configuration.ConfigurationActivity" />
+        <activity android:name=".presentation.analytics.AnalyticsActivity" />
+        <activity android:name=".presentation.objectif.ObjectifActivity" />
     </application>
 
 </manifest>

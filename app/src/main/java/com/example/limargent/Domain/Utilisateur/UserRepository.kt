@@ -1,8 +1,0 @@
-package com.example.limargent.Domain.Users
-
-import com.example.limargent.Domain.DataClasse.User
-
-interface UserRepository {
-    suspend fun getCurrentUser(): User?
-    suspend fun updateUser(user: User)
-}
