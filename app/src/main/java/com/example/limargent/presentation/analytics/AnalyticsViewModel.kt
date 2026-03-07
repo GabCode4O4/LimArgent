@@ -2,6 +2,7 @@ package com.example.limargent.presentation.analytics
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.limargent.data.classe.BudgetManager
 import com.example.limargent.domain.dataClasse.MoneyMovement
 import com.example.limargent.domain.dataClasse.MovType
 import com.example.limargent.domain.mouvements.MovementsRepository
@@ -14,7 +15,8 @@ import javax.inject.Inject
 
 @HiltViewModel
 class AnalyticsViewModel @Inject constructor(
-    movementsRepository: MovementsRepository
+    movementsRepository: MovementsRepository,
+    private val budgetManager: BudgetManager
 ) : ViewModel() {
 
     val mouvements: StateFlow<List<MoneyMovement>> =
@@ -25,35 +27,12 @@ class AnalyticsViewModel @Inject constructor(
                 SharingStarted.WhileSubscribed(5000),
                 emptyList()
             )
-
     fun getCategorieParType(type: MovType): Map<String, Float> {
-        val list = mouvements.value
-        val chartData = mutableMapOf<String, Float>()
-
-        for (m in list) {
-            if (m.type != type) continue
-            chartData[m.categorie] =
-                (chartData[m.categorie] ?: 0f) + m.montant.toFloat()
-        }
-
-        return chartData.entries
-            .sortedByDescending { it.value }
-            .associate { it.toPair() }
+        return budgetManager.getBudgetCategorie(mouvements.value, type)
     }
 
     fun getCategorieParCat(category: String): Map<String, Float> {
-        val list = mouvements.value
-        val chartData = mutableMapOf<String, Float>()
-
-        for (m in list) {
-            if (m.categorie != category) continue
-            val key = m.titre
-            chartData[key] = (chartData[key] ?: 0f) + m.montant.toFloat()
-        }
-
-        return chartData.entries
-            .sortedByDescending { it.value }
-            .associate { it.toPair() }
+        return budgetManager.getSousCategories(mouvements.value, category)
     }
 
     fun getBudgetByDateList(): List<Pair<LocalDate, Float>> {

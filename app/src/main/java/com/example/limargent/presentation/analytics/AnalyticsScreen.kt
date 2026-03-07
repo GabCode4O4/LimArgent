@@ -315,7 +315,7 @@ fun LineChart(data: List<Pair<LocalDate, Float>>) {
     Canvas(modifier = Modifier.fillMaxWidth().height(180.dp)) {
         val w = size.width
         val h = size.height
-        val maxAbsValue = data.maxOfOrNull { abs(it.second) } ?: 1f
+        val maxAbsValue = (data.maxOfOrNull { abs(it.second) } ?: 1f).takeIf { it > 0f } ?: 1f
         val scaleY = (h * 0.8f) / (maxAbsValue * 2)
         val centerY = h / 2f
         val startDate = data.first().first

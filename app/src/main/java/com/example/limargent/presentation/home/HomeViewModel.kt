@@ -8,6 +8,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.limargent.application.CategoryService
 import com.example.limargent.application.MouvementsService
 import com.example.limargent.application.PreferenceService
+import com.example.limargent.data.classe.BudgetManager
 import com.example.limargent.data.classe.SessionManager
 import com.example.limargent.domain.dataClasse.MoneyMovement
 import com.example.limargent.domain.dataClasse.MovType
@@ -26,6 +27,7 @@ class HomeViewModel @Inject constructor(
     private val mouvementsService: MouvementsService,
     private val categoryService: CategoryService,
     private val preferenceService: PreferenceService,
+    private val budgetManager: BudgetManager
 ) : ViewModel() {
 
     private val p_userName = MutableStateFlow("Utilisateur")
@@ -78,9 +80,7 @@ class HomeViewModel @Inject constructor(
                     launch {
                         mouvementsService.getMouvementsFlow().collect { lesMouvements ->
                             mouvements = lesMouvements
-                            budget = lesMouvements.sumOf {
-                                if (it.type == MovType.entree) it.montant.toDouble() else -it.montant.toDouble()
-                            }
+                            budget = budgetManager.getBudget(lesMouvements).toDouble()
                         }
                     }
                     launch {

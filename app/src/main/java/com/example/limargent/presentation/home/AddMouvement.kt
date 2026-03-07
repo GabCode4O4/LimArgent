@@ -192,9 +192,10 @@ fun AddMouvementContent(
 
         OutlinedTextField(
             value = montant,
-            onValueChange = {
-                if (it.all { char -> char.isDigit() || char == '.' }) {
-                    montant = it
+            onValueChange = { input ->
+                val formatted = input.replace(',', '.')
+                if (formatted.all { char -> char.isDigit() || char == '.' }) {
+                    montant = formatted
                 }
             },
             label = { Text("Montant (€)") },

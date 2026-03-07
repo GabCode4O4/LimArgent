@@ -6,6 +6,7 @@ import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -35,14 +36,14 @@ import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
+import com.example.limargent.ui.theme.AppleRed
+import com.example.limargent.ui.theme.AppleBlue
 
-private val AppleBlue = Color(0xFF007AFF)
-private val AppleRed = Color(0xFFFF3B30)
 private val DividerColor = Color.Gray.copy(alpha = 0.2f)
 
 @Composable
 fun ConfigurationScreen(viewModel: ConfigurationViewModel, onLogout: () -> Unit) {
-    var selectedTabIndex by remember { mutableStateOf(0) }
+    var selectedTabIndex by remember { mutableIntStateOf(0) }
     val mouvementsRecurrents by viewModel.mouvementRec.collectAsState()
     val categories by viewModel.categories.collectAsState()
 
@@ -160,7 +161,12 @@ fun RecurrenceItem(
 @Composable
 fun PreferenceSection(viewModel: ConfigurationViewModel, onLogout: () -> Unit) {
     val theme by viewModel.theme.collectAsState()
-    val isDarkTheme = theme == "dark"
+    val systemIsDark = isSystemInDarkTheme()
+    val isDarkTheme = when (theme) {
+        "dark" -> true
+        "light" -> false
+        else -> systemIsDark
+    }
     val seuilBudget by viewModel.seuilBudget.collectAsState()
     val notificationActive by viewModel.notificationActive.collectAsState()
     var seuilInput by remember(seuilBudget) { mutableStateOf(seuilBudget.toString()) }

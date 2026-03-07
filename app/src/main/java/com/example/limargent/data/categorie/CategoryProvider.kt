@@ -66,8 +66,13 @@ class CategoryProvider @Inject constructor(
                     close()
                     return@addSnapshotListener
                 }
-                val user = snapshot?.toObject(User::class.java)
-                trySend(user?.categories ?: emptyList())
+                try {
+                    val user = snapshot?.toObject(User::class.java)
+                    trySend(user?.categories ?: emptyList())
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                    trySend(emptyList())
+                }
             }
         awaitClose { listener.remove() }
     }
