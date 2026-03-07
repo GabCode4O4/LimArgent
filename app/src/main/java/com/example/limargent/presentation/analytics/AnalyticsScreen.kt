@@ -27,6 +27,7 @@ import java.time.LocalDate
 import java.time.temporal.ChronoUnit
 import kotlin.math.abs
 import kotlin.math.max
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 
 enum class AnalyticsMode { DEPENSES, RECETTES }
 
@@ -84,7 +85,7 @@ fun BudgetChartsTab(
     onCategoryClick: (String) -> Unit,
     onBackClick: () -> Unit
 ) {
-    val mouvements by viewModel.mouvements.collectAsState()
+    val mouvements by viewModel.mouvements.collectAsStateWithLifecycle()
 
     val data = remember(mouvements, mode, selectedCategory) {
         when {

@@ -6,6 +6,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
+import java.math.BigDecimal
 import java.time.LocalDate
 import java.util.UUID
 import javax.inject.Inject
@@ -22,7 +23,7 @@ class ObjectifService @Inject constructor(
         if (objectif.nom.isBlank()) {
             return@withContext Result.failure(IllegalArgumentException("Le nom de l'objectif ne peut pas être vide."))
         }
-        if (objectif.montantCible <= 0) {
+        if (objectif.montantCible <= BigDecimal.ZERO) {
             return@withContext Result.failure(IllegalArgumentException("Le montant cible doit être positif."))
         }
         if (objectif.dateEcheance != null && objectif.dateEcheance.isBefore(LocalDate.now())) {
@@ -38,15 +39,15 @@ class ObjectifService @Inject constructor(
         Result.success(Unit)
     }
 
-    suspend fun addProgress(id: String, montantAjoute: Double): Result<Unit> = withContext(Dispatchers.IO) {
-        if (montantAjoute <= 0) {
+    suspend fun addProgress(id: String, montantAjoute: BigDecimal): Result<Unit> = withContext(Dispatchers.IO) {
+        if (montantAjoute <= BigDecimal.ZERO) {
             return@withContext Result.failure(IllegalArgumentException("Le montant ajouté doit être positif."))
         }
 
         val objectif = objectifRepository.getObjectifsFlow().first().find { it.id == id }
             ?: return@withContext Result.failure(Exception("Objectif non trouvé."))
 
-        val nouveauMontant = (objectif.montantActuel + montantAjoute).coerceAtMost(objectif.montantCible)
+        val nouveauMontant = (objectif.montantActuel + montantAjoute).min(objectif.montantCible)
         objectifRepository.updateObjectif(objectif.copy(montantActuel = nouveauMontant))
         Result.success(Unit)
     }

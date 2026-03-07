@@ -38,14 +38,15 @@ import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import com.example.limargent.ui.theme.AppleRed
 import com.example.limargent.ui.theme.AppleBlue
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 
 private val DividerColor = Color.Gray.copy(alpha = 0.2f)
 
 @Composable
 fun ConfigurationScreen(viewModel: ConfigurationViewModel, onLogout: () -> Unit) {
     var selectedTabIndex by remember { mutableIntStateOf(0) }
-    val mouvementsRecurrents by viewModel.mouvementRec.collectAsState()
-    val categories by viewModel.categories.collectAsState()
+    val mouvementsRecurrents by viewModel.mouvementRec.collectAsStateWithLifecycle()
+    val categories by viewModel.categories.collectAsStateWithLifecycle()
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background
@@ -160,15 +161,15 @@ fun RecurrenceItem(
 
 @Composable
 fun PreferenceSection(viewModel: ConfigurationViewModel, onLogout: () -> Unit) {
-    val theme by viewModel.theme.collectAsState()
+    val theme by viewModel.theme.collectAsStateWithLifecycle()
     val systemIsDark = isSystemInDarkTheme()
     val isDarkTheme = when (theme) {
         "dark" -> true
         "light" -> false
         else -> systemIsDark
     }
-    val seuilBudget by viewModel.seuilBudget.collectAsState()
-    val notificationActive by viewModel.notificationActive.collectAsState()
+    val seuilBudget by viewModel.seuilBudget.collectAsStateWithLifecycle()
+    val notificationActive by viewModel.notificationActive.collectAsStateWithLifecycle()
     var seuilInput by remember(seuilBudget) { mutableStateOf(seuilBudget.toString()) }
 
     Card(

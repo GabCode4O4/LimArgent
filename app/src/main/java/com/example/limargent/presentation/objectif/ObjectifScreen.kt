@@ -21,13 +21,15 @@ import kotlinx.coroutines.flow.collectLatest
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.UUID
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import java.math.BigDecimal
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ObjectifScreen(
     viewModel: ObjectifViewModel = hiltViewModel()
 ) {
-    val objectifs by viewModel.objectifs.collectAsState()
+    val objectifs by viewModel.objectifs.collectAsStateWithLifecycle()
     var showAddDialog by remember { mutableStateOf(false) }
     val snackbarHostState = remember { SnackbarHostState() }
 
@@ -116,7 +118,7 @@ fun ObjectifScreen(
 @Composable
 fun ObjectifItem(
     objectif: ObjectifEpargne,
-    onUpdateEpargne: (Double) -> Unit,
+    onUpdateEpargne: (BigDecimal) -> Unit,
     onDelete: () -> Unit
 ) {
     var showUpdateDialog by remember { mutableStateOf(false) }
@@ -162,7 +164,7 @@ fun ObjectifItem(
                 color = if (objectif.estAtteint) Color(0xFF4CAF50) else MaterialTheme.colorScheme.primary,
                 trackColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
             )
-            if (objectif.tauxInteret > 0) {
+            if (objectif.tauxInteret > BigDecimal.ZERO) {
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
                     text = "Simulation : + ${"%.2f".format(objectif.estimation)} €/an (à ${objectif.tauxInteret}%)",
@@ -222,7 +224,7 @@ fun ObjectifItem(
 @Composable
 fun AddObjectifDialog(
     onDismiss: () -> Unit,
-    onConfirm: (String, Double, LocalDate?, Double) -> Unit
+    onConfirm: (String, BigDecimal, LocalDate?, BigDecimal) -> Unit
 ) {
     var nom by remember { mutableStateOf("") }
     var montant by remember { mutableStateOf("") }
@@ -258,9 +260,9 @@ fun AddObjectifDialog(
                 onClick = {
                     onConfirm(
                         nom,
-                        montant.toDoubleOrNull() ?: 0.0,
+                        montant.toBigDecimalOrNull() ?: BigDecimal.ZERO,
                         null,
-                        taux.toDoubleOrNull() ?: 0.0
+                        taux.toBigDecimalOrNull() ?: BigDecimal.ZERO
                     )
                 }
             ) { Text("Ajouter") }
@@ -276,7 +278,7 @@ fun AddObjectifDialog(
 @Composable
 fun UpdateEpargneDialog(
     onDismiss: () -> Unit,
-    onConfirm: (Double) -> Unit
+    onConfirm: (BigDecimal) -> Unit
 ) {
     var montant by remember { mutableStateOf("") }
 
@@ -294,7 +296,7 @@ fun UpdateEpargneDialog(
         confirmButton = {
             TextButton(
                 onClick = {
-                    onConfirm(montant.toDoubleOrNull() ?: 0.0)
+                    onConfirm(montant.toBigDecimalOrNull() ?: BigDecimal.ZERO)
                 }
             ) {
                 Text("Valider")

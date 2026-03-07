@@ -8,6 +8,7 @@ import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.tasks.await
+import java.math.BigDecimal
 import java.time.ZoneOffset
 import java.util.Date
 import javax.inject.Inject
@@ -78,10 +79,10 @@ class ObjectifProvider @Inject constructor(
                         ObjectifEpargne(
                             id = doc.id,
                             nom = doc.getString("nom") ?: "",
-                            montantCible = doc.getDouble("montantCible") ?: 0.0,
-                            montantActuel = doc.getDouble("montantActuel") ?: 0.0,
+                            montantCible = BigDecimal(doc.getString("montantCible") ?: "0.0"),
+                            montantActuel = BigDecimal(doc.getString("montantActuel") ?: "0.0"),
                             dateEcheance = doc.getTimestamp("dateEcheance")?.toDate()?.toInstant()?.atZone(ZoneOffset.UTC)?.toLocalDate(),
-                            tauxInteret = doc.getDouble("tauxInteret") ?: 0.0
+                            tauxInteret = BigDecimal(doc.getString("tauxInteret") ?: "0.0")
                         )
                     } catch (e: Exception) { null }
                 } ?: emptyList()
@@ -93,10 +94,10 @@ class ObjectifProvider @Inject constructor(
     private fun ObjectifEpargne.toMap(): Map<String, Any?> {
         return mapOf(
             "nom" to nom,
-            "montantCible" to montantCible,
-            "montantActuel" to montantActuel,
+            "montantCible" to montantCible.toString(),
+            "montantActuel" to montantActuel.toString(),
             "dateEcheance" to dateEcheance?.let { Date.from(it.atStartOfDay(ZoneOffset.UTC).toInstant()) },
-            "tauxInteret" to tauxInteret
+            "tauxInteret" to tauxInteret.toString()
         )
     }
 }

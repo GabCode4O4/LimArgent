@@ -12,6 +12,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
+import java.math.BigDecimal
 import javax.inject.Inject
 
 @HiltViewModel
@@ -19,8 +20,8 @@ class ObjectifViewModel @Inject constructor(
     private val objectifService: ObjectifService
 ) : ViewModel() {
 
-    private val _objectifs = MutableStateFlow<List<ObjectifEpargne>>(emptyList())
-    val objectifs: StateFlow<List<ObjectifEpargne>> = _objectifs.asStateFlow()
+    private val p_objectifs = MutableStateFlow<List<ObjectifEpargne>>(emptyList())
+    val objectifs: StateFlow<List<ObjectifEpargne>> = p_objectifs.asStateFlow()
     private val p_toastMessage = Channel<String>()
     val toastMessage = p_toastMessage.receiveAsFlow()
 
@@ -29,7 +30,7 @@ class ObjectifViewModel @Inject constructor(
             objectifService.getObjectifsFlow()
                 .catch { error -> p_toastMessage.send(error.message ?: "Erreur de chargement") }
                 .collect { liste ->
-                    _objectifs.value = liste
+                    p_objectifs.value = liste
                 }
         }
     }
@@ -43,7 +44,7 @@ class ObjectifViewModel @Inject constructor(
         }
     }
 
-    fun addProgress(id: String, montantAjoute: Double) {
+    fun addProgress(id: String, montantAjoute: BigDecimal) {
         viewModelScope.launch {
             val result = objectifService.addProgress(id, montantAjoute)
             result.onFailure { error ->
