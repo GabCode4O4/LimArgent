@@ -17,6 +17,7 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -63,18 +64,20 @@ class HomeViewModel @Inject constructor(
 
     private fun observeData() {
         viewModelScope.launch {
-            sessionManager.currentUser.collect { user ->
+            sessionManager.currentUser.collectLatest { user ->
                 if (user != null) {
                     p_userName.value = user.email?.split("@")?.get(0) ?: user.uid
+
                     launch {
                         mouvementService.getMouvementsFlow().collect { lesMouvements ->
                             mouvements = lesMouvements
                             budget = budgetManager.getBudget(lesMouvements).toDouble()
-                            if(preferenceService.isNotificationActive()){
+                            if (preferenceService.isNotificationActive()) {
                                 verifierSeuil(budget)
                             }
                         }
                     }
+
                     launch {
                         categoryService.getCategoriesFlow().collect { lesCategories ->
                             categories = lesCategories
@@ -84,6 +87,7 @@ class HomeViewModel @Inject constructor(
                     mouvements = emptyList()
                     categories = emptyList()
                     budget = 0.0
+                    p_userName.value = "Utilisateur"
                 }
             }
         }

@@ -39,4 +39,9 @@ class LoginViewModel @Inject constructor(
     fun clearError() {
         errorMessage = null
     }
+    fun clearCredentials() {
+        identifiant = ""
+        motDePasse = ""
+        errorMessage = null
+    }
 }

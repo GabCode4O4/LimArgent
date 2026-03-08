@@ -3,6 +3,7 @@ package com.example.limargent.presentation.objectif
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.limargent.application.ObjectifService
+import com.example.limargent.application.classe.SessionManager
 import com.example.limargent.domain.model.ObjectifEpargne
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.channels.Channel
@@ -10,6 +11,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import java.math.BigDecimal
@@ -17,7 +19,8 @@ import javax.inject.Inject
 
 @HiltViewModel
 class ObjectifViewModel @Inject constructor(
-    private val objectifService: ObjectifService
+    private val objectifService: ObjectifService,
+    private val sessionManager: SessionManager
 ) : ViewModel() {
 
     private val p_objectifs = MutableStateFlow<List<ObjectifEpargne>>(emptyList())
@@ -27,11 +30,17 @@ class ObjectifViewModel @Inject constructor(
 
     init {
         viewModelScope.launch{
-            objectifService.getObjectifsFlow()
-                .catch { error -> p_toastMessage.send(error.message ?: "Erreur de chargement") }
-                .collect { liste ->
-                    p_objectifs.value = liste
+            sessionManager.currentUser.collectLatest { user ->
+                if (user != null) {
+                    objectifService.getObjectifsFlow()
+                        .catch { error -> p_toastMessage.send(error.message ?: "Erreur") }
+                        .collect { liste ->
+                            p_objectifs.value = liste
+                        }
+                } else {
+                    p_objectifs.value = emptyList()
                 }
+            }
         }
     }
 

@@ -12,6 +12,7 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import java.time.LocalDate
@@ -46,12 +47,10 @@ class ConfigurationViewModel @Inject constructor(
 
     private fun obsMouvementRec() {
         viewModelScope.launch {
-            sessionManager.currentUser.collect { user ->
+            sessionManager.currentUser.collectLatest { user ->
                 if (user != null) {
-                    launch {
-                        mouvementService.getMouvementsFlow().collect { list ->
-                            p_mouvementRec.value = list.filter { it.isRecurrent }
-                        }
+                    mouvementService.getMouvementsFlow().collect { list ->
+                        p_mouvementRec.value = list.filter { it.isRecurrent }
                     }
                 } else {
                     p_mouvementRec.value = emptyList()

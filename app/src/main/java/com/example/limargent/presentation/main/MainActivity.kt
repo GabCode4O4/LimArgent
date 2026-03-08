@@ -89,6 +89,7 @@ class MainActivity : ComponentActivity(){
                                 MainAppScreen(onLogout = {
                                     sessionManager.logout()
                                     loginViewModel.clearError()
+                                    loginViewModel.clearCredentials()
                                 })
                             }
                         }
