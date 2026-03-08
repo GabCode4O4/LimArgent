@@ -190,8 +190,8 @@ class MouvementProvider @Inject constructor(
             }
 
             var nextDate: LocalDate? = null
-            if (doc.getTimestamp("nextExecutionDate") != null) {
-                val timestampNext = doc.getTimestamp("nextExecutionDate")!!
+            if (doc.getTimestamp("nextDate") != null) {
+                val timestampNext = doc.getTimestamp("nextDate")!!
                 nextDate = timestampNext.toDate().toInstant().atZone(ZoneOffset.UTC).toLocalDate()
             }
 
