@@ -21,6 +21,8 @@ private val DarkColorScheme = darkColorScheme(
     onSurfaceVariant = MinimalGrayText,
     primaryContainer = MinimalWhite,
     onPrimaryContainer = MinimalBlack,
+    secondaryContainer = MinimalBackgroundLight,
+    onSecondaryContainer = MinimalBlack
 )
 
 private val LightColorScheme = lightColorScheme(
@@ -33,7 +35,9 @@ private val LightColorScheme = lightColorScheme(
     surfaceVariant = MinimalSurfaceLight,
     primaryContainer = MinimalBlack,
     onPrimaryContainer = MinimalWhite,
-    onSurfaceVariant = MinimalGrayText
+    onSurfaceVariant = MinimalGrayText,
+    secondaryContainer = MinimalSurfaceDark,
+    onSecondaryContainer = MinimalWhite
 )
 
 @Composable

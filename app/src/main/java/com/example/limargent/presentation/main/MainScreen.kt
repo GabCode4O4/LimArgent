@@ -22,6 +22,7 @@ import com.example.limargent.presentation.home.HomeViewModel
 import com.example.limargent.presentation.objectif.ObjectifScreen
 import com.example.limargent.presentation.objectif.ObjectifViewModel
 import androidx.compose.foundation.Image
+import androidx.compose.material.icons.filled.TrackChanges
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.res.painterResource
@@ -30,7 +31,7 @@ import com.example.limargent.R
 enum class AppScreen(val title: String, val icon: ImageVector) {
     HOME("Accueil", Icons.Default.Home),
     ANALYTICS("Analytique", Icons.Default.Analytics),
-    OBJECTIF("Objectif", Icons.Default.AddBusiness),
+    OBJECTIF("Objectif", Icons.Default.TrackChanges),
     CONFIGURATION("Config", Icons.Default.Settings)
 
 
