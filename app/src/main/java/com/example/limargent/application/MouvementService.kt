@@ -3,10 +3,8 @@ package com.example.limargent.application
 import com.example.limargent.domain.model.Frequence
 import com.example.limargent.domain.model.MoneyMovement
 import com.example.limargent.domain.mouvements.MouvementRepository
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.withContext
 import java.math.BigDecimal
 import java.time.LocalDate
 import javax.inject.Inject
@@ -14,88 +12,83 @@ import javax.inject.Inject
 class MouvementService @Inject constructor(
     private val mouvementRepository: MouvementRepository,
 ) {
-
     fun getMouvementsFlow(): Flow<List<MoneyMovement>> {
         return mouvementRepository.getMouvementsFlow()
     }
-
-    suspend fun saveMouvement(mouvement: MoneyMovement): Result<Unit> = withContext(Dispatchers.IO) {
-        if (mouvement.titre.isBlank()) {
-            return@withContext Result.failure(IllegalArgumentException("Le titre ne peut pas être vide."))
+    suspend fun saveMouvement(mouvement: MoneyMovement): Result<Unit> {
+        if (mouvement.titre == "" || mouvement.titre.trim() == "") {
+            return Result.failure(IllegalArgumentException("Le titre ne peut pas être vide."))
         }
-        if (mouvement.montant <= BigDecimal.ZERO) {
-            return@withContext Result.failure(IllegalArgumentException("Le montant doit être supérieur à zéro."))
+        if (mouvement.montant.compareTo(BigDecimal(0)) <= 0) {
+            return Result.failure(IllegalArgumentException("Le montant doit être supérieur à zéro."))
         }
-        if (mouvement.categorie.isBlank()) {
-            return@withContext Result.failure(IllegalArgumentException("Veuillez sélectionner une catégorie."))
+        if (mouvement.categorie == "" || mouvement.categorie.trim() == "") {
+            return Result.failure(IllegalArgumentException("Veuillez sélectionner une catégorie."))
         }
 
         val finalMouvement = computeRecurrence(mouvement)
-
-        val result = if (finalMouvement.id == null) {
-            mouvementRepository.addMouvement(finalMouvement)
+        if (finalMouvement.id == null) {
+            return mouvementRepository.addMouvement(finalMouvement)
         } else {
-            mouvementRepository.updateMouvement(finalMouvement)
+            return mouvementRepository.updateMouvement(finalMouvement)
+        }
+    }
+    suspend fun deleteMouvement(mouvement: MoneyMovement): Result<Unit> {
+        return mouvementRepository.deleteMouvement(mouvement)
+    }
+    suspend fun stopRecurrence(mouvement: MoneyMovement): Result<Unit> {
+        if (mouvement.isRecurrent == false) {
+            return Result.success(Unit)
         }
 
-        result
-    }
-
-    suspend fun deleteMouvement(mouvement: MoneyMovement): Result<Unit> = withContext(Dispatchers.IO) {
-        val result = mouvementRepository.deleteMouvement(mouvement)
-        result
-    }
-
-    suspend fun stopRecurrence(mouvement: MoneyMovement): Result<Unit> = withContext(Dispatchers.IO) {
-        if (!mouvement.isRecurrent) {
-            return@withContext Result.success(Unit)
-        }
         val updatedMouvement = mouvement.copy(
             isRecurrent = false,
             frequence = Frequence.AUCUNE,
             nextDate = null
         )
-        mouvementRepository.updateMouvement(updatedMouvement)
+        return mouvementRepository.updateMouvement(updatedMouvement)
     }
-
-    suspend fun updateRecurrenceDate(mouvement: MoneyMovement, newDate: LocalDate): Result<Unit> = withContext(Dispatchers.IO) {
-        if (!mouvement.isRecurrent) {
-            return@withContext Result.failure(IllegalArgumentException("Ce mouvement n'est pas récurrent."))
+    suspend fun updateRecurrenceDate(mouvement: MoneyMovement, newDate: LocalDate): Result<Unit> {
+        if (mouvement.isRecurrent == false) {
+            return Result.failure(IllegalArgumentException("Ce mouvement n'est pas récurrent."))
         }
-        if (newDate.isBefore(LocalDate.now())) {
-            return@withContext Result.failure(IllegalArgumentException("La date de prochaine exécution ne peut pas être dans le passé."))
+        if (newDate.isBefore(LocalDate.now()) == true) {
+            return Result.failure(IllegalArgumentException("La date de prochaine exécution ne peut pas être dans le passé."))
         }
         val updatedMouvement = mouvement.copy(nextDate = newDate)
-        mouvementRepository.updateMouvement(updatedMouvement)
+        return mouvementRepository.updateMouvement(updatedMouvement)
     }
-
     private fun computeRecurrence(mouvement: MoneyMovement): MoneyMovement {
-        if (!mouvement.isRecurrent || mouvement.frequence == Frequence.AUCUNE) {
+        if (mouvement.isRecurrent == false || mouvement.frequence == Frequence.AUCUNE) {
             return mouvement.copy(isRecurrent = false, frequence = Frequence.AUCUNE, nextDate = null)
         }
 
-        if (mouvement.nextDate != null && mouvement.nextDate.isAfter(mouvement.date)) {
+        if (mouvement.nextDate != null && mouvement.nextDate.isAfter(mouvement.date) == true) {
             return mouvement
         }
-
-        val nextDate = mouvement.date.ajouterFrequence(mouvement.frequence)
+        val nextDate = ajouterFrequence(mouvement.date, mouvement.frequence)
         return mouvement.copy(nextDate = nextDate)
     }
 
-
-
-    suspend fun verifierMouvRec() = withContext(Dispatchers.IO) {
+    suspend fun verifierMouvRec() {
         val aujourdHui = LocalDate.now()
         val mouvements = mouvementRepository.getMouvementsFlow().first()
-        val mouvementsATraiter = mouvements.filter {
-            it.isRecurrent && it.nextDate != null && !it.nextDate.isAfter(aujourdHui)
+        val mouvementsATraiter = mutableListOf<MoneyMovement>()
+
+        for (i in 0 until mouvements.size) {
+            val mouv = mouvements[i]
+            if (mouv.isRecurrent == true && mouv.nextDate != null) {
+                if (mouv.nextDate.isAfter(aujourdHui) == false) {
+                    mouvementsATraiter.add(mouv)
+                }
+            }
         }
 
-        for (mouvement in mouvementsATraiter) {
+        for (i in 0 until mouvementsATraiter.size) {
+            val mouvement = mouvementsATraiter[i]
             var dateExecution = mouvement.nextDate!!
 
-            while (!dateExecution.isAfter(aujourdHui)) {
-
+            while (dateExecution.isAfter(aujourdHui) == false) {
                 val nouvelleTransaction = mouvement.copy(
                     id = null,
                     date = dateExecution,
@@ -104,21 +97,25 @@ class MouvementService @Inject constructor(
                     nextDate = null
                 )
                 mouvementRepository.addMouvement(nouvelleTransaction)
-                dateExecution = mouvement.date.ajouterFrequence(mouvement.frequence)
+
+                dateExecution = ajouterFrequence(dateExecution, mouvement.frequence)
             }
+
             val parentMisAJour = mouvement.copy(nextDate = dateExecution)
             mouvementRepository.updateMouvement(parentMisAJour)
         }
     }
-}
-
-
-fun LocalDate.ajouterFrequence(frequence: Frequence): LocalDate {
-    return when (frequence) {
-        Frequence.QUOTIDIEN -> this.plusDays(1)
-        Frequence.HEBDOMADAIRE -> this.plusWeeks(1)
-        Frequence.MENSUEL -> this.plusMonths(1)
-        Frequence.ANNUEL -> this.plusYears(1)
-        Frequence.AUCUNE -> this
+    private fun ajouterFrequence(date: LocalDate, frequence: Frequence): LocalDate {
+        if (frequence == Frequence.QUOTIDIEN) {
+            return date.plusDays(1)
+        } else if (frequence == Frequence.HEBDOMADAIRE) {
+            return date.plusWeeks(1)
+        } else if (frequence == Frequence.MENSUEL) {
+            return date.plusMonths(1)
+        } else if (frequence == Frequence.ANNUEL) {
+            return date.plusYears(1)
+        } else {
+            return date
+        }
     }
 }

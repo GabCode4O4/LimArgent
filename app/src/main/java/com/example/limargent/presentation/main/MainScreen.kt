@@ -30,8 +30,9 @@ import com.example.limargent.R
 enum class AppScreen(val title: String, val icon: ImageVector) {
     HOME("Accueil", Icons.Default.Home),
     ANALYTICS("Analytique", Icons.Default.Analytics),
-    CONFIGURATION("Config", Icons.Default.Settings),
-    OBJECTIF("Objectif", Icons.Default.AddBusiness)
+    OBJECTIF("Objectif", Icons.Default.AddBusiness),
+    CONFIGURATION("Config", Icons.Default.Settings)
+
 
 }
 
@@ -40,35 +41,35 @@ enum class AppScreen(val title: String, val icon: ImageVector) {
 fun MainAppScreen(
     onLogout: () -> Unit
 ) {
-    var screenAct by remember { mutableStateOf(AppScreen.HOME) }
-    var showAddMouv by remember { mutableStateOf(false) }
+    var screenAct by remember {mutableStateOf(AppScreen.HOME)}
+    var showAddMouv by remember {mutableStateOf(false)}
 
     val homeViewModel: HomeViewModel = hiltViewModel()
 
     Scaffold(
         bottomBar = {
             NavigationBar {
-                AppScreen.entries.forEach { screen ->
+                AppScreen.entries.forEach {screen ->
                     NavigationBarItem(
-                        icon = { Icon(screen.icon, contentDescription = screen.title) },
-                        label = { Text(screen.title) },
+                        icon = {Icon(screen.icon, contentDescription = screen.title)},
+                        label = {Text(screen.title)},
                         selected = screenAct == screen,
-                        onClick = { screenAct = screen }
+                        onClick = {screenAct = screen}
                     )
                 }
             }
         },
         floatingActionButton = {
-            if (screenAct == AppScreen.HOME) {
+            if (screenAct == AppScreen.HOME){
                 FloatingActionButton(
-                    onClick = { showAddMouv = true }
+                    onClick = {showAddMouv = true}
                 ) {
                     Icon(Icons.Filled.Add, contentDescription = "Ajouter un mouvement")
                 }
             }
         }
-    ) { innerPadding ->
-        Surface(modifier = Modifier.padding(innerPadding)) {
+    ){innerPadding ->
+        Surface(modifier = Modifier.padding(innerPadding)){
             when (screenAct) {
                 AppScreen.HOME -> {
                     HomeScreen(
@@ -91,12 +92,12 @@ fun MainAppScreen(
             }
         }
 
-        if (showAddMouv) {
+        if (showAddMouv){
             AddMouvement(
                 mouvementToEdit = null,
                 categories = homeViewModel.categories,
-                onDismiss = { showAddMouv = false },
-                onConfirm = { mouvement ->
+                onDismiss = {showAddMouv = false},
+                onConfirm = {mouvement ->
                     homeViewModel.saveMouvement(mouvement)
                     showAddMouv = false
                 }

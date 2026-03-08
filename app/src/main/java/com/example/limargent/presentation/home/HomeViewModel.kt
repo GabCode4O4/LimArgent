@@ -32,7 +32,6 @@ class HomeViewModel @Inject constructor(
 
     private val p_userName = MutableStateFlow("Utilisateur")
     val userName: StateFlow<String> = p_userName.asStateFlow()
-
     var budget by mutableStateOf(0.0)
         private set
     var mouvements by mutableStateOf<List<MoneyMovement>>(emptyList())
@@ -44,7 +43,6 @@ class HomeViewModel @Inject constructor(
     var anneeFiltre by mutableStateOf<Int?>(null)
     var catFiltre by mutableStateOf<String?>(null)
     var typeFiltre by mutableStateOf<MovType?>(null)
-
     var mouvementEnEdition by mutableStateOf<MoneyMovement?>(null)
         private set
 
@@ -68,9 +66,6 @@ class HomeViewModel @Inject constructor(
             sessionManager.currentUser.collect { user ->
                 if (user != null) {
                     p_userName.value = user.email?.split("@")?.get(0) ?: user.uid
-                    launch {
-                        mouvementService.verifierMouvRec()
-                    }
                     launch {
                         mouvementService.getMouvementsFlow().collect { lesMouvements ->
                             mouvements = lesMouvements

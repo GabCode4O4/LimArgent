@@ -14,7 +14,6 @@ import javax.inject.Inject
 class RegisterViewModel @Inject constructor(
     private val registerService: RegisterService
 ) : ViewModel() {
-
     var identifiant by mutableStateOf("")
     var motDePasse by mutableStateOf("")
     var confirmMotDePasse by mutableStateOf("")
@@ -22,14 +21,11 @@ class RegisterViewModel @Inject constructor(
         private set
     var isLoading by mutableStateOf(false)
         private set
-
     fun attemptRegister(onRegisterSuccess: () -> Unit) {
         viewModelScope.launch {
             isLoading = true
             errorMessage = null
-
             val result = registerService.register(identifiant, motDePasse, confirmMotDePasse)
-
             result.onSuccess {
                 isLoading = false
                 onRegisterSuccess()

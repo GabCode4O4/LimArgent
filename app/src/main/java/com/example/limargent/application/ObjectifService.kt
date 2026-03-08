@@ -2,10 +2,8 @@ package com.example.limargent.application
 
 import com.example.limargent.domain.model.ObjectifEpargne
 import com.example.limargent.domain.objectif.ObjectifRepository
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.withContext
 import java.math.BigDecimal
 import java.time.LocalDate
 import java.util.UUID
@@ -19,41 +17,55 @@ class ObjectifService @Inject constructor(
         return objectifRepository.getObjectifsFlow()
     }
 
-    suspend fun saveObjectif(objectif: ObjectifEpargne): Result<Unit> = withContext(Dispatchers.IO) {
-        if (objectif.nom.isBlank()) {
-            return@withContext Result.failure(IllegalArgumentException("Le nom de l'objectif ne peut pas être vide."))
+    suspend fun saveObjectif(objectif: ObjectifEpargne): Result<Unit> {
+        if (objectif.nom == "" || objectif.nom.trim() == "") {
+            return Result.failure(IllegalArgumentException("Le nom de l'objectif ne peut pas être vide."))
         }
-        if (objectif.montantCible <= BigDecimal.ZERO) {
-            return@withContext Result.failure(IllegalArgumentException("Le montant cible doit être positif."))
+        if (objectif.montantCible.compareTo(BigDecimal(0)) <= 0) {
+            return Result.failure(IllegalArgumentException("Le montant cible doit être positif."))
         }
-        if (objectif.dateEcheance != null && objectif.dateEcheance.isBefore(LocalDate.now())) {
-            return@withContext Result.failure(IllegalArgumentException("La date d'échéance ne peut pas être dans le passé."))
+        if (objectif.dateEcheance != null) {
+            if (objectif.dateEcheance.isBefore(LocalDate.now()) == true) {
+                return Result.failure(IllegalArgumentException("La date d'échéance ne peut pas être dans le passé."))
+            }
         }
-        val finalObjectif = if (objectif.id.isBlank()) {
-            objectif.copy(id = UUID.randomUUID().toString())
-        } else {
-            objectif
+        var finalObjectif = objectif
+        if (objectif.id == "" || objectif.id.trim() == "") {
+            finalObjectif = objectif.copy(id = UUID.randomUUID().toString())
         }
 
         objectifRepository.updateObjectif(finalObjectif)
-        Result.success(Unit)
+        return Result.success(Unit)
     }
 
-    suspend fun addProgress(id: String, montantAjoute: BigDecimal): Result<Unit> = withContext(Dispatchers.IO) {
-        if (montantAjoute <= BigDecimal.ZERO) {
-            return@withContext Result.failure(IllegalArgumentException("Le montant ajouté doit être positif."))
+    suspend fun addProgres(id: String, montantAjoute: BigDecimal): Result<Unit> {
+        if (montantAjoute.compareTo(BigDecimal(0)) <= 0) {
+            return Result.failure(IllegalArgumentException("Le montant ajouté doit être positif."))
         }
 
-        val objectif = objectifRepository.getObjectifsFlow().first().find { it.id == id }
-            ?: return@withContext Result.failure(Exception("Objectif non trouvé."))
+        val listeObjectifs = objectifRepository.getObjectifsFlow().first()
+        var objectifTrouve: ObjectifEpargne? = null
+        for (i in 0 until listeObjectifs.size) {
+            if (listeObjectifs[i].id == id) {
+                objectifTrouve = listeObjectifs[i]
+            }
+        }
+        if (objectifTrouve == null) {
+            return Result.failure(Exception("Objectif non trouvé."))
+        }
+        var nouveauMontant = objectifTrouve.montantActuel + montantAjoute
 
-        val nouveauMontant = (objectif.montantActuel + montantAjoute).min(objectif.montantCible)
-        objectifRepository.updateObjectif(objectif.copy(montantActuel = nouveauMontant))
-        Result.success(Unit)
+        if (nouveauMontant.compareTo(objectifTrouve.montantCible) > 0) {
+            nouveauMontant = objectifTrouve.montantCible
+        }
+
+        val objMisAJour = objectifTrouve.copy(montantActuel = nouveauMontant)
+        objectifRepository.updateObjectif(objMisAJour)
+
+        return Result.success(Unit)
     }
-
-    suspend fun deleteObjectif(id: String): Result<Unit> = withContext(Dispatchers.IO) {
+    suspend fun deleteObjectif(id: String): Result<Unit> {
         objectifRepository.deleteObjectif(id)
-        Result.success(Unit)
+        return Result.success(Unit)
     }
 }

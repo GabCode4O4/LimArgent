@@ -27,16 +27,12 @@ class ConfigurationViewModel @Inject constructor(
 
     private val p_categories = MutableStateFlow<List<String>>(emptyList())
     val categories: StateFlow<List<String>> = p_categories.asStateFlow()
-
     private val p_theme = MutableStateFlow("system")
     val theme: StateFlow<String> = p_theme.asStateFlow()
-
     private val p_seuilBudget = MutableStateFlow(0.0)
     val seuilBudget: StateFlow<Double> = p_seuilBudget.asStateFlow()
-
     private val p_notificationActive = MutableStateFlow(false)
     val notificationActive: StateFlow<Boolean> = p_notificationActive.asStateFlow()
-
     private val p_mouvementRec = MutableStateFlow<List<MoneyMovement>>(emptyList())
     val mouvementRec: StateFlow<List<MoneyMovement>> = p_mouvementRec.asStateFlow()
 
@@ -45,10 +41,10 @@ class ConfigurationViewModel @Inject constructor(
 
     init {
         loadUserPreferences()
-        observeRecurrentMovements()
+        obsMouvementRec()
     }
 
-    private fun observeRecurrentMovements() {
+    private fun obsMouvementRec() {
         viewModelScope.launch {
             sessionManager.currentUser.collect { user ->
                 if (user != null) {
@@ -106,25 +102,24 @@ class ConfigurationViewModel @Inject constructor(
 
     fun setThemePreference(theme: String) {
         viewModelScope.launch {
-            preferenceService.setTheme(theme).onSuccess {
-                loadPreference()
-            }
+            p_theme.value = theme
+            preferenceService.setTheme(theme)
         }
     }
 
     fun setSeuilBudget(seuil: Double) {
         viewModelScope.launch {
-            preferenceService.setSeuilBudget(seuil)
-                .onSuccess { loadPreference() }
-                .onFailure { error -> p_toastMessage.send(error.message ?: "Erreur") }
+            p_seuilBudget.value = seuil
+            preferenceService.setSeuilBudget(seuil).onFailure { error ->
+                p_toastMessage.send(error.message ?: "Erreur")
+            }
         }
     }
 
     fun setNotificationActive(active: Boolean) {
         viewModelScope.launch {
-            preferenceService.setNotificationActive(active).onSuccess {
-                loadPreference()
-            }
+            p_notificationActive.value = active
+            preferenceService.setNotificationActive(active)
         }
     }
 

@@ -26,7 +26,7 @@ class ObjectifViewModel @Inject constructor(
     val toastMessage = p_toastMessage.receiveAsFlow()
 
     init {
-        viewModelScope.launch {
+        viewModelScope.launch{
             objectifService.getObjectifsFlow()
                 .catch { error -> p_toastMessage.send(error.message ?: "Erreur de chargement") }
                 .collect { liste ->
@@ -35,7 +35,7 @@ class ObjectifViewModel @Inject constructor(
         }
     }
 
-    fun saveObjectif(objectif: ObjectifEpargne) {
+    fun saveObjectif(objectif: ObjectifEpargne){
         viewModelScope.launch {
             val result = objectifService.saveObjectif(objectif)
             result.onFailure { error ->
@@ -46,7 +46,7 @@ class ObjectifViewModel @Inject constructor(
 
     fun addProgress(id: String, montantAjoute: BigDecimal) {
         viewModelScope.launch {
-            val result = objectifService.addProgress(id, montantAjoute)
+            val result = objectifService.addProgres(id, montantAjoute)
             result.onFailure { error ->
                 p_toastMessage.send(error.message ?: "Erreur de mise à jour")
             }

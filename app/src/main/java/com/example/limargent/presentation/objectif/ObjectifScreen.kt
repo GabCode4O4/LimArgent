@@ -96,8 +96,8 @@ fun ObjectifScreen(
 
     if (showDialog) {
         AddObjectifDialog(
-            onDismiss = { showDialog = false },
-            onConfirm = { nom, montant, date, taux ->
+            onDismiss = {showDialog = false},
+            onConfirm = {nom, montant, date, taux ->
                 val newObjectif = ObjectifEpargne(
                     id = UUID.randomUUID().toString(),
                     nom = nom,

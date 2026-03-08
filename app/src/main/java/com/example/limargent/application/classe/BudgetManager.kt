@@ -8,36 +8,45 @@ import javax.inject.Singleton
 
 @Singleton
 class BudgetManager @Inject constructor() {
-
-    // 1. Calcul du solde total
     fun getBudget(mouvements: List<MoneyMovement>): BigDecimal {
-        // L'utilisation de 'fold' est plus optimisée et propre en Kotlin qu'une boucle 'for'
-        return mouvements.fold(BigDecimal.ZERO) { acc, mouv ->
-            if (mouv.type == MovType.entree) acc.add(mouv.montant)
-            else acc.subtract(mouv.montant)
-        }
-    }
-
-    fun getBudgetCategorie(mouvements: List<MoneyMovement>, type: MovType): Map<String, Float> {
-        val categories = mutableMapOf<String, Float>()
-        for (mouv in mouvements) {
-            if (mouv.type == type) {
-                val totalActuel = categories.getOrDefault(mouv.categorie, 0f)
-                categories[mouv.categorie] = totalActuel + mouv.montant.toFloat()
+        var total = BigDecimal(0)
+        for (i in 0 until mouvements.size) {
+            val m = mouvements[i]
+            if (m.type == MovType.entree) {
+                total = total + m.montant
+            } else {
+                total = total - m.montant
             }
         }
+        return total
+    }
+    fun getBudgetCategorie(mouvements: List<MoneyMovement>, type: MovType): Map<String, Float> {
+        val categories = mutableMapOf<String, Float>()
 
-        return categories.entries.sortedByDescending { it.value }.associate { it.toPair() }
+        for (mouv in mouvements) {
+            if (mouv.type == type) {
+                if (categories.containsKey(mouv.categorie)) {
+                    val ancienTotal = categories[mouv.categorie]!!
+                    categories[mouv.categorie] = ancienTotal + mouv.montant.toFloat()
+                } else {
+                    categories[mouv.categorie] = mouv.montant.toFloat()
+                }
+            }
+        }
+        return categories.toList().sortedByDescending { it.second }.toMap()
     }
 
     fun getSousCategories(mouvements: List<MoneyMovement>, categorie: String): Map<String, Float> {
-        val chartData = mutableMapOf<String, Float>()
+        val sousCat = mutableMapOf<String, Float>()
         for (mouv in mouvements) {
             if (mouv.categorie == categorie) {
-                val actuel = chartData.getOrDefault(mouv.categorie, 0f)
-                chartData[mouv.titre] = actuel + mouv.montant.toFloat()
+                if (sousCat[mouv.titre] == null) {
+                    sousCat[mouv.titre] = mouv.montant.toFloat()
+                } else {
+                    sousCat[mouv.titre] = sousCat[mouv.titre]!! + mouv.montant.toFloat()
+                }
             }
         }
-        return chartData.entries.sortedByDescending { it.value }.associate { it.toPair() }
+        return sousCat.toList().sortedByDescending { it.second }.toMap()
     }
 }

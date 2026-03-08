@@ -17,24 +17,44 @@ class CategoryProvider @Inject constructor(
     private val firestore: FirebaseFirestore,
     private val auth: FirebaseAuth
 ) : CategoryRepository {
-
-    private val userId: String?
-        get() = auth.currentUser?.uid
+    private fun getUserId(): String {
+        if (auth.currentUser != null) {
+            return auth.currentUser!!.uid
+        } else {
+            return ""
+        }
+    }
 
     override suspend fun getCategories(): List<String> {
-        val uid = userId ?: return emptyList()
-        return try {
+        val uid = getUserId()
+        if (uid == "") {
+            return ArrayList<String>()
+        }
+
+        try {
             val doc = firestore.collection("users").document(uid).get().await()
-            val user = doc.toObject(User::class.java)
-            user?.categories ?: emptyList()
+            if (doc.exists() == true) {
+                val user = doc.toObject(User::class.java)
+                if (user != null) {
+                    return user.categories
+                } else {
+                    return ArrayList<String>()
+                }
+            } else {
+                return ArrayList<String>()
+            }
         } catch (e: Exception) {
             e.printStackTrace()
-            emptyList()
+            return ArrayList<String>()
         }
     }
 
     override suspend fun addCategorie(nom: String) {
-        val uid = userId ?: return
+        val uid = getUserId()
+        if (uid == "") {
+            return
+        }
+
         try {
             firestore.collection("users").document(uid).update("categories", FieldValue.arrayUnion(nom))
         } catch (e: Exception) {
@@ -43,7 +63,11 @@ class CategoryProvider @Inject constructor(
     }
 
     override suspend fun supprimer(nom: String) {
-        val uid = userId ?: return
+        val uid = getUserId()
+        if (uid == "") {
+            return
+        }
+
         try {
             firestore.collection("users").document(uid).update("categories", FieldValue.arrayRemove(nom))
         } catch (e: Exception) {
@@ -51,29 +75,43 @@ class CategoryProvider @Inject constructor(
         }
     }
 
-    override fun getCategoriesFlow(): Flow<List<String>> = callbackFlow {
-        val uid = userId
-        if (uid == null) {
-            trySend(emptyList())
-            close()
-            return@callbackFlow
-        }
+    override fun getCategoriesFlow(): Flow<List<String>> {
+        return callbackFlow {
+            val uid = getUserId()
 
-        val listener = firestore.collection("users").document(uid)
-            .addSnapshotListener { snapshot, error ->
-                if (error != null) {
-                    trySend(emptyList())
-                    close()
-                    return@addSnapshotListener
-                }
-                try {
-                    val user = snapshot?.toObject(User::class.java)
-                    trySend(user?.categories ?: emptyList())
-                } catch (e: Exception) {
-                    e.printStackTrace()
-                    trySend(emptyList())
-                }
+            if (uid == "") {
+                trySend(ArrayList<String>())
+                close()
+                return@callbackFlow
             }
-        awaitClose { listener.remove() }
+            val listener = firestore.collection("users").document(uid)
+                .addSnapshotListener { snapshot, error ->
+                    if (error != null) {
+                        trySend(ArrayList<String>())
+                        close()
+                    } else {
+                        try {
+                            // Au lieu de snapshot?.toObject(...)?.categories ?: emptyList()
+                            if (snapshot != null) {
+                                val user = snapshot.toObject(User::class.java)
+                                if (user != null) {
+                                    trySend(user.categories)
+                                } else {
+                                    trySend(ArrayList<String>())
+                                }
+                            } else {
+                                trySend(ArrayList<String>())
+                            }
+                        } catch (e: Exception) {
+                            e.printStackTrace()
+                            trySend(ArrayList<String>())
+                        }
+                    }
+                }
+
+            awaitClose {
+                listener.remove()
+            }
+        }
     }
 }

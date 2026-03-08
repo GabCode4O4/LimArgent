@@ -7,9 +7,11 @@ import com.example.limargent.domain.model.MoneyMovement
 import com.example.limargent.domain.model.MovType
 import com.example.limargent.domain.mouvements.MouvementRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 import java.time.LocalDate
 import javax.inject.Inject
 
@@ -18,15 +20,16 @@ class AnalyticsViewModel @Inject constructor(
     mouvementRepository: MouvementRepository,
     private val budgetManager: BudgetManager
 ) : ViewModel() {
+    private val p_mouvements = MutableStateFlow<List<MoneyMovement>>(ArrayList())
+    val mouvements: StateFlow<List<MoneyMovement>> = p_mouvements
 
-    val mouvements: StateFlow<List<MoneyMovement>> =
-        mouvementRepository
-            .getMouvementsFlow()
-            .stateIn(
-                viewModelScope,
-                SharingStarted.WhileSubscribed(5000),
-                emptyList()
-            )
+    init {
+        viewModelScope.launch {
+            mouvementRepository.getMouvementsFlow().collect { liste ->
+                p_mouvements.value = liste
+            }
+        }
+    }
     fun getCategorieParType(type: MovType): Map<String, Float> {
         return budgetManager.getBudgetCategorie(mouvements.value, type)
     }
@@ -41,16 +44,16 @@ class AnalyticsViewModel @Inject constructor(
 
         val sortedMovements = list.sortedBy { it.date }
         val result = mutableListOf<Pair<LocalDate, Float>>()
-        var currentBalance = 0f
+        var budget = 0f
 
         for (m in sortedMovements) {
-            val amount = m.montant.toFloat()
+            val montant = m.montant.toFloat()
             if (m.type == MovType.entree) {
-                currentBalance += amount
+                budget += montant
             } else {
-                currentBalance -= amount
+                budget -= montant
             }
-            result.add(m.date to currentBalance)
+            result.add(m.date to budget)
         }
         return result
     }

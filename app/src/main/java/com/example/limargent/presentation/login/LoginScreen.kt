@@ -13,7 +13,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.limargent.presentation.util.LogoLimArgent
 
-
 @Composable
 fun LoginScreen(
     viewModel: LoginViewModel,
@@ -25,7 +24,6 @@ fun LoginScreen(
     LaunchedEffect(Unit) {
         viewModel.clearError()
     }
-
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -36,7 +34,6 @@ fun LoginScreen(
         verticalArrangement = Arrangement.Center
     ) {
         Spacer(modifier = Modifier.height(48.dp))
-
         LogoLimArgent(
             modifier = Modifier.fillMaxWidth(0.7f).aspectRatio(1f)
         )
@@ -50,7 +47,6 @@ fun LoginScreen(
         )
 
         Spacer(modifier = Modifier.height(16.dp))
-
         OutlinedTextField(
             value = viewModel.motDePasse,
             onValueChange = { viewModel.motDePasse = it },
@@ -60,14 +56,11 @@ fun LoginScreen(
             isError = viewModel.errorMessage != null,
             shape = MaterialTheme.shapes.medium
         )
-
         viewModel.errorMessage?.let {
             Spacer(modifier = Modifier.height(8.dp))
             Text(it, color = MaterialTheme.colorScheme.error)
         }
-
         Spacer(modifier = Modifier.height(32.dp))
-
         Button(
             onClick = { viewModel.onLog(onLoginSuccess = onNavigateToMain) },
             enabled = !viewModel.isLoading,

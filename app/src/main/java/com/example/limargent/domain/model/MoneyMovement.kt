@@ -2,11 +2,10 @@ package com.example.limargent.domain.model
 
 import java.math.BigDecimal
 import java.time.LocalDate
-
-enum class MovType{
-    entree,sortie
+enum class MovType {
+    entree,
+    sortie
 }
-
 enum class Frequence(val libelle: String) {
     AUCUNE("Aucune"),
     QUOTIDIEN("Quotidien"),
@@ -17,12 +16,14 @@ enum class Frequence(val libelle: String) {
 
 data class MoneyMovement(
     val titre: String = "",
-    val montant: BigDecimal = BigDecimal.ZERO, // On utilise BigDecimal car la précision est importante dès qu'on touche au financier
+    val montant: BigDecimal = BigDecimal.ZERO, 
+    
     val categorie: String = "",
-    val date: LocalDate = LocalDate.now(), // LocalDate permet de faire du tri et du parsing plus facilement et garantit le format
+    val date: LocalDate = LocalDate.now(), 
+    
     val type: MovType = MovType.entree,
     val id: String? = null,
     val isRecurrent: Boolean = false,
     val frequence: Frequence = Frequence.AUCUNE,
-    val nextDate: LocalDate? = null
+    val nextDate: LocalDate? = null 
 )

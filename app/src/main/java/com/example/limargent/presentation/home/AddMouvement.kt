@@ -358,7 +358,7 @@ fun TabButton(
     modifier: Modifier = Modifier,
     onClick: () -> Unit
 ) {
-    val backgroundColor = if (isSelected) MaterialTheme.colorScheme.primary else Color.Transparent
+    val bgColor = if (isSelected) MaterialTheme.colorScheme.primary else Color.Transparent
     val contentColor = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant
 
     Box(
@@ -366,7 +366,7 @@ fun TabButton(
             .fillMaxHeight()
             .padding(4.dp)
             .clip(RoundedCornerShape(8.dp))
-            .background(backgroundColor)
+            .background(bgColor)
             .clickable(onClick = onClick),
         contentAlignment = Alignment.Center
     ) {

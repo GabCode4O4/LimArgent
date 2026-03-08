@@ -185,22 +185,22 @@ fun HomeScreen(viewModel: HomeViewModel) {
                         Spacer(modifier = Modifier.height(8.dp))
 
                         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            val months = listOf("Tous") + Month.entries.map { it.getDisplayName(TextStyle.FULL, Locale.FRANCE).replaceFirstChar { char -> char.uppercase() } }
+                            val mois = listOf("Tous", "Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre")
                             Filtrer(
                                 modifier = Modifier.weight(1f),
                                 label = "Mois",
-                                options = months,
-                                selectedOption = viewModel.moisFiltre?.let { months[it] } ?: "Tous",
+                                options = mois,
+                                selectedOption = viewModel.moisFiltre?.let { mois[it] } ?: "Tous",
                                 onOptionSelected = {
-                                    viewModel.moisFiltre = if (it == "Tous") null else months.indexOf(it)
+                                    viewModel.moisFiltre = if (it == "Tous") null else mois.indexOf(it)
                                 }
                             )
 
-                            val availableYears = listOf("Toutes") + viewModel.mouvements.map { it.date.year }.distinct().sortedDescending().map { it.toString() }
+                            val annee = listOf("Toutes") + viewModel.mouvements.map { it.date.year }.distinct().sortedDescending().map { it.toString() }
                             Filtrer(
                                 modifier = Modifier.weight(1f),
                                 label = "Année",
-                                options = availableYears,
+                                options = annee,
                                 selectedOption = viewModel.anneeFiltre?.toString() ?: "Toutes",
                                 onOptionSelected = {
                                     viewModel.anneeFiltre = if (it == "Toutes") null else it.toIntOrNull()

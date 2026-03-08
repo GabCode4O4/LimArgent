@@ -14,7 +14,6 @@ import javax.inject.Inject
 class LoginViewModel @Inject constructor(
     private val loginService: LoginService
 ) : ViewModel() {
-
     var identifiant by mutableStateOf("")
     var motDePasse by mutableStateOf("")
     var errorMessage by mutableStateOf<String?>(null)
@@ -37,7 +36,6 @@ class LoginViewModel @Inject constructor(
             }
         }
     }
-
     fun clearError() {
         errorMessage = null
     }
