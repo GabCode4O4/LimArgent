@@ -47,7 +47,11 @@ enum class ModeAnalyse { DEPENSES, RECETTES }
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AnalyticsScreen(viewModel: AnalyticsViewModel) {
+
+    // permet de changer d'onglet de piechart, par défaut les dépenses
     var mode by remember { mutableStateOf(ModeAnalyse.DEPENSES) }
+
+    // permet d'afficher un piechart d'une catégorie en particulier quand on clique dessus
     var selectedCategorie by remember { mutableStateOf<String?>(null) }
 
     Scaffold(
@@ -88,6 +92,7 @@ fun OngletGraphBudget(
     auClicCategorie: (String) -> Unit,
     auClicRetour: () -> Unit
 ) {
+    // on récupère les mouvements
     val mouvements by viewModel.mouvements.collectAsStateWithLifecycle()
 
     val donnees = remember(mouvements, mode, selectedCategorie) {

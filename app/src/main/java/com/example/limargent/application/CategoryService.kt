@@ -35,6 +35,7 @@ class CategoryService @Inject constructor(
     }
     suspend fun supprimer(nom: String): Result<Unit> {
         val mouvements = mouvementRepository.getMouvementsFlow().first()
+        // si la catégorie est déjà utilisée dans un mouvement, on empêche la suppression avec un booléen
         var estUtilise = false
         for (i in 0 until mouvements.size) {
             val mouv = mouvements[i]

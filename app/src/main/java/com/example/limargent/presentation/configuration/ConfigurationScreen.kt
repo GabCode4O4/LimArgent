@@ -71,6 +71,7 @@ fun ConfigurationScreen(viewModel: ConfigurationViewModel, onLogout: () -> Unit)
             }
 
             when (selectedTabIndex) {
+                // on affiche la section sélectionnée
                 0 -> item { PreferenceSection(viewModel, onLogout) }
                 1 -> item { CategorieSection(viewModel, categories) }
                 2 -> {
@@ -158,6 +159,8 @@ fun RecurrenceItem(
 @Composable
 fun PreferenceSection(viewModel: ConfigurationViewModel, onLogout: () -> Unit) {
     val theme by viewModel.theme.collectAsStateWithLifecycle()
+
+    // on récupère le paramètre de thème du système du tél au cas où l'utilisateur choisit pas de thème
     val systemIsDark = isSystemInDarkTheme()
     val isDarkTheme = when (theme) {
         "dark" -> true
@@ -261,6 +264,8 @@ fun PreferenceSection(viewModel: ConfigurationViewModel, onLogout: () -> Unit) {
 fun CategorieSection(viewModel: ConfigurationViewModel, categories: List<String>) {
     var newCat by remember { mutableStateOf("") }
 
+
+    // Partie pour ajouter une nouvelle catégorie
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
@@ -306,6 +311,7 @@ fun CategorieSection(viewModel: ConfigurationViewModel, categories: List<String>
 
     Spacer(modifier = Modifier.height(24.dp))
 
+    // Liste des catégories existantes
     if (categories.isNotEmpty()) {
         Card(
             modifier = Modifier.fillMaxWidth(),

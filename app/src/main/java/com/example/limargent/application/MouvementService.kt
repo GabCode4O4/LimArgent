@@ -84,6 +84,8 @@ class MouvementService @Inject constructor(
             }
         }
 
+        // On ne traite que les mouvements dont la date d'exécution est passée et qu'il faut donc actualiser
+
         for (i in 0 until mouvementsATraiter.size) {
             val mouvement = mouvementsATraiter[i]
             var dateExecution = mouvement.nextDate!!

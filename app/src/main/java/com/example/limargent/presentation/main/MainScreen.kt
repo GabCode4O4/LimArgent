@@ -93,6 +93,7 @@ fun MainAppScreen(
             }
         }
 
+        // si l'utilisateur appuie sur le bouton pour ajouter un mouvement
         if (showAddMouv){
             AddMouvement(
                 mouvementToEdit = null,

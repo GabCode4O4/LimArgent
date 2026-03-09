@@ -25,6 +25,7 @@ class LoginViewModel @Inject constructor(
         viewModelScope.launch {
             isLoading = true
             errorMessage = null
+            // on appelle le service de connexion
             val result = loginService.authentification(identifiant, motDePasse)
 
             result.onSuccess {

@@ -22,6 +22,8 @@ class RegisterService @Inject constructor(
             return Result.failure(IllegalArgumentException("Le mot de passe doit contenir au moins 6 caractères."))
         }
 
+        // On essaie de gérer tous les cas d'erreurs de typo et ensuite on essaie l'inscription avec une méthode firebase
+
         try {
             val email = identifiant + "@limargent.app"
             val authResult = firebaseAuth.createUserWithEmailAndPassword(email, motDePasse).await()

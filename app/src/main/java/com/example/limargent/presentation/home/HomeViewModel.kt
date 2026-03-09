@@ -49,6 +49,8 @@ class HomeViewModel @Inject constructor(
 
     private val p_toastMessage = Channel<String>()
     val toastMessage = p_toastMessage.receiveAsFlow()
+
+    // liste de mouvements à afficher post filtrage et triés par date
     val filtrage: List<MoneyMovement>
         get() = mouvements.filter {
             (recherche.isBlank() || it.titre.contains(recherche, ignoreCase = true) || it.categorie.contains(recherche, ignoreCase = true)) &&

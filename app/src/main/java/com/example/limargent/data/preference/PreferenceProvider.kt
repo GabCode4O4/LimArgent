@@ -26,6 +26,7 @@ class PreferenceProvider @Inject constructor(
             return "system"
         }
 
+        // on cherche dans la collection de l'utilisateur son thème dans ses préférences, si y'en a pas, on prend celui par défaut du système
         try {
             val doc = firestore.collection("users").document(uid).get().await()
             val themePref = doc.getString("preference.theme")
@@ -55,6 +56,8 @@ class PreferenceProvider @Inject constructor(
 
     override suspend fun getSeuilBudget(): Double {
         val uid = getUserId()
+
+        // on met un seuil à 100 euros par défaut
         if (uid == "") {
             return 100.0
         }
@@ -93,13 +96,14 @@ class PreferenceProvider @Inject constructor(
             return false
         }
 
+        // simple vérif des notifs
+
         try {
             val doc = firestore.collection("users").document(uid).get().await()
 
             val isActive = doc.getBoolean("preference.notificationsActive")
 
             if (isActive != null) {
-                // Typique junior : vérifier un booléen pour renvoyer un booléen
                 if (isActive == true) {
                     return true
                 } else {

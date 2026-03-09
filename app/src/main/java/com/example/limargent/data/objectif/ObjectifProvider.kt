@@ -38,6 +38,7 @@ class ObjectifProvider @Inject constructor(
         try {
             val map = convertToMap(objectif)
 
+            // on ajoute l'objectif aux données de l'utilisateur avec firestore
             firestore.collection("users").document(uid)
                 .collection("objectifs").document(objectif.id)
                 .set(map)
@@ -82,6 +83,8 @@ class ObjectifProvider @Inject constructor(
     }
 
     override fun getObjectifsFlow(): Flow<List<ObjectifEpargne>> {
+        // même fonctionnement que la fonction de flux dans le category provider
+
         return callbackFlow {
             val uid = getUserId()
             if (uid == "") {

@@ -19,6 +19,10 @@ import javax.inject.Singleton
 @InstallIn(SingletonComponent::class)
 abstract class RepositoryModule {
 
+    // pour configurer l'injection de dépendances avec hilt (j'ai mal à la tête)
+
+    // permet une injection dans le viewmodel directement, le singleton empêchant d'avoir des duplications (garantit une seule instance)
+
     @Binds
     @Singleton
     abstract fun bindCategoryRepository(

@@ -10,6 +10,7 @@ fun LocalDate.toDateFormat(): String {
     return this.format(date)
 }
 
+// permet d'avoir un string prêt à afficher pour des montants
 fun BigDecimal.toArgent(): String {
     return "${"%.2f".format(this)} €"
 }

@@ -32,6 +32,8 @@ import java.time.format.DateTimeFormatter
 
 @OptIn(ExperimentalMaterial3Api::class)
 object maDate : SelectableDates {
+
+    // empêche l'utilisateur de choisir une date future pour un mouvement passé
     override fun isSelectableDate(time: Long): Boolean {
         return time <= System.currentTimeMillis()
     }
@@ -43,6 +45,7 @@ object maDate : SelectableDates {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
+// le composable principal qui ouvre un Bottom Sheet pour ajouter ou modifier un mouvement
 fun AddMouvement(
     mouvementToEdit: MoneyMovement?,
     categories: List<String>,
@@ -70,6 +73,7 @@ fun AddMouvement(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
+// le contenu du formulaire pour ajouter/modifier un mouvement
 fun AddMouvementContent(
     mouvementToEdit: MoneyMovement?,
     categories: List<String>,
@@ -80,6 +84,7 @@ fun AddMouvementContent(
     val isEditing = mouvementToEdit != null
     val scrollState = rememberScrollState()
 
+    // les champs du formulaire
     var titre by remember { mutableStateOf(mouvementToEdit?.titre ?: "") }
     var montant by remember { mutableStateOf(mouvementToEdit?.montant?.toString() ?: "") }
     var type by remember { mutableStateOf(mouvementToEdit?.type ?: MovType.sortie) }
@@ -88,6 +93,7 @@ fun AddMouvementContent(
     var dateSelectionnee by remember { mutableStateOf(mouvementToEdit?.date ?: LocalDate.now()) }
     var afficherSelecteurDate by remember { mutableStateOf(false) }
 
+    // la gestion des mouvements récurrents
     var isRecurrent by remember { mutableStateOf(mouvementToEdit?.isRecurrent ?: false) }
     var frequenceSelectionnee by remember { mutableStateOf(mouvementToEdit?.frequence ?: Frequence.MENSUEL) }
     var menuFrequenceOuvert by remember { mutableStateOf(false) }
@@ -95,11 +101,13 @@ fun AddMouvementContent(
     var dateTypeToSelect by remember { mutableStateOf(0) }
     var nextDate by remember { mutableStateOf(mouvementToEdit?.nextDate) }
 
+    // affiche un popup pour choisir la date si nécessaire
     if (afficherSelecteurDate) {
         val dateInitiale = if (dateTypeToSelect == 0) dateSelectionnee else nextDate ?: LocalDate.now().plusDays(1)
         val datePickerState = rememberDatePickerState(
             initialSelectedDateMillis = dateInitiale.atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli(),
             selectableDates = if (dateTypeToSelect == 0) maDate else object : SelectableDates {
+                // pour empêcher de prendre une date antérieure pour la prochaine exec
                 override fun isSelectableDate(time: Long): Boolean = time >= System.currentTimeMillis() - 86400000
             }
         )
@@ -122,6 +130,7 @@ fun AddMouvementContent(
         }
     }
 
+    //partie  principale du formulaire
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -155,6 +164,7 @@ fun AddMouvementContent(
 
         Spacer(modifier = Modifier.height(24.dp))
 
+        // sélection dépense/revenu
         Row(
             modifier = Modifier
                 .fillMaxWidth()

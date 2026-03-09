@@ -14,6 +14,9 @@ enum class Frequence(val libelle: String) {
     ANNUEL("Annuel")
 }
 
+// on utilise une dataclass car ca fait que stocker les données, la logique métier est dans application/viewmodel
+// on utilise des val comme ca l'objet est immuable, ca ajoute une couche de protection
+// pour le modifier on fait copy() donc on le 'remplace' en soit
 data class MoneyMovement(
     val titre: String = "",
     val montant: BigDecimal = BigDecimal.ZERO, 

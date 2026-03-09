@@ -72,6 +72,7 @@ fun LoginScreen(
             )
         ) {
             if (viewModel.isLoading) {
+                // si la connexion prend du temps, on affiche une animation pour que l'utilisateur sache que ca a pas freeze
                 CircularProgressIndicator(color = MaterialTheme.colorScheme.onPrimary)
             } else {
                 Text("Se connecter", fontSize = 18.sp, fontWeight = FontWeight.SemiBold)

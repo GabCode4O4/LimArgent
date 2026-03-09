@@ -14,6 +14,7 @@ class ObjectifService @Inject constructor(
 ) {
 
     fun getObjectifsFlow(): Flow<List<ObjectifEpargne>> {
+        // permet d'avoir un flux de données, et donc une actualisation de l'affichage en temps réel
         return objectifRepository.getObjectifsFlow()
     }
 

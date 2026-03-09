@@ -32,6 +32,7 @@ class CategoryProvider @Inject constructor(
         }
 
         try {
+            // on récupère les données de l'utilisateur connecté avec firestore
             val doc = firestore.collection("users").document(uid).get().await()
             if (doc.exists() == true) {
                 val user = doc.toObject(User::class.java)
@@ -80,10 +81,13 @@ class CategoryProvider @Inject constructor(
             val uid = getUserId()
 
             if (uid == "") {
+                // si y'a pas d'utilisateur, on renvoie une liste vide et on ferme le flux
                 trySend(ArrayList<String>())
                 close()
                 return@callbackFlow
             }
+
+            // on créé le listener firestore qui s'active à chaque modif des données utilisateur
             val listener = firestore.collection("users").document(uid)
                 .addSnapshotListener { snapshot, error ->
                     if (error != null) {
@@ -91,7 +95,7 @@ class CategoryProvider @Inject constructor(
                         close()
                     } else {
                         try {
-                            // Au lieu de snapshot?.toObject(...)?.categories ?: emptyList()
+
                             if (snapshot != null) {
                                 val user = snapshot.toObject(User::class.java)
                                 if (user != null) {
@@ -109,6 +113,7 @@ class CategoryProvider @Inject constructor(
                     }
                 }
 
+            // s'active à la fermeture du flux pour empêcher une fuite de mémoire du listener firestore
             awaitClose {
                 listener.remove()
             }

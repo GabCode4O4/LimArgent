@@ -41,6 +41,7 @@ class ConfigurationViewModel @Inject constructor(
     val toastMessage = p_toastMessage.receiveAsFlow()
 
     init {
+        // Ici on charge toutes les données utilisateur
         loadUserPreferences()
         obsMouvementRec()
     }
