@@ -14,28 +14,41 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.*
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.limargent.domain.model.MovType
-import java.time.LocalDate
-import java.time.temporal.ChronoUnit
-import kotlin.math.abs
-import kotlin.math.max
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.limargent.domain.model.MovType
 import com.example.limargent.presentation.util.LaTopAppBar
 import com.example.limargent.presentation.util.SelectOnglet
 import com.example.limargent.presentation.util.toArgent
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
+import kotlin.math.max
 
-enum class AnalyticsMode { DEPENSES, RECETTES }
+// --- IMPORTS VICO ---
+import com.patrykandpatrick.vico.compose.axis.axisLabelComponent
+import com.patrykandpatrick.vico.compose.axis.horizontal.rememberBottomAxis
+import com.patrykandpatrick.vico.compose.axis.vertical.rememberStartAxis
+import com.patrykandpatrick.vico.compose.chart.Chart
+import com.patrykandpatrick.vico.compose.chart.line.lineChart
+import com.patrykandpatrick.vico.compose.component.lineComponent
+import com.patrykandpatrick.vico.compose.m3.style.m3ChartStyle
+import com.patrykandpatrick.vico.compose.style.ProvideChartStyle
+import com.patrykandpatrick.vico.core.axis.AxisPosition
+import com.patrykandpatrick.vico.core.axis.formatter.AxisValueFormatter
+import com.patrykandpatrick.vico.core.entry.entryModelOf
+import com.patrykandpatrick.vico.core.entry.entryOf
+
+enum class ModeAnalyse { DEPENSES, RECETTES }
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AnalyticsScreen(viewModel: AnalyticsViewModel) {
-    var mode by remember { mutableStateOf(AnalyticsMode.DEPENSES) }
-    var selectedCategory by remember { mutableStateOf<String?>(null) }
+    var mode by remember { mutableStateOf(ModeAnalyse.DEPENSES) }
+    var selectedCategorie by remember { mutableStateOf<String?>(null) }
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
@@ -44,7 +57,6 @@ fun AnalyticsScreen(viewModel: AnalyticsViewModel) {
         }
     ) { paddingValues ->
         Column(
-
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
@@ -54,13 +66,13 @@ fun AnalyticsScreen(viewModel: AnalyticsViewModel) {
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            BudgetChartsTab(
+            OngletGraphBudget(
                 viewModel = viewModel,
                 mode = mode,
-                onModeChange = { mode = it },
-                selectedCategory = selectedCategory,
-                onCategoryClick = { selectedCategory = it },
-                onBackClick = { selectedCategory = null }
+                auChangementDeMode = { mode = it },
+                selectedCategorie = selectedCategorie,
+                auClicCategorie = { selectedCategorie = it },
+                auClicRetour = { selectedCategorie = null }
             )
 
         }
@@ -68,20 +80,20 @@ fun AnalyticsScreen(viewModel: AnalyticsViewModel) {
 }
 
 @Composable
-fun BudgetChartsTab(
+fun OngletGraphBudget(
     viewModel: AnalyticsViewModel,
-    mode: AnalyticsMode,
-    onModeChange: (AnalyticsMode) -> Unit,
-    selectedCategory: String?,
-    onCategoryClick: (String) -> Unit,
-    onBackClick: () -> Unit
+    mode: ModeAnalyse,
+    auChangementDeMode: (ModeAnalyse) -> Unit,
+    selectedCategorie: String?,
+    auClicCategorie: (String) -> Unit,
+    auClicRetour: () -> Unit
 ) {
     val mouvements by viewModel.mouvements.collectAsStateWithLifecycle()
 
-    val data = remember(mouvements, mode, selectedCategory) {
+    val donnees = remember(mouvements, mode, selectedCategorie) {
         when {
-            selectedCategory != null -> viewModel.getCategorieParCat(selectedCategory)
-            mode == AnalyticsMode.DEPENSES -> viewModel.getCategorieParType(MovType.sortie)
+            selectedCategorie != null -> viewModel.getCategorieParCat(selectedCategorie)
+            mode == ModeAnalyse.DEPENSES -> viewModel.getCategorieParType(MovType.sortie)
             else -> viewModel.getCategorieParType(MovType.entree)
         }
     }
@@ -92,63 +104,64 @@ fun BudgetChartsTab(
         contentPadding = PaddingValues(bottom = 40.dp)
     ) {
         item {
-            if (selectedCategory == null) {
-                ChartCard {
+            if (selectedCategorie == null) {
+                GraphCard {
                     Text(
                         text = "Évolution du solde",
                         fontWeight = FontWeight.SemiBold,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     Spacer(modifier = Modifier.height(16.dp))
-                    LineChart(viewModel.getBudgetByDateList())
+                    GraphLineaire(donnees = viewModel.getBudgetByDateList())
                 }
                 Spacer(modifier = Modifier.height(32.dp))
             } else {
                 Row(
-                    modifier = Modifier.fillMaxWidth().clickable { onBackClick() },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { auClicRetour() },
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text("Retour", color = Color(0xFF007AFF), fontWeight = FontWeight.Medium)
                     Spacer(modifier = Modifier.width(24.dp))
-                    Text(selectedCategory, fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                    Text(selectedCategorie, fontWeight = FontWeight.Bold, fontSize = 18.sp)
                 }
                 Spacer(modifier = Modifier.height(24.dp))
             }
         }
-        item{
-            if (selectedCategory == null) {
+        item {
+            if (selectedCategorie == null) {
                 Spacer(modifier = Modifier.height(32.dp))
                 SelectOnglet(
                     items = listOf("Dépenses", "Recettes"),
-                    selectedIndex = if (mode == AnalyticsMode.DEPENSES) 0 else 1,
-                    onItemSelected = { onModeChange(if (it == 0) AnalyticsMode.DEPENSES else AnalyticsMode.RECETTES) }
+                    selectedIndex = if (mode == ModeAnalyse.DEPENSES) 0 else 1,
+                    onItemSelected = { auChangementDeMode(if (it == 0) ModeAnalyse.DEPENSES else ModeAnalyse.RECETTES) }
                 )
                 Spacer(modifier = Modifier.height(16.dp))
             }
         }
 
         item {
-            // Carte Donut Chart
-            ChartCard {
+            GraphCard {
                 Text(
                     text = "Répartition",
                     fontWeight = FontWeight.SemiBold,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
-                AnimatedDonutChart(data = data)
+                donut(donnees = donnees)
             }
             Spacer(modifier = Modifier.height(24.dp))
         }
 
-        val colors = getPremiumColors(data.size)
+        val couleurs = getCouleur(donnees.size)
 
-        items(data.size) { index ->
-            val entry = data.entries.elementAt(index)
-            CleanCategoryRow(
-                name = entry.key,
-                amount = entry.value,
-                color = colors[index % colors.size],
-                onClick = { if (selectedCategory == null) onCategoryClick(entry.key) }
+        items(donnees.size) { index ->
+            val entree = donnees.entries.elementAt(index)
+            categorie(
+                nom = entree.key,
+                montant = entree.value,
+                couleur = couleurs[index % couleurs.size],
+                auClic = { if (selectedCategorie == null) auClicCategorie(entree.key) }
             )
             Spacer(modifier = Modifier.height(8.dp))
         }
@@ -156,26 +169,24 @@ fun BudgetChartsTab(
 }
 
 
-
-
 @Composable
-fun ChartCard(content: @Composable ColumnScope.() -> Unit) {
+fun GraphCard(contenu: @Composable ColumnScope.() -> Unit) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(24.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.cardElevation(0.dp) // Flat design
+        elevation = CardDefaults.cardElevation(0.dp)
     ) {
         Column(
             modifier = Modifier.padding(24.dp),
-            content = content
+            content = contenu
         )
     }
 }
 
 
 @Composable
-fun CleanCategoryRow(name: String, amount: Float, color: Color, onClick: () -> Unit) {
+fun categorie(nom: String, montant: Float, couleur: Color, auClic: () -> Unit) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
@@ -184,23 +195,23 @@ fun CleanCategoryRow(name: String, amount: Float, color: Color, onClick: () -> U
                 MaterialTheme.colorScheme.surfaceVariant,
                 RoundedCornerShape(12.dp)
             )
-            .clickable { onClick() }
+            .clickable { auClic() }
             .padding(vertical = 12.dp, horizontal = 8.dp)
     ) {
         Box(
             modifier = Modifier
                 .size(14.dp)
-                .background(color, CircleShape)
+                .background(couleur, CircleShape)
         )
         Spacer(modifier = Modifier.width(16.dp))
         Text(
-            text = name,
+            text = nom,
             modifier = Modifier.weight(1f),
             fontWeight = FontWeight.Medium,
             fontSize = 16.sp
         )
         Text(
-            text = amount.toArgent(),
+            text = montant.toArgent(),
             fontWeight = FontWeight.SemiBold,
             fontSize = 16.sp
         )
@@ -208,35 +219,37 @@ fun CleanCategoryRow(name: String, amount: Float, color: Color, onClick: () -> U
 }
 
 @Composable
-fun AnimatedDonutChart(data: Map<String, Float>) {
-    val progress = remember { Animatable(0f) }
-    LaunchedEffect(data) {
-        progress.snapTo(0f)
-        progress.animateTo(1f, animationSpec = tween(800, easing = FastOutSlowInEasing))
+fun donut(donnees: Map<String, Float>) {
+    val progression = remember { Animatable(0f) }
+    LaunchedEffect(donnees) {
+        progression.snapTo(0f)
+        progression.animateTo(1f, animationSpec = tween(800, easing = FastOutSlowInEasing))
     }
 
-    val total = data.values.sum()
-    val colors = getPremiumColors(data.size)
+    val total = donnees.values.sum()
+    val couleurs = getCouleur(donnees.size)
 
     Box(
         contentAlignment = Alignment.Center,
-        modifier = Modifier.fillMaxWidth().padding(vertical = 16.dp)
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 16.dp)
     ) {
         Canvas(modifier = Modifier.size(220.dp)) {
-            val thickness = 40f
-            var startAngle = -90f
-            val gap = if (data.size > 1) 3f else 0f
+            val epaisseur = 40f
+            var angleDepart = -90f
+            val ecart = if (donnees.size > 1) 3f else 0f
 
-            data.entries.forEachIndexed { index, entry ->
-                val sweepAngle = (entry.value / total) * 360f * progress.value
+            donnees.entries.forEachIndexed { index, entree ->
+                val angleBalayage = (entree.value / total) * 360f * progression.value
                 drawArc(
-                    color = colors[index % colors.size],
-                    startAngle = startAngle + (gap / 2),
-                    sweepAngle = max(1f, sweepAngle - gap),
+                    color = couleurs[index % couleurs.size],
+                    startAngle = angleDepart + (ecart / 2),
+                    sweepAngle = max(1f, angleBalayage - ecart),
                     useCenter = false,
-                    style = Stroke(width = thickness, cap = StrokeCap.Round)
+                    style = Stroke(width = epaisseur, cap = StrokeCap.Round)
                 )
-                startAngle += (entry.value / total) * 360f
+                angleDepart += (entree.value / total) * 360f
             }
         }
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -256,70 +269,58 @@ fun AnimatedDonutChart(data: Map<String, Float>) {
 }
 
 @Composable
-fun LineChart(data: List<Pair<LocalDate, Float>>) {
-    if (data.isEmpty()) {
+fun GraphLineaire(donnees: List<Pair<LocalDate, Float>>) {
+    if (donnees.isEmpty()) {
         Text("Pas assez de données", color = MaterialTheme.colorScheme.onSurfaceVariant)
         return
     }
 
-    val primaryColor = Color(0xFF007AFF) // Bleu Apple
+    val entreGraph = donnees.mapIndexed { index, pair ->
+        entryOf(x = index.toFloat(), y = pair.second)
+    }
+    val modelGraph = entryModelOf(entreGraph)
 
-    Canvas(modifier = Modifier.fillMaxWidth().height(180.dp)) {
-        val w = size.width
-        val h = size.height
-        val maxAbsValue = (data.maxOfOrNull { abs(it.second) } ?: 1f).takeIf { it > 0f } ?: 1f
-        val scaleY = (h * 0.8f) / (maxAbsValue * 2)
-        val centerY = h / 2f
-        val startDate = data.first().first
-        val endDate = data.last().first
-        val totalDays = max(ChronoUnit.DAYS.between(startDate, endDate).toFloat(), 1f)
-
-        val points = data.map { (date, value) ->
-            val daysFromStart = ChronoUnit.DAYS.between(startDate, date).toFloat()
-            val x = (daysFromStart / totalDays) * w
-            val y = centerY - (value * scaleY)
-            Offset(x, y)
+    val formatDate = AxisValueFormatter<AxisPosition.Horizontal.Bottom> { valeur, _ ->
+        val index = valeur.toInt()
+        if (index >= 0 && index < donnees.size) {
+            donnees[index].first.format(DateTimeFormatter.ofPattern("dd/MM"))
+        } else {
+            ""
         }
+    }
+    val couleurTexteAxe = MaterialTheme.colorScheme.onSurfaceVariant
+    val couleurLigneAxe = MaterialTheme.colorScheme.surfaceVariant
 
-        // Ligne de zéro subtile
-        drawLine(
-            color = Color.LightGray.copy(alpha = 0.5f),
-            start = Offset(0f, centerY),
-            end = Offset(w, centerY),
-            strokeWidth = 2f,
-            pathEffect = PathEffect.dashPathEffect(floatArrayOf(10f, 10f), 0f)
-        )
-
-        val path = Path().apply {
-            if (points.isNotEmpty()) {
-                moveTo(points.first().x, points.first().y)
-                for (i in 0 until points.size - 1) {
-                    val p0 = points[i]
-                    val p1 = points[i + 1]
-                    quadraticTo(p0.x, p0.y, (p0.x + p1.x) / 2, (p0.y + p1.y) / 2)
-                }
-                lineTo(points.last().x, points.last().y)
-            }
-        }
-
-        drawPath(
-            path = path,
-            color = primaryColor,
-            style = Stroke(width = 8f, cap = StrokeCap.Round)
+    ProvideChartStyle(m3ChartStyle()) {
+        Chart(
+            chart = lineChart(),
+            model = modelGraph,
+            startAxis = rememberStartAxis(
+                label = axisLabelComponent(color = couleurTexteAxe),
+                axis = lineComponent(color = couleurTexteAxe, thickness = 1.dp),
+                guideline = lineComponent(color = couleurLigneAxe, thickness = 1.dp)
+            ),
+            bottomAxis = rememberBottomAxis(
+                valueFormatter = formatDate,
+                label = axisLabelComponent(color = couleurTexteAxe),
+                axis = lineComponent(color = couleurTexteAxe, thickness = 1.dp),
+                guideline = null
+            ),
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(200.dp)
         )
     }
 }
-
-// Génère une palette de couleurs douces et modernes (style iOS)
-fun getPremiumColors(length: Int): List<Color> {
-    val premiumPalette = listOf(
-        Color(0xFF007AFF), // Blue
-        Color(0xFF34C759), // Green
-        Color(0xFFFF9500), // Orange
-        Color(0xFFAF52DE), // Purple
-        Color(0xFFFF2D55), // Pink
-        Color(0xFF5856D6), // Indigo
-        Color(0xFF5AC8FA)  // Teal
+fun getCouleur(taille: Int): List<Color> {
+    val palette = listOf(
+        Color(0xFF007AFF),
+        Color(0xFF34C759),
+        Color(0xFFFF9500),
+        Color(0xFFAF52DE),
+        Color(0xFFFF2D55),
+        Color(0xFF5856D6),
+        Color(0xFF5AC8FA)
     )
-    return List(length) { i -> premiumPalette[i % premiumPalette.size] }
+    return List(taille) { i -> palette[i % palette.size] }
 }
