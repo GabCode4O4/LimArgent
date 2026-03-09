@@ -67,7 +67,13 @@ class HomeViewModel @Inject constructor(
             sessionManager.currentUser.collectLatest { user ->
                 if (user != null) {
                     p_userName.value = user.email?.split("@")?.get(0) ?: user.uid
-
+                    launch {
+                        try {
+                            mouvementService.verifierMouvRec()
+                        } catch (e: Exception) {
+                            e.printStackTrace()
+                        }
+                    }
                     launch {
                         mouvementService.getMouvementsFlow().collect { lesMouvements ->
                             mouvements = lesMouvements

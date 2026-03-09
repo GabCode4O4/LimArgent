@@ -25,13 +25,6 @@ import com.example.limargent.ui.theme.LimArgentTheme
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.work.Constraints
-import androidx.work.ExistingPeriodicWorkPolicy
-import androidx.work.NetworkType
-import androidx.work.PeriodicWorkRequestBuilder
-import androidx.work.WorkManager
-import com.example.limargent.application.classe.MouvementRecWorker
-import java.util.concurrent.TimeUnit
 
 enum class ScreenState {LOGIN, REGISTER, HOME}
 @AndroidEntryPoint
@@ -59,7 +52,6 @@ class MainActivity : ComponentActivity(){
                 if (currentUser != null) {
                     configurationViewModel.loadUserPreferences()
                     screenAct = ScreenState.HOME
-                    planifierMouvRec()
                 } else {
                     if (screenAct == ScreenState.HOME) {
                         screenAct = ScreenState.LOGIN
@@ -98,18 +90,5 @@ class MainActivity : ComponentActivity(){
             }
         }
     }
-    private fun planifierMouvRec() {
-        val constraints = Constraints.Builder()
-            .setRequiredNetworkType(NetworkType.CONNECTED)
-            .build()
 
-        val workRequest = PeriodicWorkRequestBuilder<MouvementRecWorker>(24, TimeUnit.HOURS)
-            .setConstraints(constraints)
-            .build()
-        WorkManager.getInstance(this).enqueueUniquePeriodicWork(
-            "RecurrentMouvementWork",
-            ExistingPeriodicWorkPolicy.KEEP,
-            workRequest
-        )
-    }
 }
