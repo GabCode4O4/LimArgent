@@ -15,7 +15,7 @@ class LoginService @Inject constructor(
         }
 
         try {
-            // on essaie la connexion avec une méthode firebase, si l'authentification échoue, on lance des exceptions
+            // on essaie la connexion avec une méthode firebase, si l'authentification échoue, on lance des exceptions pour indiquer au user ce qu'il doit faire
             val email = identifiant + "@limargent.app"
             firebaseAuth.signInWithEmailAndPassword(email, motDePasse).await()
 

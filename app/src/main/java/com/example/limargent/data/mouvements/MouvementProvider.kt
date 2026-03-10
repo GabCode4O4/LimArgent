@@ -68,7 +68,7 @@ class MouvementProvider @Inject constructor(
             return Result.failure(e)
         }
     }
-
+//pour mettre à jour les mouvement dans firestore
     override suspend fun updateMouvement(mouvement: MoneyMovement): Result<Unit> {
         val uid = getUserId()
         if (uid == "") {
@@ -110,7 +110,6 @@ class MouvementProvider @Inject constructor(
                         close()
                     } else {
                         if (snapshot != null) {
-                            // On crée la liste à la main au lieu d'utiliser mapNotNull
                             val mouvementsList = ArrayList<MoneyMovement>()
 
                             for (i in 0 until snapshot.documents.size) {
@@ -134,6 +133,7 @@ class MouvementProvider @Inject constructor(
         }
     }
 
+    //Méthode permettant de convertir un mouvement en donnée firestore
     private fun convertToMap(mouvement: MoneyMovement): Map<String, Any?> {
         val map = HashMap<String, Any?>()
         map.put("titre", mouvement.titre)
@@ -155,7 +155,7 @@ class MouvementProvider @Inject constructor(
 
         return map
     }
-
+//Méthode inverse de convertToMap
     private fun convertToMouvement(doc: DocumentSnapshot): MoneyMovement? {
         try {
             val titre = doc.getString("titre")!!

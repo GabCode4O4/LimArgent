@@ -17,7 +17,6 @@ import kotlinx.coroutines.launch
 import java.time.LocalDate
 import javax.inject.Inject
 
-
 // Quand le viewmodel est créé, il créé en cascade ses dépendances (il est créé dans MainScreen.kt)
 @HiltViewModel
 class AnalyticsViewModel @Inject constructor(
@@ -25,11 +24,9 @@ class AnalyticsViewModel @Inject constructor(
     private val budgetManager: BudgetManager,
     private val sessionManager: SessionManager
 ) : ViewModel() {
-
     // on récupère les mouvements avec une version modifiable mutable state flow, ce qui permet de faire une étape intermédiaire au cas où l'utilisateur se déconnecte
-    // , si l'utilisateur se déco, on peut vider la variable sans toucher au database
+    //, si l'utilisateur se déco, on peut vider la variable sans toucher au database
     private val p_mouvements = MutableStateFlow<List<MoneyMovement>>(ArrayList())
-
     // et le paramètre en lecture seule qu'on va utiliser pour l'UI
     val mouvements: StateFlow<List<MoneyMovement>> = p_mouvements
     init {

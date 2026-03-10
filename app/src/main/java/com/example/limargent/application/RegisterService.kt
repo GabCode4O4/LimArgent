@@ -30,6 +30,7 @@ class RegisterService @Inject constructor(
             val firebaseUser = authResult.user
 
             if (firebaseUser != null) {
+                //On  donne des catégorie de base
                 val defaultCategories = ArrayList<String>()
                 defaultCategories.add("Alimentation")
                 defaultCategories.add("Logement")

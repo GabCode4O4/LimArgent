@@ -12,9 +12,8 @@ import javax.inject.Inject
 class ObjectifService @Inject constructor(
     private val objectifRepository: ObjectifRepository
 ) {
-
+//Les méthodes flow comme celle ci nous permettent de récup en temps rééls les données pour que ce soit tjrs à jour
     fun getObjectifsFlow(): Flow<List<ObjectifEpargne>> {
-        // permet d'avoir un flux de données, et donc une actualisation de l'affichage en temps réel
         return objectifRepository.getObjectifsFlow()
     }
 

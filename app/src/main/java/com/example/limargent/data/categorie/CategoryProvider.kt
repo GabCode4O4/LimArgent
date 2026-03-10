@@ -81,7 +81,7 @@ class CategoryProvider @Inject constructor(
             val uid = getUserId()
 
             if (uid == "") {
-                // si y'a pas d'utilisateur, on renvoie une liste vide et on ferme le flux
+                //si y'a pas d'utilisateur, on renvoie une liste vide et on ferme le flux (éviter que l'app crash)
                 trySend(ArrayList<String>())
                 close()
                 return@callbackFlow
@@ -89,7 +89,7 @@ class CategoryProvider @Inject constructor(
 
             // on créé le listener firestore qui s'active à chaque modif des données utilisateur
             val listener = firestore.collection("users").document(uid)
-                .addSnapshotListener { snapshot, error ->
+                .addSnapshotListener { snapshot, error -> //Snapshot permet de garder une relation en live avec la BDD que ce soit localalement ou en ligne
                     if (error != null) {
                         trySend(ArrayList<String>())
                         close()
@@ -113,7 +113,7 @@ class CategoryProvider @Inject constructor(
                     }
                 }
 
-            // s'active à la fermeture du flux pour empêcher une fuite de mémoire du listener firestore
+            //s'active à la fermeture du flux pour éviter une fuite mémoire du listener firestore
             awaitClose {
                 listener.remove()
             }

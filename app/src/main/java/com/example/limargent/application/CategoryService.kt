@@ -5,7 +5,7 @@ import com.example.limargent.domain.mouvements.MouvementRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import javax.inject.Inject
-
+//Service permettant de gérer les catégories
 class CategoryService @Inject constructor(
     private val categoryRepository: CategoryRepository,
     private val mouvementRepository: MouvementRepository
@@ -35,7 +35,7 @@ class CategoryService @Inject constructor(
     }
     suspend fun supprimer(nom: String): Result<Unit> {
         val mouvements = mouvementRepository.getMouvementsFlow().first()
-        // si la catégorie est déjà utilisée dans un mouvement, on empêche la suppression avec un booléen
+        //si la catégorie est déjà utilisée dans un mouvement, on empêche la suppression avec un booléen
         var estUtilise = false
         for (i in 0 until mouvements.size) {
             val mouv = mouvements[i]
