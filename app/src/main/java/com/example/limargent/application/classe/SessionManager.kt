@@ -8,12 +8,13 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
+//Classe permettant de gérer la session de l'utilisateur
 class SessionManager @Inject constructor(
     private val firebaseAuth: FirebaseAuth
 ) {
-    private val UserAct = MutableStateFlow<FirebaseUser?>(firebaseAuth.currentUser)
+    private val UserAct = MutableStateFlow<FirebaseUser?>(firebaseAuth.currentUser) //récupère l'utilisateur actuellement connecté
     val currentUser: StateFlow<FirebaseUser?> = UserAct
-    init {
+    init { //Listener qui met à jour l'utilisateur
         firebaseAuth.addAuthStateListener { auth ->
             UserAct.value = auth.currentUser
         }

@@ -9,6 +9,7 @@ import javax.inject.Singleton
 @Singleton
 class BudgetManager @Inject constructor() {
     fun getBudget(mouvements: List<MoneyMovement>): BigDecimal {
+        //Calcule le montant total des mouvements
         var total = BigDecimal(0)
         for (i in 0 until mouvements.size) {
             val m = mouvements[i]
@@ -21,6 +22,7 @@ class BudgetManager @Inject constructor() {
         return total
     }
     fun getBudgetCategorie(mouvements: List<MoneyMovement>, type: MovType): Map<String, Float> {
+        //Calcule le montant total des mouvements par catégorie
         val categories = mutableMapOf<String, Float>()
 
         for (mouv in mouvements) {
@@ -37,6 +39,7 @@ class BudgetManager @Inject constructor() {
     }
 
     fun getSousCategories(mouvements: List<MoneyMovement>, categorie: String): Map<String, Float> {
+        //Calcule le montant total des mouvements par sous-catégorie
         val sousCat = mutableMapOf<String, Float>()
         for (mouv in mouvements) {
             if (mouv.categorie == categorie) {
