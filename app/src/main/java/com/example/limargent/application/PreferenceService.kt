@@ -1,5 +1,4 @@
 package com.example.limargent.application
-
 import com.example.limargent.domain.preferences.PreferenceRepository
 import javax.inject.Inject
 
